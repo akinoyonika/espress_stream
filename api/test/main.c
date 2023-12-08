@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <arpa/inet.h>
 
 #include "espress_stream/api.h"
 
@@ -151,6 +152,22 @@ int main()
 			}
 		}
 
+		espress_stream_src_address(client_sid, address);
+		printf("api: client: src_address = %s:%u\n",
+			inet_ntoa(((struct sockaddr_in *)address)->sin_addr),
+			ntohs(((struct sockaddr_in *)address)->sin_port));
+		espress_stream_src_address(server_sid, address);
+		printf("api: server: src_address = %s:%u\n",
+			inet_ntoa(((struct sockaddr_in *)address)->sin_addr),
+			ntohs(((struct sockaddr_in *)address)->sin_port));
+		espress_stream_dst_address(client_sid, address);
+		printf("api: client: dst_address = %s:%u\n",
+			inet_ntoa(((struct sockaddr_in *)address)->sin_addr),
+			ntohs(((struct sockaddr_in *)address)->sin_port));
+		espress_stream_dst_address(server_sid, address);
+		printf("api: server: dst_address = %s:%u\n",
+			inet_ntoa(((struct sockaddr_in *)address)->sin_addr),
+			ntohs(((struct sockaddr_in *)address)->sin_port));
 		printf("api: client: connection_id = %08x\n", espress_stream_connection_id(client_sid));
 		printf("api: server: connection_id = %08x\n", espress_stream_connection_id(server_sid));
 		assert(espress_stream_connection_id(client_sid) == espress_stream_connection_id(server_sid));

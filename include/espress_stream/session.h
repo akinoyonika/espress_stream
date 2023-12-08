@@ -94,6 +94,8 @@ struct espress_stream_session_ops
 	i_t (*send)(struct espress_stream_session *this);
 	i_t (*flush)(struct espress_stream_session *this);
 	i_t (*recv)(struct espress_stream_session *this);
+	void (*src_address)(struct espress_stream_session *this, struct espress_stream_dgram_address *address);
+	void (*dst_address)(struct espress_stream_session *this, struct espress_stream_dgram_address *address);
 	void (*connection_id)(struct espress_stream_session *this, struct espress_stream_uint32 *connection_id);
 	void (*shared_key)(struct espress_stream_session *this, b_t *shared_key);
 	i_t (*rtt)(struct espress_stream_session *this, struct espress_stream_uint32 *rtt);

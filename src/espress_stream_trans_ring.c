@@ -122,10 +122,12 @@ static struct espress_stream_dgram_buffer * const *_tail(struct espress_stream_t
 }
 
 static i_t _request(struct espress_stream_trans_ring *this,
-	i_t (*trans_request)(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num))
+	i_t (*trans_request)(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num))
 {
 	u_t u;
 	u_t v;
+	u_t w;
+	u_t x;
 	struct espress_stream_dgram_buffer * const *b;
 	struct espress_stream_dgram_buffer * const *p;
 
@@ -133,13 +135,23 @@ static i_t _request(struct espress_stream_trans_ring *this,
 		(NULL != (b = _tail(this, u))) &&
 			(ESPRESS_STREAM_TRANS_RING_INVALID_DATA_SIZE == b[0]->data_size) ;
 		u++);
-	for (v = u, p = NULL ;
+	for (v = u, w = 0, x = 0, p = NULL ;
 		(NULL != (b = _tail(this, v))) &&
 			(0 < b[0]->data_size) &&
-			(ESPRESS_STREAM_TRANS_RING_INVALID_DATA_SIZE != b[0]->data_size) &&
-			(p < b) ;
-		v++, p = b);
-	return trans_request(this->dgram, _tail(this, u), v - u);
+			(ESPRESS_STREAM_TRANS_RING_INVALID_DATA_SIZE != b[0]->data_size) ;
+		v++)
+	{
+		if (p < b)
+		{
+			w++;
+			p = b;
+		}
+		else
+		{
+			x++;
+		}
+	}
+	return trans_request(this->dgram, _tail(this, u), w, _tail(this, u + w), x);
 }
 
 static i_t _result(struct espress_stream_trans_ring *this,

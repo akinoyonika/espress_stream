@@ -127,6 +127,8 @@ struct espress_stream_trans_packet_ops
 		struct espress_stream_uint32 *receive_window_size,
 		i_t *is_ack_true);
 	i_t (*purge)(struct espress_stream_trans_packet *this);
+	void (*src_address)(struct espress_stream_trans_packet *this, struct espress_stream_dgram_address *address);
+	void (*dst_address)(struct espress_stream_trans_packet *this, struct espress_stream_dgram_address *address);
 	void (*connection_id)(struct espress_stream_trans_packet *this, struct espress_stream_uint32 *connection_id);
 	void (*shared_key)(struct espress_stream_trans_packet *this, b_t *shared_key);
 	i_t (*rtt)(struct espress_stream_trans_packet *this, struct espress_stream_uint32 *rtt);

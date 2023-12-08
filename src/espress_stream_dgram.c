@@ -10,9 +10,9 @@
 
 static i_t _init(struct espress_stream_dgram *this, struct espress_stream_dgram_address const *bind_address, struct espress_stream_event *send_event, struct espress_stream_event *recv_event);
 static void _final(struct espress_stream_dgram *this);
-static i_t _send_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num);
+static i_t _send_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num);
 static i_t _send_result(struct espress_stream_dgram *this, u_t *num);
-static i_t _recv_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num);
+static i_t _recv_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num);
 static i_t _recv_result(struct espress_stream_dgram *this, u_t *num);
 static u_t _mtu(struct espress_stream_dgram *this);
 static void _send_yield(struct espress_stream_dgram *this, struct espress_stream_uint32 const *timeout);
@@ -119,9 +119,11 @@ static void _final(struct espress_stream_dgram *this)
 	memset(this, 0, sizeof(*this));
 }
 
-static i_t _send_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num)
+static i_t _send_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num)
 {
 	i_t ret = 0;
+	(void)ex_buffer;
+	(void)ex_num;
 	espress_stream_mutex->lock(this->send_mutex);
 	if ((0 == this->num_send_buffer) && (0 == this->num_sent_buffer))
 	{
@@ -157,9 +159,11 @@ static i_t _send_result(struct espress_stream_dgram *this, u_t *num)
 	return ret;
 }
 
-static i_t _recv_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num)
+static i_t _recv_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num)
 {
 	i_t ret = 0;
+	(void)ex_buffer;
+	(void)ex_num;
 	espress_stream_mutex->lock(this->recv_mutex);
 	if ((0 == this->num_recv_buffer) && (0 == this->num_rcvd_buffer))
 	{

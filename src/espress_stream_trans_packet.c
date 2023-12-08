@@ -70,6 +70,8 @@ static i_t _recv_ack(struct espress_stream_trans_packet *this,
 	struct espress_stream_uint32 *receive_window_size,
 	i_t *is_ack_true);
 static i_t _purge(struct espress_stream_trans_packet *this);
+static void _src_address(struct espress_stream_trans_packet *this, struct espress_stream_dgram_address *address);
+static void _dst_address(struct espress_stream_trans_packet *this, struct espress_stream_dgram_address *address);
 static void _connection_id(struct espress_stream_trans_packet *this, struct espress_stream_uint32 *connection_id);
 static void _shared_key(struct espress_stream_trans_packet *this, b_t *shared_key);
 static i_t _rtt(struct espress_stream_trans_packet *this, struct espress_stream_uint32 *rtt);
@@ -127,6 +129,8 @@ struct espress_stream_trans_packet_ops const espress_stream_trans_packet[] =
 	_send_ack,
 	_recv_ack,
 	_purge,
+	_src_address,
+	_dst_address,
 	_connection_id,
 	_shared_key,
 	_rtt,
@@ -915,8 +919,6 @@ static i_t _recv_connect(struct espress_stream_trans_packet *this,
 		memcpy(payload, espress_stream_packet->connect_payload(p), payload_size_var);
 	}
 
-	memcpy(this->dst_address, p->address, sizeof(*(this->dst_address)));
-	memcpy(address, p->address, sizeof(*address));
 	if (NULL != payload_size)
 	{
 		*payload_size = payload_size_var;
@@ -934,6 +936,9 @@ static i_t _recv_connect(struct espress_stream_trans_packet *this,
 			espress_stream_key->init(this->recv_key, this->shared_key, sizeof(this->shared_key), this->dst_random, sizeof(this->dst_random));
 		}
 	}
+
+	memcpy(this->dst_address, p->address, sizeof(*(this->dst_address)));
+	memcpy(address, p->address, sizeof(*address));
 
 MISMATCH_CONNECTION_ID_EXIT:
 ILLEGAL_CONNECTION_ID_EXIT:
@@ -1068,6 +1073,8 @@ static i_t _recv_disconnect(struct espress_stream_trans_packet *this,
 	{
 		*payload_size = payload_size_var;
 	}
+
+	memcpy(this->dst_address, p->address, sizeof(*(this->dst_address)));
 
 MISMATCH_CONNECTION_ID_EXIT:
 ILLEGAL_PACKET_SIZE_EXIT:
@@ -1364,6 +1371,8 @@ static i_t _recv_envelope(struct espress_stream_trans_packet *this,
 		espress_stream_uint32_assign(this->dst_receive_window_address, receive_window_address);
 	}
 
+	memcpy(this->dst_address, p->address, sizeof(*(this->dst_address)));
+
 MISMATCH_CONNECTION_ID_EXIT:
 ILLEGAL_PACKET_SIZE_EXIT:
 MISMATCH_PACKET_TYPE_EXIT:
@@ -1486,6 +1495,8 @@ static i_t _recv_ack(struct espress_stream_trans_packet *this,
 	espress_stream_uint32_assign(this->dst_receive_counter_number, receive_counter_number);
 	espress_stream_uint32_assign(this->dst_receive_window_address, receive_window_address);
 
+	memcpy(this->dst_address, p->address, sizeof(*(this->dst_address)));
+
 MISMATCH_CONNECTION_ID_EXIT:
 ILLEGAL_PACKET_SIZE_EXIT:
 MISMATCH_PACKET_TYPE_EXIT:
@@ -1536,6 +1547,16 @@ RECV_QUEUE_EMPTY_EXIT:
 	espress_stream_mutex->unlock(this->interface->mutex);
 
 	return ret;
+}
+
+static void _src_address(struct espress_stream_trans_packet *this, struct espress_stream_dgram_address *address)
+{
+	memcpy(address, this->src_address, sizeof(*address));
+}
+
+static void _dst_address(struct espress_stream_trans_packet *this, struct espress_stream_dgram_address *address)
+{
+	memcpy(address, this->dst_address, sizeof(*address));
 }
 
 static void _connection_id(struct espress_stream_trans_packet *this, struct espress_stream_uint32 *connection_id)

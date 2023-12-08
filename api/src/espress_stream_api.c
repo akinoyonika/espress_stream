@@ -676,7 +676,7 @@ int espress_stream_begin_interface(void **ifd, struct sockaddr_storage const *ad
 	begin_session(i);
 	this = get_interface(i);
 
-	memcpy(dgram_address->storage, address, sizeof(*address));
+	memcpy(dgram_address->storage, address, sizeof(*(dgram_address->storage)));
 	j = espress_stream_trans_packet->init(this->interface, dgram_address);
 	if (j != 0) {
 		ret = 1;
@@ -1762,6 +1762,32 @@ EXIT:
 #	endif
 
 	return ret;
+}
+
+void espress_stream_src_address(void *sid, struct sockaddr_storage *address)
+{
+	struct session *this = get_session(sid);
+	struct espress_stream_dgram_address dgram_address[1];
+
+	espress_stream_mutex->lock(this->mutex);
+
+	espress_stream_session->src_address(this->session, dgram_address);
+	memcpy(address, dgram_address->storage, sizeof(*address));
+
+	espress_stream_mutex->unlock(this->mutex);
+}
+
+void espress_stream_dst_address(void *sid, struct sockaddr_storage *address)
+{
+	struct session *this = get_session(sid);
+	struct espress_stream_dgram_address dgram_address[1];
+
+	espress_stream_mutex->lock(this->mutex);
+
+	espress_stream_session->dst_address(this->session, dgram_address);
+	memcpy(address, dgram_address->storage, sizeof(*address));
+
+	espress_stream_mutex->unlock(this->mutex);
 }
 
 unsigned espress_stream_connection_id(void *sid)

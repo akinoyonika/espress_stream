@@ -29,12 +29,16 @@ struct espress_stream_dgram
 	int sock;
 	int send_eventfd;
 	struct espress_stream_dgram_buffer * const *send_buffer;
+	struct espress_stream_dgram_buffer * const *send_ex_buffer;
 	u_t num_send_buffer;
+	u_t num_send_ex_buffer;
 	u_t num_sent_buffer;
 	i_t send_errno;
 	int recv_eventfd;
 	struct espress_stream_dgram_buffer * const *recv_buffer;
+	struct espress_stream_dgram_buffer * const *recv_ex_buffer;
 	u_t num_recv_buffer;
+	u_t num_recv_ex_buffer;
 	u_t num_rcvd_buffer;
 	i_t recv_errno;
 };
@@ -43,9 +47,9 @@ struct espress_stream_dgram_ops
 {
 	i_t (*init)(struct espress_stream_dgram *this, struct espress_stream_dgram_address const *bind_address, struct espress_stream_event *send_event, struct espress_stream_event *recv_event);
 	void (*final)(struct espress_stream_dgram *this);
-	i_t (*send_request)(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num);
+	i_t (*send_request)(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num);
 	i_t (*send_result)(struct espress_stream_dgram *this, u_t *num);
-	i_t (*recv_request)(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num);
+	i_t (*recv_request)(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num);
 	i_t (*recv_result)(struct espress_stream_dgram *this, u_t *num);
 	u_t (*mtu)(struct espress_stream_dgram *this);
 	void (*send_yield)(struct espress_stream_dgram *this, struct espress_stream_uint32 const *timeout);

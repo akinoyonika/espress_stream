@@ -10,9 +10,9 @@
 
 static i_t _init(struct espress_stream_dgram *this, struct espress_stream_dgram_address const *bind_address, struct espress_stream_event *send_event, struct espress_stream_event *recv_event);
 static void _final(struct espress_stream_dgram *this);
-static i_t _send_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num);
+static i_t _send_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num);
 static i_t _send_result(struct espress_stream_dgram *this, u_t *num);
-static i_t _recv_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num);
+static i_t _recv_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num);
 static i_t _recv_result(struct espress_stream_dgram *this, u_t *num);
 static u_t _mtu(struct espress_stream_dgram *this);
 static void _send_yield(struct espress_stream_dgram *this, struct espress_stream_uint32 const *timeout);
@@ -119,7 +119,7 @@ static void _final(struct espress_stream_dgram *this)
 	memset(this, 0, sizeof(*this));
 }
 
-static i_t _send_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num)
+static i_t _send_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num)
 {
 	i_t ret = 0;
 	espress_stream_mutex->lock(this->send_mutex);
@@ -127,6 +127,15 @@ static i_t _send_request(struct espress_stream_dgram *this, struct espress_strea
 	{
 		this->send_buffer = buffer;
 		this->num_send_buffer = num;
+		this->send_ex_buffer = ex_buffer;
+		if (NULL == ex_buffer)
+		{
+			this->num_send_ex_buffer = 0;
+		}
+		else
+		{
+			this->num_send_ex_buffer = ex_num;
+		}
 		espress_stream_event->set(this->send_event, 1);
 	}
 	else
@@ -157,7 +166,7 @@ static i_t _send_result(struct espress_stream_dgram *this, u_t *num)
 	return ret;
 }
 
-static i_t _recv_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num)
+static i_t _recv_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num)
 {
 	i_t ret = 0;
 	espress_stream_mutex->lock(this->recv_mutex);
@@ -165,6 +174,15 @@ static i_t _recv_request(struct espress_stream_dgram *this, struct espress_strea
 	{
 		this->recv_buffer = buffer;
 		this->num_recv_buffer = num;
+		this->recv_ex_buffer = ex_buffer;
+		if (NULL == ex_buffer)
+		{
+			this->num_recv_ex_buffer = 0;
+		}
+		else
+		{
+			this->num_recv_ex_buffer = ex_num;
+		}
 		espress_stream_event->set(this->recv_event, 1);
 	}
 	else
@@ -203,21 +221,36 @@ static u_t _mtu(struct espress_stream_dgram *this)
 static int _sendmmsg(struct espress_stream_dgram *this)
 {
 	u_t u;
+	u_t v;
+	struct espress_stream_dgram_buffer *b;
 	struct mmsghdr mmsghdr[ESPRESS_STREAM_SEND_QUEUE_SIZE];
 	struct iovec iovec[ESPRESS_STREAM_SEND_QUEUE_SIZE];
 
-	for (u = 0 ; u < this->num_send_buffer ; u++)
+	v = this->num_send_buffer + this->num_send_ex_buffer;
+	if (ESPRESS_STREAM_SEND_QUEUE_SIZE < v)
 	{
-		iovec[u].iov_base = this->send_buffer[u]->data;
-		iovec[u].iov_len = this->send_buffer[u]->data_size;
-		mmsghdr[u].msg_hdr.msg_name = (struct sockaddr *)this->send_buffer[u]->address->storage;
+		v = ESPRESS_STREAM_SEND_QUEUE_SIZE;
+	}
+	for (u = 0 ; u < v ; u++)
+	{
+		if (u < this->num_send_buffer)
+		{
+			b = this->send_buffer[u];
+		}
+		else
+		{
+			b = this->send_ex_buffer[u - this->num_send_buffer];
+		}
+		iovec[u].iov_base = b->data;
+		iovec[u].iov_len = b->data_size;
+		mmsghdr[u].msg_hdr.msg_name = (struct sockaddr *)(b->address->storage);
 		mmsghdr[u].msg_hdr.msg_namelen = sizeof(*(this->send_buffer[0]->address->storage));
 		mmsghdr[u].msg_hdr.msg_iov = iovec + u;
 		mmsghdr[u].msg_hdr.msg_iovlen = 1;
 		mmsghdr[u].msg_hdr.msg_control = NULL;
 		mmsghdr[u].msg_hdr.msg_controllen = 0;
 		mmsghdr[u].msg_hdr.msg_flags = 0;
-		mmsghdr[u].msg_len = this->send_buffer[u]->data_size;
+		mmsghdr[u].msg_len = b->data_size;
 	}
 
 	return sendmmsg(this->sock, mmsghdr, this->num_send_buffer, 0);
@@ -289,15 +322,30 @@ static int _recvmmsg(struct espress_stream_dgram *this)
 {
 	int ret;
 	u_t u;
+	u_t v;
+	struct espress_stream_dgram_buffer *b;
 	struct mmsghdr mmsghdr[ESPRESS_STREAM_RECV_QUEUE_SIZE];
 	struct iovec iovec[ESPRESS_STREAM_RECV_QUEUE_SIZE];
 
-	for (u = 0 ; u < this->num_recv_buffer ; u++)
+	v = this->num_recv_buffer + this->num_recv_ex_buffer;
+	if (ESPRESS_STREAM_RECV_QUEUE_SIZE < v)
 	{
-		iovec[u].iov_base = this->recv_buffer[u]->data;
-		iovec[u].iov_len = this->recv_buffer[u]->data_size;
-		mmsghdr[u].msg_hdr.msg_name = (struct sockaddr *)this->recv_buffer[u]->address->storage;
-		mmsghdr[u].msg_hdr.msg_namelen = sizeof(*(this->recv_buffer[u]->address->storage));
+		v = ESPRESS_STREAM_RECV_QUEUE_SIZE;
+	}
+	for (u = 0 ; u < v ; u++)
+	{
+		if (u < this->num_recv_buffer)
+		{
+			b = this->recv_buffer[u];
+		}
+		else
+		{
+			b = this->recv_ex_buffer[u - this->num_recv_buffer];
+		}
+		iovec[u].iov_base = b->data;
+		iovec[u].iov_len = b->data_size;
+		mmsghdr[u].msg_hdr.msg_name = (struct sockaddr *)(b->address->storage);
+		mmsghdr[u].msg_hdr.msg_namelen = sizeof(*(b->address->storage));
 		mmsghdr[u].msg_hdr.msg_iov = iovec + u;
 		mmsghdr[u].msg_hdr.msg_iovlen = 1;
 		mmsghdr[u].msg_hdr.msg_control = NULL;
@@ -312,7 +360,15 @@ static int _recvmmsg(struct espress_stream_dgram *this)
 	{
 		for (u = 0 ; u < ret ; u++)
 		{
-			this->recv_buffer[u]->data_size = mmsghdr[u].msg_len;
+			if (u < this->num_recv_buffer)
+			{
+				b = this->recv_buffer[u];
+			}
+			else
+			{
+				b = this->recv_ex_buffer[u - this->num_recv_buffer];
+			}
+			b->data_size = mmsghdr[u].msg_len;
 		}
 	}
 

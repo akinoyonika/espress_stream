@@ -51,6 +51,8 @@ static i_t _disconnect_detect(struct espress_stream_session *this);
 static i_t _send(struct espress_stream_session *this);
 static i_t _flush(struct espress_stream_session *this);
 static i_t _recv(struct espress_stream_session *this);
+static void _src_address(struct espress_stream_session *this, struct espress_stream_dgram_address *address);
+static void _dst_address(struct espress_stream_session *this, struct espress_stream_dgram_address *address);
 static void _connection_id(struct espress_stream_session *this, struct espress_stream_uint32 *connection_id);
 static void _shared_key(struct espress_stream_session *this, b_t *shared_key);
 static i_t _rtt(struct espress_stream_session *this, struct espress_stream_uint32 *rtt);
@@ -81,6 +83,8 @@ struct espress_stream_session_ops const espress_stream_session[] =
 	_send,
 	_flush,
 	_recv,
+	_src_address,
+	_dst_address,
 	_connection_id,
 	_shared_key,
 	_rtt,
@@ -563,6 +567,20 @@ MISMATCH_STATE_EXIT:
 	espress_stream_mutex->unlock(this->mutex);
 
 	return ret;
+}
+
+static void _src_address(struct espress_stream_session *this, struct espress_stream_dgram_address *address)
+{
+	espress_stream_mutex->lock(this->mutex);
+	espress_stream_trans_packet->src_address(this->trans_packet, address);
+	espress_stream_mutex->unlock(this->mutex);
+}
+
+static void _dst_address(struct espress_stream_session *this, struct espress_stream_dgram_address *address)
+{
+	espress_stream_mutex->lock(this->mutex);
+	espress_stream_trans_packet->dst_address(this->trans_packet, address);
+	espress_stream_mutex->unlock(this->mutex);
 }
 
 static void _connection_id(struct espress_stream_session *this, struct espress_stream_uint32 *connection_id)

@@ -388,11 +388,7 @@ static int conn(struct file_tx_attr *attr,
 
 	i = espress_stream_connect(*sid, address);
 	if (i == 0) {
-		for (i = -1 ;
-			*is_running &&
-				(i == -1) &&
-				(t = (espress_stream_time() - start_time) & 0xffffffff) < timeout ;
-			) {
+		for (i = -1, t = 0 ; *is_running && (i == -1) ; ) {
 			t = timeout - t;
 			i = espress_stream_connect_result(*sid, t);
 			if (0 < i) {
@@ -413,6 +409,10 @@ static int conn(struct file_tx_attr *attr,
 				espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
 				i = 1;
 			}
+
+			if (timeout <= (t = (espress_stream_time() - start_time) & 0xffffffff)) {
+				break;
+			}
 		}
 	}
 
@@ -430,15 +430,15 @@ static int send_recv(struct file_tx_attr *attr,
 	void *sid = attr->sid;
 	unsigned const start_time = espress_stream_time();
 
-	for (i = -1, j = -1 ;
-		*is_running &&
-			(i == -1) && (j == -1) &&
-			((t = (espress_stream_time() - start_time) & 0xffffffff) < timeout) ;
-		) {
+	for (i = -1, j = -1, t = 0 ; *is_running && (i == -1) && (j == -1) ; ) {
 		t = timeout - t;
 		espress_stream_wait_any(sid, t);
 		i = espress_stream_send(sid, send_data, send_data_size, 0);
 		j = espress_stream_recv(sid, recv_data, recv_data_size, 0);
+
+		if (timeout <= (t = (espress_stream_time() - start_time) & 0xffffffff)) {
+			break;
+		}
 	}
 
 	i = (i < 0) ? -1 : ((0 < i) ? 1 : 0);
@@ -456,15 +456,15 @@ static int flush_recv(struct file_tx_attr *attr,
 	void *sid = attr->sid;
 	unsigned const start_time = espress_stream_time();
 
-	for (i = -1, j = -1 ;
-		*is_running &&
-			(i == -1) && (j == -1) &&
-			((t = (espress_stream_time() - start_time) & 0xffffffff) < timeout) ;
-		) {
+	for (i = -1, j = -1, t = 0 ; *is_running && (i == -1) && (j == -1) ; ) {
 		t = timeout - t;
 		espress_stream_wait_any(sid, t);
 		i = espress_stream_flush(sid, 0);
 		j = espress_stream_recv(sid, recv_data, recv_data_size, 0);
+
+		if (timeout <= (t = (espress_stream_time() - start_time) & 0xffffffff)) {
+			break;
+		}
 	}
 
 	i = (i < 0) ? -1 : ((0 < i) ? 1 : 0);
@@ -477,6 +477,7 @@ static void *file_tx(void *param)
 	int i;
 	int j;
 	size_t s;
+	unsigned t;
 	unsigned u;
 	unsigned v;
 	unsigned w;
@@ -492,6 +493,7 @@ static void *file_tx(void *param)
 	void **sid = &(((struct file_tx_attr *)param)->sid);
 	unsigned char buf[BUFFER_SIZE];
 	uint64_t progress;
+	unsigned start_time;
 
 	main_file_name = strrchr(file_name, '/');
 	if (main_file_name == NULL) {
@@ -580,6 +582,14 @@ static void *file_tx(void *param)
 	for (progress = 0 ; *is_running ; ) {
 		s = fread(buf, 1, sizeof(buf), file);
 		for (u = 0 ; u < s ; u += v) {
+			disp(index, main_file_name, file_size, (progress + u) - espress_stream_buffered_send_size(*sid, NULL), i ? -1 : 0,
+				espress_stream_buffered_send_size(*sid, NULL),
+				espress_stream_rtt(*sid),
+				espress_stream_rto(*sid),
+				espress_stream_dac(*sid),
+				espress_stream_cwnd(*sid),
+				espress_stream_send_timeout_count(*sid),
+				espress_stream_fast_retransmit_count(*sid));
 			v = s - u;
 			w = 1;
 			i = send_recv((struct file_tx_attr *)param, buf + u, &v, &b, &w, *is_running ? TIMEOUT : 0, is_running);
@@ -614,7 +624,9 @@ static void *file_tx(void *param)
 		goto DATA_SEND_BREAK_EXIT;
 	}
 
-	for (u = espress_stream_buffered_send_size(*sid, NULL) ; *is_running ; u = v) {
+	for (u = espress_stream_buffered_send_size(*sid, NULL), start_time = espress_stream_time(), t = 0 ;
+		*is_running ;
+		u = v) {
 		disp(index, main_file_name, file_size, progress - espress_stream_buffered_send_size(*sid, NULL), 0,
 			espress_stream_buffered_send_size(*sid, NULL),
 			espress_stream_rtt(*sid),
@@ -624,14 +636,21 @@ static void *file_tx(void *param)
 			espress_stream_send_timeout_count(*sid),
 			espress_stream_fast_retransmit_count(*sid));
 		w = 1;
-		i = flush_recv((struct file_tx_attr *)param, &b, &w, *is_running ? TIMEOUT : 0, is_running);
+		i = flush_recv((struct file_tx_attr *)param, &b, &w, 0, is_running);
 		j = (i >> 2) & 0x03; if (1 < j) j = -1;
 		i = i & 0x03; if (1 < i) i = -1;
 		if ((0 <= i) || ((j == 0) && (w == 0))) {
 			break;
 		}
 		v = espress_stream_buffered_send_size(*sid, NULL);
-		if (u == v) {
+		if (u != v) {
+			start_time = espress_stream_time();
+		}
+
+		if ((t = (espress_stream_time() - start_time) & 0xffffffff) < TIMEOUT) {
+			t = TIMEOUT - t;
+			espress_stream_wait_any(*sid, *is_running ? t : 0);
+		} else {
 			break;
 		}
 	}

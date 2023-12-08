@@ -371,6 +371,30 @@ void espress_stream_wait_break(void *sid);
  */
 int espress_stream_poll(void * const *sids, unsigned num, unsigned timeout);
 
+/** @brief Get source address.
+ * 
+ * Get source network address.
+ * 
+ * @param[in] sid
+ *     Session ID.
+ * @param[out] address
+ *     Store address of a source network address.
+ * 
+ */
+void espress_stream_src_address(void *sid, struct sockaddr_storage *address);
+
+/** @brief Get destination address.
+ * 
+ * Get destination network address.
+ * 
+ * @param[in] sid
+ *     Session ID.
+ * @param[out] address
+ *     Store address of a destination network address.
+ * 
+ */
+void espress_stream_dst_address(void *sid, struct sockaddr_storage *address);
+
 /** @brief Get connection ID.
  * 
  * Get connection ID value.
@@ -379,7 +403,7 @@ int espress_stream_poll(void * const *sids, unsigned num, unsigned timeout);
  *     Session ID.
  * 
  * @return
- *     Connection ID value.  It's only lower 32 bits are available. The unit is microsecond.
+ *     Connection ID value. It's only lower 32 bits are available. The unit is microsecond.
  */
 unsigned espress_stream_connection_id(void *sid);
 
