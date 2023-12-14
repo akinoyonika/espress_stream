@@ -4,9 +4,7 @@
 
 #define _U_T_BIT_WIDTH (U_T_WIDTH * 8)
 
-#if 128 <= ESPRESS_STREAM_UINT_MAX_WIDTH
-#	define _BUFFER_SIZE sizeof(struct espress_stream_uint1024)
-#elif 64 <= ESPRESS_STREAM_UINT_MAX_WIDTH
+#if 64 <= ESPRESS_STREAM_UINT_MAX_WIDTH
 #	define _BUFFER_SIZE sizeof(struct espress_stream_uint512)
 #elif 32 <= ESPRESS_STREAM_UINT_MAX_WIDTH
 #	define _BUFFER_SIZE sizeof(struct espress_stream_uint256)
@@ -73,13 +71,6 @@ struct
 		{offsetof(struct espress_stream_uint512, l), offsetof(struct espress_stream_uint512, h)},
 #	endif
 #endif
-#if 128 <= ESPRESS_STREAM_UINT_MAX_WIDTH
-#	if 128 <= MAX_U_T_WIDTH
-		{(1 - ESPRESS_STREAM_IS_HOST_BYTE_ORDER_LITTLE) << 6, ESPRESS_STREAM_IS_HOST_BYTE_ORDER_LITTLE << 6},
-#	else
-		{offsetof(struct espress_stream_uint1024, l), offsetof(struct espress_stream_uint1024, h)},
-#	endif
-#endif
 };
 
 #if ESPRESS_STREAM_IS_HOST_BYTE_ORDER_LITTLE
@@ -88,13 +79,7 @@ struct
 #	define _O(w, n) ((1 << (w)) - 1 - (n))
 #endif
 
-#if 128 <= MAX_U_T_WIDTH
-#	define _espress_stream_uint espress_stream_uint1024
-#	define _np_last(w, this, __func__) do{if (7 == (w)) {espress_stream_uint1024_##__func__ (this); goto EXIT;}}while (0)
-#	define _last(w, this, __func__, ...) do{if (7 == (w)) {espress_stream_uint1024_##__func__ (this, __VA_ARGS__); goto EXIT;}}while (0)
-#	define _r_last(r, w, this, __func__, ...) do{if (7 == (w)) {r = espress_stream_uint1024_##__func__ (this, __VA_ARGS__); goto EXIT;}}while (0)
-#	define _va_last(w, __func__, this, np) do{if (7 == (w)) {espress_stream_uint1024_##__func__ (this, np); goto EXIT;}}while (0)
-#elif 64 <= MAX_U_T_WIDTH
+#if 64 <= MAX_U_T_WIDTH
 #	define _espress_stream_uint espress_stream_uint512
 #	define _np_last(w, this, __func__) do{if (6 == (w)) {espress_stream_uint512_##__func__ (this); goto EXIT;}}while (0)
 #	define _last(w, this, __func__, ...) do{if (6 == (w)) {espress_stream_uint512_##__func__ (this, __VA_ARGS__); goto EXIT;}}while (0)
@@ -742,82 +727,5 @@ struct espress_stream_uint512 const espress_stream_uint512_max[] = {ESPRESS_STRE
 		i_t espress_stream_uint512_lt(struct espress_stream_uint512 const *this, struct espress_stream_uint512 const *n) {return _uint_lt(6, (b_t const *)this, (b_t const *)n);}
 		i_t espress_stream_uint512_le(struct espress_stream_uint512 const *this, struct espress_stream_uint512 const *n) {return _uint_le(6, (b_t const *)this, (b_t const *)n);}
 		void espress_stream_uint512_bswap(struct espress_stream_uint512 *this) {_uint_bswap(6, (b_t *)this);}
-#	endif
-#endif
-
-struct espress_stream_uint1024 const espress_stream_uint1024_0[] = {ESPRESS_STREAM_UINT1024_0};
-struct espress_stream_uint1024 const espress_stream_uint1024_1[] = {ESPRESS_STREAM_UINT1024_1};
-struct espress_stream_uint1024 const espress_stream_uint1024_max[] = {ESPRESS_STREAM_UINT1024_MAX};
-
-#if 64<= ESPRESS_STREAM_UINT_MAX_WIDTH
-#	if 64<= MAX_U_T_WIDTH
-#	else
-		void espress_stream_uint1024_set(struct espress_stream_uint1024 *this,
-			b_t n127, b_t n126, b_t n125, b_t n124, b_t n123, b_t n122, b_t n121, b_t n120,
-			b_t n119, b_t n118, b_t n117, b_t n116, b_t n115, b_t n114, b_t n113, b_t n112,
-			b_t n111, b_t n110, b_t n109, b_t n108, b_t n107, b_t n106, b_t n105, b_t n104,
-			b_t n103, b_t n102, b_t n101, b_t n100, b_t n99, b_t n98, b_t n97, b_t n96,
-			b_t n95, b_t n94, b_t n93, b_t n92, b_t n91, b_t n90, b_t n89, b_t n88,
-			b_t n87, b_t n86, b_t n85, b_t n84, b_t n83, b_t n82, b_t n81, b_t n80,
-			b_t n79, b_t n78, b_t n77, b_t n76, b_t n75, b_t n74, b_t n73, b_t n72,
-			b_t n71, b_t n70, b_t n69, b_t n68, b_t n67, b_t n66, b_t n65, b_t n64,
-			b_t n63, b_t n62, b_t n61, b_t n60, b_t n59, b_t n58, b_t n57, b_t n56,
-			b_t n55, b_t n54, b_t n53, b_t n52, b_t n51, b_t n50, b_t n49, b_t n48,
-			b_t n47, b_t n46, b_t n45, b_t n44, b_t n43, b_t n42, b_t n41, b_t n40,
-			b_t n39, b_t n38, b_t n37, b_t n36, b_t n35, b_t n34, b_t n33, b_t n32,
-			b_t n31, b_t n30, b_t n29, b_t n28, b_t n27, b_t n26, b_t n25, b_t n24,
-			b_t n23, b_t n22, b_t n21, b_t n20, b_t n19, b_t n18, b_t n17, b_t n16,
-			b_t n15, b_t n14, b_t n13, b_t n12, b_t n11, b_t n10, b_t n9, b_t n8,
-			b_t n7, b_t n6, b_t n5, b_t n4, b_t n3, b_t n2, b_t n1, b_t n0)
-		{
-			_uint_set(7, (b_t *)this,
-				n127, n126, n125, n124, n123, n122, n121, n120, n119, n118, n117, n116, n115, n114, n113, n112, n111, n110, n109, n108, n107, n106, n105, n104, n103, n102, n101, n100, n99, n98, n97, n96,
-				n95, n94, n93, n92, n91, n90, n89, n88, n87, n86, n85, n84, n83, n82, n81, n80, n79, n78, n77, n76, n75, n74, n73, n72, n71, n70, n69, n68, n67, n66, n65, n64,
-				n63, n62, n61, n60, n59, n58, n57, n56, n55, n54, n53, n52, n51, n50, n49, n48, n47, n46, n45, n44, n43, n42, n41, n40, n39, n38, n37, n36, n35, n34, n33, n32,
-				n31, n30, n29, n28, n27, n26, n25, n24, n23, n22, n21, n20, n19, n18, n17, n16, n15, n14, n13, n12, n11, n10, n9, n8, n7, n6, n5, n4, n3, n2, n1, n0);
-		}
-		void espress_stream_uint1024_get(struct espress_stream_uint1024 const *this,
-			b_t *n127, b_t *n126, b_t *n125, b_t *n124, b_t *n123, b_t *n122, b_t *n121, b_t *n120,
-			b_t *n119, b_t *n118, b_t *n117, b_t *n116, b_t *n115, b_t *n114, b_t *n113, b_t *n112,
-			b_t *n111, b_t *n110, b_t *n109, b_t *n108, b_t *n107, b_t *n106, b_t *n105, b_t *n104,
-			b_t *n103, b_t *n102, b_t *n101, b_t *n100, b_t *n99, b_t *n98, b_t *n97, b_t *n96,
-			b_t *n95, b_t *n94, b_t *n93, b_t *n92, b_t *n91, b_t *n90, b_t *n89, b_t *n88,
-			b_t *n87, b_t *n86, b_t *n85, b_t *n84, b_t *n83, b_t *n82, b_t *n81, b_t *n80,
-			b_t *n79, b_t *n78, b_t *n77, b_t *n76, b_t *n75, b_t *n74, b_t *n73, b_t *n72,
-			b_t *n71, b_t *n70, b_t *n69, b_t *n68, b_t *n67, b_t *n66, b_t *n65, b_t *n64,
-			b_t *n63, b_t *n62, b_t *n61, b_t *n60, b_t *n59, b_t *n58, b_t *n57, b_t *n56,
-			b_t *n55, b_t *n54, b_t *n53, b_t *n52, b_t *n51, b_t *n50, b_t *n49, b_t *n48,
-			b_t *n47, b_t *n46, b_t *n45, b_t *n44, b_t *n43, b_t *n42, b_t *n41, b_t *n40,
-			b_t *n39, b_t *n38, b_t *n37, b_t *n36, b_t *n35, b_t *n34, b_t *n33, b_t *n32,
-			b_t *n31, b_t *n30, b_t *n29, b_t *n28, b_t *n27, b_t *n26, b_t *n25, b_t *n24,
-			b_t *n23, b_t *n22, b_t *n21, b_t *n20, b_t *n19, b_t *n18, b_t *n17, b_t *n16,
-			b_t *n15, b_t *n14, b_t *n13, b_t *n12, b_t *n11, b_t *n10, b_t *n9, b_t *n8,
-			b_t *n7, b_t *n6, b_t *n5, b_t *n4, b_t *n3, b_t *n2, b_t *n1, b_t *n0)
-		{
-			_uint_get(7, (b_t const *)this,
-				n127, n126, n125, n124, n123, n122, n121, n120, n119, n118, n117, n116, n115, n114, n113, n112, n111, n110, n109, n108, n107, n106, n105, n104, n103, n102, n101, n100, n99, n98, n97, n96,
-				n95, n94, n93, n92, n91, n90, n89, n88, n87, n86, n85, n84, n83, n82, n81, n80, n79, n78, n77, n76, n75, n74, n73, n72, n71, n70, n69, n68, n67, n66, n65, n64,
-				n63, n62, n61, n60, n59, n58, n57, n56, n55, n54, n53, n52, n51, n50, n49, n48, n47, n46, n45, n44, n43, n42, n41, n40, n39, n38, n37, n36, n35, n34, n33, n32,
-				n31, n30, n29, n28, n27, n26, n25, n24, n23, n22, n21, n20, n19, n18, n17, n16, n15, n14, n13, n12, n11, n10, n9, n8, n7, n6, n5, n4, n3, n2, n1, n0);
-		}
-		void espress_stream_uint1024_va_set(struct espress_stream_uint1024 *this, va_list *np) {_uint_va_set(7, (b_t *)this, np);}
-		void espress_stream_uint1024_va_get(struct espress_stream_uint1024 const *this, va_list *np) {_uint_va_get(7, (b_t const *)this, np);}
-		void espress_stream_uint1024_set_u(struct espress_stream_uint1024 *this, u_t n) {_uint_set_u(7, (b_t *)this, n);}
-		void espress_stream_uint1024_get_u(struct espress_stream_uint1024 const *this, u_t *n) {_uint_get_u(7, (b_t const *)this, n);}
-		void espress_stream_uint1024_assign(struct espress_stream_uint1024 *this, struct espress_stream_uint1024 const *n) {_uint_assign(7, (b_t *)this, (b_t const *)n);}
-		i_t espress_stream_uint1024_add(struct espress_stream_uint1024 *this, struct espress_stream_uint1024 const *n) {return _uint_add(7, (b_t *)this, (b_t const *)n);}
-		i_t espress_stream_uint1024_sub(struct espress_stream_uint1024 *this, struct espress_stream_uint1024 const *n) {return _uint_sub(7, (b_t *)this, (b_t const *)n);}
-		void espress_stream_uint1024_mul(struct espress_stream_uint1024 *this, struct espress_stream_uint1024 const *n) {_uint_mul(7, (b_t *)this, (b_t const *)n);}
-		void espress_stream_uint1024_div(struct espress_stream_uint1024 *this, struct espress_stream_uint1024 const *n) {_uint_div(7, (b_t *)this, (b_t const *)n);}
-		void espress_stream_uint1024_and(struct espress_stream_uint1024 *this, struct espress_stream_uint1024 const *n) {_uint_and(7, (b_t *)this, (b_t const *)n);}
-		void espress_stream_uint1024_or(struct espress_stream_uint1024 *this, struct espress_stream_uint1024 const *n) {_uint_or(7, (b_t *)this, (b_t const *)n);}
-		void espress_stream_uint1024_xor(struct espress_stream_uint1024 *this, struct espress_stream_uint1024 const *n) {_uint_xor(7, (b_t *)this, (b_t const *)n);}
-		void espress_stream_uint1024_not(struct espress_stream_uint1024 *this) {_uint_not(7, (b_t *)this);}
-		void espress_stream_uint1024_shift(struct espress_stream_uint1024 *this, i_t n) {_uint_shift(7, (b_t *)this, n);}
-		void espress_stream_uint1024_rotate(struct espress_stream_uint1024 *this, i_t n) {_uint_rotate(7, (b_t *)this, n);}
-		i_t espress_stream_uint1024_eq(struct espress_stream_uint1024 const *this, struct espress_stream_uint1024 const *n) {return _uint_eq(7, (b_t const *)this, (b_t const *)n);}
-		i_t espress_stream_uint1024_lt(struct espress_stream_uint1024 const *this, struct espress_stream_uint1024 const *n) {return _uint_lt(7, (b_t const *)this, (b_t const *)n);}
-		i_t espress_stream_uint1024_le(struct espress_stream_uint1024 const *this, struct espress_stream_uint1024 const *n) {return _uint_le(7, (b_t const *)this, (b_t const *)n);}
-		void espress_stream_uint1024_bswap(struct espress_stream_uint1024 *this) {_uint_bswap(7, (b_t *)this);}
 #	endif
 #endif

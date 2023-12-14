@@ -37,9 +37,6 @@ enum
 #elif 512 == ESPRESS_STREAM_EVENT_FLAGS_MAX_NUM_FLAG_CLASS
 #	define ESPRESS_STREAM_EVENT_FLAGS_UINT(s) ESPRESS_STREAM_UINT512 ## s
 #	define espress_stream_event_flags_uint(s) espress_stream_uint512 ## s
-#elif 1024 == ESPRESS_STREAM_EVENT_FLAGS_MAX_NUM_FLAG_CLASS
-#	define ESPRESS_STREAM_EVENT_FLAGS_UINT(s) ESPRESS_STREAM_UINT1024 ## s
-#	define espress_stream_event_flags_uint(s) espress_stream_uint1024 ## s
 #else
 #	error
 #endif

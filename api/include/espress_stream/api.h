@@ -450,19 +450,19 @@ unsigned espress_stream_buffered_recv_size(void *sid, unsigned *max_size);
  *     Session ID.
  * 
  * @return
- *     Round trip time value.  It's only lower 32 bits are available. The unit is microsecond.
+ *     Round trip time value. It's only lower 32 bits are available. The unit is microsecond.
  */
 unsigned espress_stream_rtt(void *sid);
 
 /** @brief Get rto.
  * 
- * Get retry timeout value. For debugging use.
+ * Get retransmission timeout value. For debugging use.
  * 
  * @param[in] sid
  *     Session ID.
  * 
  * @return
- *     Retry timeout value.  It's only lower 32 bits are available. The unit is microsecond.
+ *     Retransmission timeout value. It's only lower 32 bits are available. The unit is microsecond.
  */
 unsigned espress_stream_rto(void *sid);
 

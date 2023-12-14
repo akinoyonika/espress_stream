@@ -23,6 +23,7 @@
 #include "espress_stream/packet.h"
 #include "espress_stream/trans_packet.h"
 
+struct espress_stream_uint32 const espress_stream_min_rto[1] = {ESPRESS_STREAM_UINT32(0x00, 0x03, 0x0d, 0x40)};
 struct espress_stream_uint32 const espress_stream_max_rto[1] = {ESPRESS_STREAM_SESSION_TIMEOUT_TIME};
 
 static i_t _init(struct espress_stream_trans_packet_interface *this,
@@ -550,6 +551,10 @@ static void _stop_rto_measurement(struct espress_stream_trans_packet_rto_measure
 		}
 		espress_stream_uint32_add(this->rto, this->srtt);
 
+		if (espress_stream_uint32_lt(this->rto, espress_stream_min_rto))
+		{
+			espress_stream_uint32_assign(this->rto, espress_stream_min_rto);
+		}
 		if (espress_stream_uint32_lt(espress_stream_max_rto, this->rto))
 		{
 			espress_stream_uint32_assign(this->rto, espress_stream_max_rto);

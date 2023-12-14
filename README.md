@@ -44,9 +44,13 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20231209.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20231209.tar.gz)
+- [espress_stream.20231214.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20231214.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20231214.tar.gz (0.7-0)
+: - 再送タイムアウトにlinuxと同様の最小値を設定した。
+ - リファクタリング、コメントの修正。
 
 espress_stream.20231209.tar.gz (0.6-0)
 : - デスティネーションのネットワークアドレスをパケット受信毎に更新するようにした。
@@ -620,19 +624,19 @@ unsigned espress_stream_buffered_recv_size(void *sid, unsigned *max_size);
  *     Session ID.
  * 
  * @return
- *     Round trip time value.  It's only lower 32 bits are available. The unit is microsecond.
+ *     Round trip time value. It's only lower 32 bits are available. The unit is microsecond.
  */
 unsigned espress_stream_rtt(void *sid);
 
 /** @brief Get rto.
  * 
- * Get retry timeout value. For debugging use.
+ * Get retransmission timeout value. For debugging use.
  * 
  * @param[in] sid
  *     Session ID.
  * 
  * @return
- *     Retry timeout value.  It's only lower 32 bits are available. The unit is microsecond.
+ *     Retransmission timeout value. It's only lower 32 bits are available. The unit is microsecond.
  */
 unsigned espress_stream_rto(void *sid);
 
@@ -2124,7 +2128,7 @@ public key: 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae8069c9
 bind address: (any)
 bind port: 12345
 receiving file overwrite: available
-receiving file store dir: "/home/foo/Downloads"
+receiving file store dir: "~/Downloads"
 ```
 
 次に、ファイルを送信するマシンで<tt>es_ftx</tt>を立ち上げ、ファイル送信を行います。
