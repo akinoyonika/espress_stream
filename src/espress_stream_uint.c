@@ -275,6 +275,111 @@ EXIT:
 	return is_uf;
 }
 
+static void __uint_mul(i_t w, b_t *this, b_t const *n)
+{
+	i_t i;
+	i_t j;
+	i_t const ww = w - 1;
+	b_t b[_BUFFER_SIZE];
+	b_t b0[_BUFFER_SIZE];
+	b_t b1[_BUFFER_SIZE];
+	b_t r[_BUFFER_SIZE] = {0};
+	i_t l;
+	i_t h;
+	i_t lhlh[4];
+	_last(w, mul, (struct _espress_stream_uint *)this, (struct _espress_stream_uint const *)n);
+	l = _uint[w].l;
+	h = _uint[w].h;
+	lhlh[0] = l + _uint[ww].l;
+	lhlh[1] = l + _uint[ww].h;
+	lhlh[2] = h + _uint[ww].l;
+	lhlh[3] = h + _uint[ww].h;
+#	if 1
+		memcpy(b + lhlh[0], this + lhlh[0], 1 << (ww - 1));
+		memset(b + lhlh[1], 0, 1 << (ww - 1));
+		memcpy(b + lhlh[2], this + lhlh[1], 1 << (ww - 1));
+		memset(b + lhlh[3], 0, 1 << (ww - 1));
+		if (_uint_lt(ww, b + l, b + h))
+		{
+			_uint_sub(ww, b + h, b + l);
+			i = 0;
+		}
+		else
+		{
+			_uint_sub(ww, b + l, b + h);
+			i = 1;
+		}
+		memcpy(b0 + lhlh[0], n + lhlh[0], 1 << (ww - 1));
+		memset(b0 + lhlh[1], 0, 1 << (ww - 1));
+		memcpy(b0 + lhlh[2], n + lhlh[1], 1 << (ww - 1));
+		memset(b0 + lhlh[3], 0, 1 << (ww - 1));
+		if (_uint_lt(ww, b0 + l, b0 + h))
+		{
+			_uint_sub(ww, b0 + h, b0 + l);
+			j = 0;
+		}
+		else
+		{
+			_uint_sub(ww, b0 + l, b0 + h);
+			j = 1;
+		}
+		__uint_mul(ww, i ? b + l : b + h, j ? b0 + l : b0 + h);
+		if (!i)
+		{
+			memcpy(b + l, b + h, 1 << ww);
+		}
+		memset(b + h, 0, 1 << ww);
+
+		memcpy(r + lhlh[0], this + lhlh[0], 1 << (ww - 1));
+		memset(r + lhlh[1], 0, 1 << (ww - 1));
+		memcpy(b0 + lhlh[2], n + lhlh[0], 1 << (ww - 1));
+		memset(b0 + lhlh[3], 0, 1 << (ww - 1));
+		__uint_mul(ww, r + l, b0 + h);
+		memset(r + h, 0, 1 << ww);
+
+		memcpy(b1 + lhlh[0], this + lhlh[1], 1 << (ww - 1));
+		memset(b1 + lhlh[1], 0, 1 << (ww - 1));
+		memcpy(b1 + lhlh[2], n + lhlh[1], 1 << (ww - 1));
+		memset(b1 + lhlh[3], 0, 1 << (ww - 1));
+		__uint_mul(ww, b1 + l, b1 + h);
+		memset(b1 + h, 0, 1 << ww);
+
+		_uint_assign(w, b0, r);
+		_uint_add(w, b0, b1);
+		if (i ^ j)
+		{
+			_uint_add(w, b0, b);
+		}
+		else
+		{
+			_uint_sub(w, b0, b);
+		}
+
+		_uint_shift(w, b0, 1 << (ww + 2));
+		_uint_add(w, r, b0);
+		_uint_shift(w, b1, 1 << (ww + 3));
+		_uint_add(w, r, b1);
+#	else
+		for (i = 0 ; i < 2 ; i++)
+		{
+			for (j = 0 ; j < 2 ; j++)
+			{
+				memcpy(b + lhlh[0], this + lhlh[i], 1 << (ww - 1));
+				memset(b + lhlh[1], 0, 1 << (ww - 1));
+				memcpy(b + lhlh[2], n + lhlh[j], 1 << (ww - 1));
+				memset(b + lhlh[3], 0, 1 << (ww - 1));
+				__uint_mul(ww, b + l, b + h);
+				memset(b + h, 0, 1 << ww);
+				_uint_shift(w, b, (1 << (ww + 2)) * (i + j));
+				_uint_add(w, r, b);
+			}
+		}
+#	endif
+	_uint_assign(w, this, r);
+EXIT:
+	return;
+}
+
 static void _uint_mul(i_t w, b_t *this, b_t const *n)
 {
 	i_t i;
@@ -301,7 +406,7 @@ static void _uint_mul(i_t w, b_t *this, b_t const *n)
 			memset(b + lhlh[1], 0, 1 << (ww - 1));
 			memcpy(b + lhlh[2], n + lhlh[j], 1 << (ww - 1));
 			memset(b + lhlh[3], 0, 1 << (ww - 1));
-			_uint_mul(ww, b + l, b + h);
+			__uint_mul(ww, b + l, b + h);
 			memset(b + h, 0, 1 << ww);
 			_uint_shift(w, b, (1 << (ww + 2)) * (i + j));
 			_uint_add(w, r, b);
@@ -494,12 +599,11 @@ struct espress_stream_uint8 const espress_stream_uint8_0[] = {ESPRESS_STREAM_UIN
 struct espress_stream_uint8 const espress_stream_uint8_1[] = {ESPRESS_STREAM_UINT8_1};
 struct espress_stream_uint8 const espress_stream_uint8_max[] = {ESPRESS_STREAM_UINT8_MAX};
 
-struct espress_stream_uint16 const espress_stream_uint16_0[] = {ESPRESS_STREAM_UINT16_0};
-struct espress_stream_uint16 const espress_stream_uint16_1[] = {ESPRESS_STREAM_UINT16_1};
-struct espress_stream_uint16 const espress_stream_uint16_max[] = {ESPRESS_STREAM_UINT16_MAX};
-
-#if 2<= ESPRESS_STREAM_UINT_MAX_WIDTH
-#	if 2<= MAX_U_T_WIDTH
+#if 2 <= ESPRESS_STREAM_UINT_MAX_WIDTH
+	struct espress_stream_uint16 const espress_stream_uint16_0[] = {ESPRESS_STREAM_UINT16_0};
+	struct espress_stream_uint16 const espress_stream_uint16_1[] = {ESPRESS_STREAM_UINT16_1};
+	struct espress_stream_uint16 const espress_stream_uint16_max[] = {ESPRESS_STREAM_UINT16_MAX};
+#	if 2 <= MAX_U_T_WIDTH
 #	else
 		void espress_stream_uint16_set(struct espress_stream_uint16 *this, b_t n1, b_t n0) {_uint_set(1, (b_t *)this, n1, n0);}
 		void espress_stream_uint16_get(struct espress_stream_uint16 const *this, b_t *n1, b_t *n0) {_uint_get(1, (b_t const *)this, n1, n0);}
@@ -525,12 +629,11 @@ struct espress_stream_uint16 const espress_stream_uint16_max[] = {ESPRESS_STREAM
 #	endif
 #endif
 
-struct espress_stream_uint32 const espress_stream_uint32_0[] = {ESPRESS_STREAM_UINT32_0};
-struct espress_stream_uint32 const espress_stream_uint32_1[] = {ESPRESS_STREAM_UINT32_1};
-struct espress_stream_uint32 const espress_stream_uint32_max[] = {ESPRESS_STREAM_UINT32_MAX};
-
-#if 4<= ESPRESS_STREAM_UINT_MAX_WIDTH
-#	if 4<= MAX_U_T_WIDTH
+#if 4 <= ESPRESS_STREAM_UINT_MAX_WIDTH
+	struct espress_stream_uint32 const espress_stream_uint32_0[] = {ESPRESS_STREAM_UINT32_0};
+	struct espress_stream_uint32 const espress_stream_uint32_1[] = {ESPRESS_STREAM_UINT32_1};
+	struct espress_stream_uint32 const espress_stream_uint32_max[] = {ESPRESS_STREAM_UINT32_MAX};
+#	if 4 <= MAX_U_T_WIDTH
 #	else
 		void espress_stream_uint32_set(struct espress_stream_uint32 *this, b_t n3, b_t n2, b_t n1, b_t n0) {_uint_set(2, (b_t *)this, n3, n2, n1, n0);}
 		void espress_stream_uint32_get(struct espress_stream_uint32 const *this, b_t *n3, b_t *n2, b_t *n1, b_t *n0) {_uint_get(2, (b_t const *)this, n3, n2, n1, n0);}
@@ -556,12 +659,11 @@ struct espress_stream_uint32 const espress_stream_uint32_max[] = {ESPRESS_STREAM
 #	endif
 #endif
 
-struct espress_stream_uint64 const espress_stream_uint64_0[] = {ESPRESS_STREAM_UINT64_0};
-struct espress_stream_uint64 const espress_stream_uint64_1[] = {ESPRESS_STREAM_UINT64_1};
-struct espress_stream_uint64 const espress_stream_uint64_max[] = {ESPRESS_STREAM_UINT64_MAX};
-
-#if 8<= ESPRESS_STREAM_UINT_MAX_WIDTH
-#	if 8<= MAX_U_T_WIDTH
+#if 8 <= ESPRESS_STREAM_UINT_MAX_WIDTH
+	struct espress_stream_uint64 const espress_stream_uint64_0[] = {ESPRESS_STREAM_UINT64_0};
+	struct espress_stream_uint64 const espress_stream_uint64_1[] = {ESPRESS_STREAM_UINT64_1};
+	struct espress_stream_uint64 const espress_stream_uint64_max[] = {ESPRESS_STREAM_UINT64_MAX};
+#	if 8 <= MAX_U_T_WIDTH
 #	else
 		void espress_stream_uint64_set(struct espress_stream_uint64 *this, b_t n7, b_t n6, b_t n5, b_t n4, b_t n3, b_t n2, b_t n1, b_t n0) {_uint_set(3, (b_t *)this, n7, n6, n5, n4, n3, n2, n1, n0);}
 		void espress_stream_uint64_get(struct espress_stream_uint64 const *this, b_t *n7, b_t *n6, b_t *n5, b_t *n4, b_t *n3, b_t *n2, b_t *n1, b_t *n0) {_uint_get(3, (b_t const *)this, n7, n6, n5, n4, n3, n2, n1, n0);}
@@ -587,12 +689,11 @@ struct espress_stream_uint64 const espress_stream_uint64_max[] = {ESPRESS_STREAM
 #	endif
 #endif
 
-struct espress_stream_uint128 const espress_stream_uint128_0[] = {ESPRESS_STREAM_UINT128_0};
-struct espress_stream_uint128 const espress_stream_uint128_1[] = {ESPRESS_STREAM_UINT128_1};
-struct espress_stream_uint128 const espress_stream_uint128_max[] = {ESPRESS_STREAM_UINT128_MAX};
-
-#if 16<= ESPRESS_STREAM_UINT_MAX_WIDTH
-#	if 16<= MAX_U_T_WIDTH
+#if 16 <= ESPRESS_STREAM_UINT_MAX_WIDTH
+	struct espress_stream_uint128 const espress_stream_uint128_0[] = {ESPRESS_STREAM_UINT128_0};
+	struct espress_stream_uint128 const espress_stream_uint128_1[] = {ESPRESS_STREAM_UINT128_1};
+	struct espress_stream_uint128 const espress_stream_uint128_max[] = {ESPRESS_STREAM_UINT128_MAX};
+#	if 16 <= MAX_U_T_WIDTH
 #	else
 		void espress_stream_uint128_set(struct espress_stream_uint128 *this,
 			b_t n15, b_t n14, b_t n13, b_t n12, b_t n11, b_t n10, b_t n9, b_t n8,
@@ -628,12 +729,11 @@ struct espress_stream_uint128 const espress_stream_uint128_max[] = {ESPRESS_STRE
 #	endif
 #endif
 
-struct espress_stream_uint256 const espress_stream_uint256_0[] = {ESPRESS_STREAM_UINT256_0};
-struct espress_stream_uint256 const espress_stream_uint256_1[] = {ESPRESS_STREAM_UINT256_1};
-struct espress_stream_uint256 const espress_stream_uint256_max[] = {ESPRESS_STREAM_UINT256_MAX};
-
-#if 32<= ESPRESS_STREAM_UINT_MAX_WIDTH
-#	if 32<= MAX_U_T_WIDTH
+#if 32 <= ESPRESS_STREAM_UINT_MAX_WIDTH
+	struct espress_stream_uint256 const espress_stream_uint256_0[] = {ESPRESS_STREAM_UINT256_0};
+	struct espress_stream_uint256 const espress_stream_uint256_1[] = {ESPRESS_STREAM_UINT256_1};
+	struct espress_stream_uint256 const espress_stream_uint256_max[] = {ESPRESS_STREAM_UINT256_MAX};
+#	if 32 <= MAX_U_T_WIDTH
 #	else
 		void espress_stream_uint256_set(struct espress_stream_uint256 *this,
 			b_t n31, b_t n30, b_t n29, b_t n28, b_t n27, b_t n26, b_t n25, b_t n24,
@@ -673,12 +773,11 @@ struct espress_stream_uint256 const espress_stream_uint256_max[] = {ESPRESS_STRE
 #	endif
 #endif
 
-struct espress_stream_uint512 const espress_stream_uint512_0[] = {ESPRESS_STREAM_UINT512_0};
-struct espress_stream_uint512 const espress_stream_uint512_1[] = {ESPRESS_STREAM_UINT512_1};
-struct espress_stream_uint512 const espress_stream_uint512_max[] = {ESPRESS_STREAM_UINT512_MAX};
-
-#if 64<= ESPRESS_STREAM_UINT_MAX_WIDTH
-#	if 64<= MAX_U_T_WIDTH
+#if 64 <= ESPRESS_STREAM_UINT_MAX_WIDTH
+	struct espress_stream_uint512 const espress_stream_uint512_0[] = {ESPRESS_STREAM_UINT512_0};
+	struct espress_stream_uint512 const espress_stream_uint512_1[] = {ESPRESS_STREAM_UINT512_1};
+	struct espress_stream_uint512 const espress_stream_uint512_max[] = {ESPRESS_STREAM_UINT512_MAX};
+#	if 64 <= MAX_U_T_WIDTH
 #	else
 		void espress_stream_uint512_set(struct espress_stream_uint512 *this,
 			b_t n63, b_t n62, b_t n61, b_t n60, b_t n59, b_t n58, b_t n57, b_t n56,

@@ -1,7 +1,7 @@
 #ifndef __ESPRESS_STREAM_UINT_H__
 #define __ESPRESS_STREAM_UINT_H__
 
-#define ESPRESS_STREAM_UINT_MAX_WIDTH (128)
+#define ESPRESS_STREAM_UINT_MAX_WIDTH (64)
 
 #pragma pack(push, 1)
 struct espress_stream_uint8
@@ -517,9 +517,9 @@ extern struct espress_stream_uint8 const espress_stream_uint8_max[];
 #	define ESPRESS_STREAM_UINT64_MAX ESPRESS_STREAM_UINT64(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff)
 #	if ESPRESS_STREAM_IS_HOST_BYTE_ORDER_LITTLE
 #		define espress_stream_uint64_htol(this) ((void)(this))
-#		define espress_stream_uint64_htob(this) espress_stream_uint64->bswap(this)
+#		define espress_stream_uint64_htob(this) espress_stream_uint64_bswap(this)
 #	else
-#		define espress_stream_uint64_htol(this) espress_stream_uint64->bswap(this)
+#		define espress_stream_uint64_htol(this) espress_stream_uint64_bswap(this)
 #		define espress_stream_uint64_htob(this) ((void)(this))
 #	endif
 #	define espress_stream_uint64_ltoh(this) espress_stream_uint64_htol(this)
@@ -712,9 +712,9 @@ extern struct espress_stream_uint8 const espress_stream_uint8_max[];
 #	define ESPRESS_STREAM_UINT128_MAX ESPRESS_STREAM_UINT128(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff)
 #	if ESPRESS_STREAM_IS_HOST_BYTE_ORDER_LITTLE
 #		define espress_stream_uint128_htol(this) ((void)(this))
-#		define espress_stream_uint128_htob(this) espress_stream_uint128->bswap(this)
+#		define espress_stream_uint128_htob(this) espress_stream_uint128_bswap(this)
 #	else
-#		define espress_stream_uint128_htol(this) espress_stream_uint128->bswap(this)
+#		define espress_stream_uint128_htol(this) espress_stream_uint128_bswap(this)
 #		define espress_stream_uint128_htob(this) ((void)(this))
 #	endif
 #	define espress_stream_uint128_ltoh(this) espress_stream_uint128_htol(this)
@@ -792,9 +792,9 @@ extern struct espress_stream_uint8 const espress_stream_uint8_max[];
 #	define ESPRESS_STREAM_UINT256_MAX ESPRESS_STREAM_UINT256(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff)
 #	if ESPRESS_STREAM_IS_HOST_BYTE_ORDER_LITTLE
 #		define espress_stream_uint256_htol(this) ((void)(this))
-#		define espress_stream_uint256_htob(this) espress_stream_uint256->bswap(this)
+#		define espress_stream_uint256_htob(this) espress_stream_uint256_bswap(this)
 #	else
-#		define espress_stream_uint256_htol(this) espress_stream_uint256->bswap(this)
+#		define espress_stream_uint256_htol(this) espress_stream_uint256_bswap(this)
 #		define espress_stream_uint256_htob(this) ((void)(this))
 #	endif
 #	define espress_stream_uint256_ltoh(this) espress_stream_uint256_htol(this)
@@ -891,9 +891,9 @@ extern struct espress_stream_uint8 const espress_stream_uint8_max[];
 		)
 #	if ESPRESS_STREAM_IS_HOST_BYTE_ORDER_LITTLE
 #		define espress_stream_uint512_htol(this) ((void)(this))
-#		define espress_stream_uint512_htob(this) espress_stream_uint512->bswap(this)
+#		define espress_stream_uint512_htob(this) espress_stream_uint512_bswap(this)
 #	else
-#		define espress_stream_uint512_htol(this) espress_stream_uint512->bswap(this)
+#		define espress_stream_uint512_htol(this) espress_stream_uint512_bswap(this)
 #		define espress_stream_uint512_htob(this) ((void)(this))
 #	endif
 #	define espress_stream_uint512_ltoh(this) espress_stream_uint512_htol(this)

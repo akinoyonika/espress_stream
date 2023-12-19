@@ -44,9 +44,12 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20231214.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20231214.tar.gz)
+- [espress_stream.20231219.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20231219.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20231219.tar.gz (0.8-0)
+: - 多ビット長整数演算部の改良。
 
 espress_stream.20231214.tar.gz (0.7-0)
 : - 再送タイムアウトにlinuxと同様の最小値を設定した。
