@@ -16,7 +16,7 @@ void espress_stream_event_test()
 	struct espress_stream_event_flags flags[1];
 	struct espress_stream_event event[1];
 
-	espress_stream_event->init(event);
+	espress_stream_event->initialize(event);
 	for (i = 0 ; i < 4 ; i++)
 	{
 		espress_stream_event->wait(event, flags, espress_stream_uint32_0);
@@ -36,9 +36,9 @@ void espress_stream_event_test()
 		}
 		printf("\n");
 	}
-	espress_stream_event->final(event);
+	espress_stream_event->finalize(event);
 
-	espress_stream_event->init(event);
+	espress_stream_event->initialize(event);
 	for (i = 0 ; i < 4 ; i++)
 	{
 		espress_stream_event->wait(event, flags, espress_stream_uint32_0);
@@ -61,5 +61,5 @@ void espress_stream_event_test()
 		}
 		printf("\n");
 	}
-	espress_stream_event->final(event);
+	espress_stream_event->finalize(event);
 }

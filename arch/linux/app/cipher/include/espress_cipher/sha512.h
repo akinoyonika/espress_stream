@@ -15,8 +15,8 @@ struct espress_cipher_sha512
 
 struct espress_cipher_sha512_ops
 {
-	void (*init)(struct espress_cipher_sha512 *this);
-	void (*final)(struct espress_cipher_sha512 *this, b_t *digest);
+	void (*initialize)(struct espress_cipher_sha512 *this);
+	void (*finalize)(struct espress_cipher_sha512 *this, b_t *digest);
 	void (*update)(struct espress_cipher_sha512 *this, b_t const *message, u_t size);
 };
 

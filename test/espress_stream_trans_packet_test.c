@@ -135,7 +135,7 @@ static void _espress_stream_trans_packet_test(
 	printf("trans_packet: server(%s:%d) ", inet_ntoa(((struct sockaddr_in *)(server_server_address->storage))->sin_addr), ntohs(((struct sockaddr_in *)(server_server_address->storage))->sin_port));
 	printf("<- connect(initial_window_wize = %u) ", u);
 	printf("- client(%s:%d)\n", inet_ntoa(((struct sockaddr_in *)(server_client_address->storage))->sin_addr), ntohs(((struct sockaddr_in *)(server_client_address->storage))->sin_port));
-	assert(espress_stream_uint32_eq(server_connection_param, espress_stream_uint32_0));
+	assert(espress_stream_uint32_eq(client_connection_param, espress_stream_uint32_0));
 	assert(4096 == u);
 	assert((26 == client_payload_size) && (0 == memcmp((b_t *)"abcdefghijklmnopqrstuvwxyz", client_payload, client_payload_size)));
 
@@ -412,18 +412,18 @@ void espress_stream_trans_packet_test()
 	espress_stream_event_flags->reset_all(client_flags);
 	espress_stream_event_flags->reset_all(server_flags);
 
-	espress_stream_event->init(client_event);
-	espress_stream_event->init(server_event);
+	espress_stream_event->initialize(client_event);
+	espress_stream_event->initialize(server_event);
 
 	((struct sockaddr_in *)(client_client_address->storage))->sin_family = AF_INET;
 	((struct sockaddr_in *)(client_client_address->storage))->sin_port = htons(1234);
 	((struct sockaddr_in *)(client_client_address->storage))->sin_addr.s_addr = htonl(INADDR_ANY);
-	i = espress_stream_trans_packet->init(client_interface, client_client_address);
+	i = espress_stream_trans_packet->initialize(client_interface, client_client_address);
 	assert(0 == i);
 	((struct sockaddr_in *)(server_server_address->storage))->sin_family = AF_INET;
 	((struct sockaddr_in *)(server_server_address->storage))->sin_port = htons(4321);
 	((struct sockaddr_in *)(server_server_address->storage))->sin_addr.s_addr = htonl(INADDR_ANY);
-	i = espress_stream_trans_packet->init(server_interface, server_server_address);
+	i = espress_stream_trans_packet->initialize(server_interface, server_server_address);
 	assert(0 == i);
 
 	_espress_stream_trans_packet_test(
@@ -437,22 +437,22 @@ void espress_stream_trans_packet_test()
 		server_interface
 	);
 
-	espress_stream_trans_packet->final(server_interface);
-	espress_stream_trans_packet->final(client_interface);
+	espress_stream_trans_packet->finalize(server_interface);
+	espress_stream_trans_packet->finalize(client_interface);
 
-	espress_stream_event->final(server_event);
-	espress_stream_event->final(client_event);
+	espress_stream_event->finalize(server_event);
+	espress_stream_event->finalize(client_event);
 
 	/****************************************************************/
 
 	espress_stream_event_flags->reset_all(client_flags);
 
-	espress_stream_event->init(client_event);
+	espress_stream_event->initialize(client_event);
 
 	((struct sockaddr_in *)(client_client_address->storage))->sin_family = AF_INET;
 	((struct sockaddr_in *)(client_client_address->storage))->sin_port = htons(1234);
 	((struct sockaddr_in *)(client_client_address->storage))->sin_addr.s_addr = htonl(INADDR_ANY);
-	i = espress_stream_trans_packet->init(client_interface, client_client_address);
+	i = espress_stream_trans_packet->initialize(client_interface, client_client_address);
 	assert(0 == i);
 
 	_espress_stream_trans_packet_test(
@@ -466,8 +466,8 @@ void espress_stream_trans_packet_test()
 		client_interface
 	);
 
-	espress_stream_trans_packet->final(client_interface);
+	espress_stream_trans_packet->finalize(client_interface);
 
-	espress_stream_event->final(client_event);
+	espress_stream_event->finalize(client_event);
 
 }

@@ -13,8 +13,8 @@ struct espress_stream_trans_ring
 
 struct espress_stream_trans_ring_ops
 {
-	void (*init)(struct espress_stream_trans_ring *this, struct espress_stream_dgram_buffer * const *buffer, u_t size, struct espress_stream_dgram *dgram);
-	void (*final)(struct espress_stream_trans_ring *this);
+	void (*initialize)(struct espress_stream_trans_ring *this, struct espress_stream_dgram_buffer * const *buffer, u_t size, struct espress_stream_dgram *dgram);
+	void (*finalize)(struct espress_stream_trans_ring *this);
 	u_t (*en)(struct espress_stream_trans_ring *this, u_t num);
 	u_t (*de)(struct espress_stream_trans_ring *this, u_t num);
 	i_t (*is_empty)(struct espress_stream_trans_ring *this);

@@ -35,7 +35,7 @@ void espress_stream_ctr_cipher_test()
 		"\x1f\x35\x2c\x07\x3b\x61\x08\xd7\x2d\x98\x10\xa3\x09\x14\xdf\xf4";
 	espress_stream_uint32_assign(u, (struct espress_stream_uint32 *)init_counter);
 	espress_stream_uint32_btoh(u);
-	espress_stream_ctr_cipher->init(cipher, nonce, u, key);
+	espress_stream_ctr_cipher->initialize(cipher, nonce, u, key);
 	printf("ctr_cipher: nonce = "); _dump(nonce, ESPRESS_STREAM_CTR_CIPHER_NONCE_SIZE); printf(",\n");
 	printf("\tinit_counter = "); _dump(init_counter, ESPRESS_STREAM_CTR_CIPHER_BLOCK_SIZE - ESPRESS_STREAM_CTR_CIPHER_NONCE_SIZE); printf(",\n");
 	printf("\tkey = "); _dump(key, ESPRESS_STREAM_CTR_CIPHER_KEY_SIZE); printf("\n");
@@ -72,5 +72,5 @@ void espress_stream_ctr_cipher_test()
 	printf("\tctr_ciphertext = "); _dump(buffer, ESPRESS_STREAM_CTR_CIPHER_BLOCK_SIZE); printf("\n");
 	assert(0 == memcmp(ciphertext, buffer, ESPRESS_STREAM_CTR_CIPHER_BLOCK_SIZE));
 
-	espress_stream_ctr_cipher->final(cipher);
+	espress_stream_ctr_cipher->finalize(cipher);
 }

@@ -35,11 +35,11 @@ void espress_stream_dgram_test()
 	struct espress_stream_dgram_address address[1];
 	struct espress_stream_dgram dgram[1];
 
-	espress_stream_event->init(event);
+	espress_stream_event->initialize(event);
 	((struct sockaddr_in *)(address->storage))->sin_family = AF_INET;
 	((struct sockaddr_in *)(address->storage))->sin_port = htons(1234);
 	((struct sockaddr_in *)(address->storage))->sin_addr.s_addr = htonl(INADDR_ANY);
-	i = espress_stream_dgram->init(dgram, address, event, event);
+	i = espress_stream_dgram->initialize(dgram, address, event, event);
 	assert(0 == i);
 	recv_buffer->data_size = espress_stream_dgram->mtu(dgram);
 	espress_stream_dgram->recv_request(dgram, recv_buffers, 1, NULL, 0);
@@ -76,6 +76,6 @@ void espress_stream_dgram_test()
 			break;
 		}
 	}
-	espress_stream_dgram->final(dgram);
-	espress_stream_event->final(event);
+	espress_stream_dgram->finalize(dgram);
+	espress_stream_event->finalize(event);
 }

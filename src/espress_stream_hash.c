@@ -3,14 +3,14 @@
 #include "espress_stream/uint.h"
 #include "espress_stream/hash.h"
 
-static void _init(struct espress_stream_hash *this);
-static void _final(struct espress_stream_hash *this, b_t *digest);
+static void _initialize(struct espress_stream_hash *this);
+static void _finalize(struct espress_stream_hash *this, b_t *digest);
 static void _update(struct espress_stream_hash *this, b_t const *message, u_t size);
 
 struct espress_stream_hash_ops const espress_stream_hash[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_update
 }};
 
@@ -215,7 +215,7 @@ static void _process_chunk(struct espress_stream_hash *this)
 	espress_stream_uint32_add(this->h + 7, h);
 }
 
-static void _init(struct espress_stream_hash *this)
+static void _initialize(struct espress_stream_hash *this)
 {
 	espress_stream_uint32_set(this->h + 0, 0x6a, 0x09, 0xe6, 0x67);
 	espress_stream_uint32_set(this->h + 1, 0xbb, 0x67, 0xae, 0x85);
@@ -229,7 +229,7 @@ static void _init(struct espress_stream_hash *this)
 	this->total_size = 0;
 }
 
-static void _final(struct espress_stream_hash *this, b_t *digest)
+static void _finalize(struct espress_stream_hash *this, b_t *digest)
 {
 	struct espress_stream_uint64 u64[1];
 

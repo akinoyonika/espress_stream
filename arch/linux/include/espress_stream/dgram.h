@@ -45,8 +45,8 @@ struct espress_stream_dgram
 
 struct espress_stream_dgram_ops
 {
-	i_t (*init)(struct espress_stream_dgram *this, struct espress_stream_dgram_address const *bind_address, struct espress_stream_event *send_event, struct espress_stream_event *recv_event);
-	void (*final)(struct espress_stream_dgram *this);
+	i_t (*initialize)(struct espress_stream_dgram *this, struct espress_stream_dgram_address const *bind_address, struct espress_stream_event *send_event, struct espress_stream_event *recv_event);
+	void (*finalize)(struct espress_stream_dgram *this);
 	i_t (*send_request)(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num);
 	i_t (*send_result)(struct espress_stream_dgram *this, u_t *num);
 	i_t (*recv_request)(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num);

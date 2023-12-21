@@ -4,8 +4,8 @@
 #include "espress_stream/tick.h"
 #include "espress_stream/cond.h"
 
-static void _init(struct espress_stream_cond *this);
-static void _final(struct espress_stream_cond *this);
+static void _initialize(struct espress_stream_cond *this);
+static void _finalize(struct espress_stream_cond *this);
 static void _signal_lock(struct espress_stream_cond *this);
 static void _signal_unlock(struct espress_stream_cond *this);
 static void _signal(struct espress_stream_cond *this);
@@ -16,8 +16,8 @@ static i_t _poll(struct espress_stream_cond * const *these, u_t num, struct espr
 
 struct espress_stream_cond_ops const espress_stream_cond[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_signal_lock,
 	_signal_unlock,
 	_signal,
@@ -27,7 +27,7 @@ struct espress_stream_cond_ops const espress_stream_cond[] =
 	_poll
 }};
 
-static void _event_init(int *event)
+static void _event_initialize(int *event)
 {
 	*event = eventfd(0, 0);
 }
@@ -62,7 +62,7 @@ static i_t _reset_event_signal(int event)
 	return ret;
 }
 
-static void _init(struct espress_stream_cond *this)
+static void _initialize(struct espress_stream_cond *this)
 {
 	pthread_condattr_t condattr[1];
 	pthread_mutexattr_t mutexattr[1];
@@ -77,10 +77,10 @@ static void _init(struct espress_stream_cond *this)
 	//pthread_mutexattr_settype(mutexattr, PTHREAD_MUTEX_RECURSIVE_NP);
 	pthread_mutex_init(this->mutex, mutexattr);
 	pthread_mutexattr_destroy(mutexattr);
-	_event_init(&(this->event));
+	_event_initialize(&(this->event));
 }
 
-static void _final(struct espress_stream_cond *this)
+static void _finalize(struct espress_stream_cond *this)
 {
 	_event_destroy(this->event);
 	pthread_mutex_destroy(this->mutex);

@@ -8,8 +8,8 @@
 #include "espress_stream/dgram.h"
 #include "espress_stream/trans_ring.h"
 
-static void _init(struct espress_stream_trans_ring *this, struct espress_stream_dgram_buffer * const *buffer, u_t size, struct espress_stream_dgram *dgram);
-static void _final(struct espress_stream_trans_ring *this);
+static void _initialize(struct espress_stream_trans_ring *this, struct espress_stream_dgram_buffer * const *buffer, u_t size, struct espress_stream_dgram *dgram);
+static void _finalize(struct espress_stream_trans_ring *this);
 static u_t _en(struct espress_stream_trans_ring *this, u_t num);
 static u_t _de(struct espress_stream_trans_ring *this, u_t num);
 static i_t _is_empty(struct espress_stream_trans_ring *this);
@@ -26,8 +26,8 @@ static i_t _recv_result(struct espress_stream_trans_ring *this, u_t *num);
 
 struct espress_stream_trans_ring_ops const espress_stream_trans_ring[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_en,
 	_de,
 	_is_empty,
@@ -43,18 +43,18 @@ struct espress_stream_trans_ring_ops const espress_stream_trans_ring[] =
 	_recv_result
 }};
 
-static void _init(struct espress_stream_trans_ring *this, struct espress_stream_dgram_buffer * const *buffer, u_t size, struct espress_stream_dgram *dgram)
+static void _initialize(struct espress_stream_trans_ring *this, struct espress_stream_dgram_buffer * const *buffer, u_t size, struct espress_stream_dgram *dgram)
 {
 	this->dgram = dgram;
 	this->is_sending = 0;
 	this->is_recving = 0;
 
-	espress_stream_ring->init(this->ring, (void * const *)buffer, size);
+	espress_stream_ring->initialize(this->ring, (void * const *)buffer, size);
 }
 
-static void _final(struct espress_stream_trans_ring *this)
+static void _finalize(struct espress_stream_trans_ring *this)
 {
-	espress_stream_ring->final(this->ring);
+	espress_stream_ring->finalize(this->ring);
 	memset(this, 0, sizeof(*this));
 }
 

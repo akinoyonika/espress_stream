@@ -61,30 +61,30 @@ static void __compo(struct espress_stream_event_flags *this, struct espress_stre
 	espress_stream_event_flags_uint(_or)(this->flags, flags->flags);
 }
 
-static void _init(struct espress_stream_event *this);
-static void _final(struct espress_stream_event *this);
+static void _initialize(struct espress_stream_event *this);
+static void _finalize(struct espress_stream_event *this);
 static void _set(struct espress_stream_event *this, u_t flag);
 static void _wait(struct espress_stream_event *this, struct espress_stream_event_flags *flags, struct espress_stream_uint32 const *timeout);
 static i_t _poll(struct espress_stream_event * const *these, u_t num, struct espress_stream_uint32 const *timeout);
 
 struct espress_stream_event_ops const espress_stream_event[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_set,
 	_wait,
 	_poll
 }};
 
-static void _init(struct espress_stream_event *this)
+static void _initialize(struct espress_stream_event *this)
 {
 	__reset_all(this->flags);
-	espress_stream_cond->init(this->cond);
+	espress_stream_cond->initialize(this->cond);
 }
 
-static void _final(struct espress_stream_event *this)
+static void _finalize(struct espress_stream_event *this)
 {
-	espress_stream_cond->final(this->cond);
+	espress_stream_cond->finalize(this->cond);
 	memset(this, 0, sizeof(*this));
 }
 

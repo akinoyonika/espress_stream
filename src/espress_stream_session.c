@@ -30,7 +30,7 @@ struct espress_stream_uint32 const espress_stream_protocol_version[1] = {ESPRESS
 struct espress_stream_uint32 const espress_stream_session_timeout_time[1] = {ESPRESS_STREAM_SESSION_TIMEOUT_TIME};
 struct espress_stream_uint32 const espress_stream_beacon_interval_time[1] = {ESPRESS_STREAM_BEACON_INTERVAL_TIME};
 
-static i_t _init(struct espress_stream_session *this,
+static i_t _initialize(struct espress_stream_session *this,
 	struct espress_stream_trans_packet_interface *interface,
 	struct espress_stream_event *event,
 	i_t is_server,
@@ -40,7 +40,7 @@ static i_t _init(struct espress_stream_session *this,
 	i_t (*recv_connect_payload)(struct espress_stream_session *this, i_t (*callback)(struct espress_stream_session *this, b_t *payload, u_t *payload_size), void *param), void *recv_connect_payload_param,
 	i_t (*send_disconnect_payload)(struct espress_stream_session *this, i_t (*callback)(struct espress_stream_session *this, b_t const *payload, u_t payload_size), void *param), void *send_disconnect_payload_param,
 	i_t (*recv_disconnect_payload)(struct espress_stream_session *this, i_t (*callback)(struct espress_stream_session *this, b_t *payload, u_t *payload_size), void *param), void *recv_disconnect_payload_param);
-static void _final(struct espress_stream_session *this);
+static void _finalize(struct espress_stream_session *this);
 static i_t _connect(struct espress_stream_session *this,
 	struct espress_stream_dgram_address const *address);
 static i_t _connect_result(struct espress_stream_session *this);
@@ -72,8 +72,8 @@ static void _this_yield_break(struct espress_stream_session *this);
 
 struct espress_stream_session_ops const espress_stream_session[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_connect,
 	_connect_result,
 	_connect_detect,
@@ -266,7 +266,7 @@ static void _tell_fast_retransmit_cong_avoid(struct espress_stream_session_cong_
 	}
 }
 
-static i_t _init(struct espress_stream_session *this,
+static i_t _initialize(struct espress_stream_session *this,
 	struct espress_stream_trans_packet_interface *interface,
 	struct espress_stream_event *event,
 	i_t is_server,
@@ -303,7 +303,7 @@ static i_t _init(struct espress_stream_session *this,
 	this->send_state = _INIT;
 	this->recv_state = _INIT;
 
-	espress_stream_event->init(this->event);
+	espress_stream_event->initialize(this->event);
 
 	if (0 != espress_stream_trans_packet->open(this->trans_packet, this->interface, this->event, this->is_server))
 	{
@@ -311,10 +311,10 @@ static i_t _init(struct espress_stream_session *this,
 		goto TRANS_PACKET_OPEN_FAIL_EXIT;
 	}
 
-	espress_stream_mutex->init(this->mutex);
-	espress_stream_timer->init(this->send_timer);
-	espress_stream_timer->init(this->session_timer);
-	espress_stream_timer->init(this->beacon_timer);
+	espress_stream_mutex->initialize(this->mutex);
+	espress_stream_timer->initialize(this->send_timer);
+	espress_stream_timer->initialize(this->session_timer);
+	espress_stream_timer->initialize(this->beacon_timer);
 
 	this->is_ack_ready = 0;
 
@@ -341,23 +341,23 @@ static i_t _init(struct espress_stream_session *this,
 
 TRANS_PACKET_OPEN_FAIL_EXIT:
 
-	if (0 != ret) espress_stream_event->final(this->event);
+	if (0 != ret) espress_stream_event->finalize(this->event);
 
 	return ret;
 }
 
-static void _final(struct espress_stream_session *this)
+static void _finalize(struct espress_stream_session *this)
 {
 	this->send_state = _CLOSED;
 	this->recv_state = _CLOSED;
 	_final_cong_avoid(this->cong_avoid);
 	_final_fast_retransmit(this->fast_retransmit);
-	espress_stream_timer->final(this->beacon_timer);
-	espress_stream_timer->final(this->session_timer);
-	espress_stream_timer->final(this->send_timer);
-	espress_stream_mutex->final(this->mutex);
+	espress_stream_timer->finalize(this->beacon_timer);
+	espress_stream_timer->finalize(this->session_timer);
+	espress_stream_timer->finalize(this->send_timer);
+	espress_stream_mutex->finalize(this->mutex);
 	espress_stream_trans_packet->close(this->trans_packet);
-	espress_stream_event->final(this->event);
+	espress_stream_event->finalize(this->event);
 	memset(this, 0, sizeof(*this));
 }
 

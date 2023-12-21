@@ -73,7 +73,7 @@ struct espress_stream_session
 
 struct espress_stream_session_ops
 {
-	i_t (*init)(struct espress_stream_session *this,
+	i_t (*initialize)(struct espress_stream_session *this,
 		struct espress_stream_trans_packet_interface *interface,
 		struct espress_stream_event *event,
 		i_t is_server,
@@ -83,7 +83,7 @@ struct espress_stream_session_ops
 		i_t (*recv_connect_payload)(struct espress_stream_session *this, i_t (*callback)(struct espress_stream_session *this, b_t *payload, u_t *payload_size), void *param), void *recv_connect_payload_param,
 		i_t (*send_disconnect_payload)(struct espress_stream_session *this, i_t (*callback)(struct espress_stream_session *this, b_t const *payload, u_t payload_size), void *param), void *send_disconnect_payload_param,
 		i_t (*recv_disconnect_payload)(struct espress_stream_session *this, i_t (*callback)(struct espress_stream_session *this, b_t *payload, u_t *payload_size), void *param), void *recv_disconnect_payload_param);
-	void (*final)(struct espress_stream_session *this);
+	void (*finalize)(struct espress_stream_session *this);
 	i_t (*connect)(struct espress_stream_session *this,
 		struct espress_stream_dgram_address const *address);
 	i_t (*connect_result)(struct espress_stream_session *this);

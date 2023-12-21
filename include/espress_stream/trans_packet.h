@@ -82,9 +82,9 @@ struct espress_stream_trans_packet
 
 struct espress_stream_trans_packet_ops
 {
-	i_t (*init)(struct espress_stream_trans_packet_interface *this,
+	i_t (*initialize)(struct espress_stream_trans_packet_interface *this,
 		struct espress_stream_dgram_address const *address);
-	void (*final)(struct espress_stream_trans_packet_interface *this);
+	void (*finalize)(struct espress_stream_trans_packet_interface *this);
 	u_t (*mtu)(struct espress_stream_trans_packet_interface *this);
 	i_t (*open)(struct espress_stream_trans_packet *this,
 		struct espress_stream_trans_packet_interface *interface,

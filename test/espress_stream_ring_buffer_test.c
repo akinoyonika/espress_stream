@@ -27,7 +27,7 @@ void espress_stream_ring_buffer_test()
 	b_t buffer[16];
 	b_t data[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
-	espress_stream_ring_buffer->init(ring_buffer, buffer, 17);
+	espress_stream_ring_buffer->initialize(ring_buffer, buffer, 17);
 	p = espress_stream_ring_buffer->head(ring_buffer, head_address, 0);
 	assert((buffer == p) && espress_stream_uint32_eq(espress_stream_uint32_0, head_address));
 	p = espress_stream_ring_buffer->tail(ring_buffer, tail_address, 0);
@@ -109,5 +109,5 @@ void espress_stream_ring_buffer_test()
 		assert(16 == u);
 	}
 
-	espress_stream_ring_buffer->final(ring_buffer);
+	espress_stream_ring_buffer->finalize(ring_buffer);
 }

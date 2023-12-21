@@ -12,8 +12,8 @@ struct espress_stream_mac
 
 struct espress_stream_mac_ops
 {
-	void (*init)(struct espress_stream_mac *this, b_t const *key, u_t key_size);
-	void (*final)(struct espress_stream_mac *this, b_t *mac);
+	void (*initialize)(struct espress_stream_mac *this, b_t const *key, u_t key_size);
+	void (*finalize)(struct espress_stream_mac *this, b_t *mac);
 	void (*update)(struct espress_stream_mac *this, b_t const *message, u_t size);
 };
 

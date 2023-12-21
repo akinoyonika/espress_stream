@@ -109,8 +109,8 @@ struct _var
 	u_t cipher_count;
 };
 
-static void _init(struct espress_stream_packet *this, struct espress_stream_event *event);
-static void _final(struct espress_stream_packet *this);
+static void _initialize(struct espress_stream_packet *this, struct espress_stream_event *event);
+static void _finalize(struct espress_stream_packet *this);
 static struct espress_stream_uint16 *_packet_type(struct espress_stream_packet *this);
 static struct espress_stream_uint16 *_packet_size(struct espress_stream_packet *this);
 static struct espress_stream_uint32 *_connection_id(struct espress_stream_packet *this);
@@ -140,8 +140,8 @@ static void _yield_break(struct espress_stream_packet *this);
 
 struct espress_stream_packet_ops const espress_stream_packet[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_packet_type,
 	_packet_size,
 	_connection_id,
@@ -263,13 +263,13 @@ static void _set_var(struct espress_stream_packet *this, struct _var *var)
 	}
 }
 
-static void _init(struct espress_stream_packet *this, struct espress_stream_event *event)
+static void _initialize(struct espress_stream_packet *this, struct espress_stream_event *event)
 {
 	this->data_size = 0;
 	this->outer_event = event;
 	this->key = NULL;
-	espress_stream_event->init(this->event);
-	espress_stream_mutex->init(this->mutex);
+	espress_stream_event->initialize(this->event);
+	espress_stream_mutex->initialize(this->mutex);
 
 	this->packet_type_connect = espress_stream_packet_type_client_connect;
 	this->packet_type_disconnect = espress_stream_packet_type_client_disconnect;
@@ -278,10 +278,10 @@ static void _init(struct espress_stream_packet *this, struct espress_stream_even
 	this->id = NULL;
 }
 
-static void _final(struct espress_stream_packet *this)
+static void _finalize(struct espress_stream_packet *this)
 {
-	espress_stream_mutex->final(this->mutex);
-	espress_stream_event->final(this->event);
+	espress_stream_mutex->finalize(this->mutex);
+	espress_stream_event->finalize(this->event);
 	memset(this, 0, sizeof(*this));
 }
 
@@ -514,7 +514,7 @@ static void _yield(struct espress_stream_packet *this, struct espress_stream_uin
 					if (NULL == this->key)
 					{
 						k = _k;
-						espress_stream_key->init(k, (b_t const *)espress_stream_uint256_0, 32, (b_t const *)espress_stream_uint256_0, 32);
+						espress_stream_key->initialize(k, (b_t const *)espress_stream_uint256_0, 32, (b_t const *)espress_stream_uint256_0, 32);
 						v = espress_stream_uint32_0;
 					}
 					else
@@ -535,21 +535,21 @@ static void _yield(struct espress_stream_packet *this, struct espress_stream_uin
 						if (NULL != val->cipher_start)
 						{
 #							if _IS_ENCRYPTION_ENABLE
-								espress_stream_ctr_cipher->init(cipher, this->data, espress_stream_uint32_0, cipher_key);
+								espress_stream_ctr_cipher->initialize(cipher, this->data, espress_stream_uint32_0, cipher_key);
 								espress_stream_ctr_cipher->encrypt(cipher, val->cipher_start, var->cipher_count);
-								espress_stream_ctr_cipher->final(cipher);
+								espress_stream_ctr_cipher->finalize(cipher);
 #							endif
 						}
 						data_size = (var->packet_size + 3) / 4 * 4;
 						memset(this->data + var->packet_size, 0, data_size - var->packet_size);
-						espress_stream_mac->init(mac, mac_key, ESPRESS_STREAM_KEY_MAC_KEY_SIZE);
+						espress_stream_mac->initialize(mac, mac_key, ESPRESS_STREAM_KEY_MAC_KEY_SIZE);
 						espress_stream_mac->update(mac, this->data, data_size);
-						espress_stream_mac->final(mac, this->data + data_size);
+						espress_stream_mac->finalize(mac, this->data + data_size);
 						data_size += ESPRESS_STREAM_MAC_MAC_SIZE;
 					}
 					if (NULL == this->key)
 					{
-						espress_stream_key->final(k);
+						espress_stream_key->finalize(k);
 					}
 				}
 			}
@@ -569,7 +569,7 @@ static void _yield(struct espress_stream_packet *this, struct espress_stream_uin
 				if (NULL == this->key)
 				{
 					k = _k;
-					espress_stream_key->init(k, (b_t const *)espress_stream_uint256_0, 32, (b_t const *)espress_stream_uint256_0, 32);
+					espress_stream_key->initialize(k, (b_t const *)espress_stream_uint256_0, 32, (b_t const *)espress_stream_uint256_0, 32);
 					v = espress_stream_uint32_0;
 				}
 				else
@@ -581,9 +581,9 @@ static void _yield(struct espress_stream_packet *this, struct espress_stream_uin
 				}
 				if (espress_stream_key->get(k, mac_key, cipher_key, v))
 				{
-					espress_stream_mac->init(mac, mac_key, ESPRESS_STREAM_KEY_MAC_KEY_SIZE);
+					espress_stream_mac->initialize(mac, mac_key, ESPRESS_STREAM_KEY_MAC_KEY_SIZE);
 					espress_stream_mac->update(mac, this->data, this->data_size - ESPRESS_STREAM_MAC_MAC_SIZE);
-					espress_stream_mac->final(mac, mac_body);
+					espress_stream_mac->finalize(mac, mac_body);
 					if (0 == memcmp(this->data + (this->data_size - ESPRESS_STREAM_MAC_MAC_SIZE), mac_body, ESPRESS_STREAM_MAC_MAC_SIZE))
 					{
 						if (NULL != val->uint16_start)
@@ -597,9 +597,9 @@ static void _yield(struct espress_stream_packet *this, struct espress_stream_uin
 							if (NULL != val->cipher_start)
 							{
 #								if _IS_ENCRYPTION_ENABLE
-									espress_stream_ctr_cipher->init(cipher, this->data, espress_stream_uint32_0, cipher_key);
+									espress_stream_ctr_cipher->initialize(cipher, this->data, espress_stream_uint32_0, cipher_key);
 									espress_stream_ctr_cipher->decrypt(cipher, val->cipher_start, var->cipher_count);
-									espress_stream_ctr_cipher->final(cipher);
+									espress_stream_ctr_cipher->finalize(cipher);
 #								endif
 							}
 							if (NULL != val->uint32_start)
@@ -615,7 +615,7 @@ static void _yield(struct espress_stream_packet *this, struct espress_stream_uin
 				}
 				if (NULL == this->key)
 				{
-					espress_stream_key->final(k);
+					espress_stream_key->finalize(k);
 				}
 			}
 			this->data_size = data_size;

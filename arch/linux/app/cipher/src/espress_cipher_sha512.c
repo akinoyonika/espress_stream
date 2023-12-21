@@ -2,14 +2,14 @@
 #include "espress_cipher/uint.h"
 #include "espress_cipher/sha512.h"
 
-static void _init(struct espress_cipher_sha512 *this);
-static void _final(struct espress_cipher_sha512 *this, b_t *digest);
+static void _initialize(struct espress_cipher_sha512 *this);
+static void _finalize(struct espress_cipher_sha512 *this, b_t *digest);
 static void _update(struct espress_cipher_sha512 *this, b_t const *message, u_t size);
 
 struct espress_cipher_sha512_ops const espress_cipher_sha512[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_update
 }};
 
@@ -230,7 +230,7 @@ static void _process_chunk(struct espress_cipher_sha512 *this)
 	espress_cipher_uint64_add(this->h + 7, h);
 }
 
-static void _init(struct espress_cipher_sha512 *this)
+static void _initialize(struct espress_cipher_sha512 *this)
 {
 	espress_cipher_uint64_set(this->h + 0, 0x6a, 0x09, 0xe6, 0x67, 0xf3, 0xbc, 0xc9, 0x08);
 	espress_cipher_uint64_set(this->h + 1, 0xbb, 0x67, 0xae, 0x85, 0x84, 0xca, 0xa7, 0x3b);
@@ -244,7 +244,7 @@ static void _init(struct espress_cipher_sha512 *this)
 	this->total_size = 0;
 }
 
-static void _final(struct espress_cipher_sha512 *this, b_t *digest)
+static void _finalize(struct espress_cipher_sha512 *this, b_t *digest)
 {
 	struct espress_cipher_uint128 u128[1];
 

@@ -33,9 +33,9 @@ void espress_stream_hash_test()
 		"\x9a\xfb\xf4\xc8\x99\x6f\xb9\x24"
 		"\x27\xae\x41\xe4\x64\x9b\x93\x4c"
 		"\xa4\x95\x99\x1b\x78\x52\xb8\x55";
-	espress_stream_hash->init(h);
+	espress_stream_hash->initialize(h);
 	espress_stream_hash->update(h, message, message_size);
-	espress_stream_hash->final(h, d);
+	espress_stream_hash->finalize(h, d);
 	printf("hash: (null) -> "); _dump(d, ESPRESS_STREAM_HASH_DIGEST_SIZE); printf("\n");
 	assert(0 == memcmp(digest, d, ESPRESS_STREAM_HASH_DIGEST_SIZE));
 
@@ -46,9 +46,9 @@ void espress_stream_hash_test()
 		"\x41\x41\x40\xde\x5d\xae\x22\x23"
 		"\xb0\x03\x61\xa3\x96\x17\x7a\x9c"
 		"\xb4\x10\xff\x61\xf2\x00\x15\xad";
-	espress_stream_hash->init(h);
+	espress_stream_hash->initialize(h);
 	espress_stream_hash->update(h, message, message_size);
-	espress_stream_hash->final(h, d);
+	espress_stream_hash->finalize(h, d);
 	printf("hash: \"%s\" -> ", message); _dump(d, ESPRESS_STREAM_HASH_DIGEST_SIZE); printf("\n");
 	assert(0 == memcmp(digest, d, ESPRESS_STREAM_HASH_DIGEST_SIZE));
 
@@ -59,9 +59,9 @@ void espress_stream_hash_test()
 		"\x69\xca\x9a\xbc\xb0\x08\x2e\x4f"
 		"\x8d\x56\x51\xe4\x6d\x3c\xdb\x76"
 		"\x2d\x02\xd0\xbf\x37\xc9\xe5\x92";
-	espress_stream_hash->init(h);
+	espress_stream_hash->initialize(h);
 	espress_stream_hash->update(h, message, message_size);
-	espress_stream_hash->final(h, d);
+	espress_stream_hash->finalize(h, d);
 	printf("hash: \"%s\" -> ", message); _dump(d, ESPRESS_STREAM_HASH_DIGEST_SIZE); printf("\n");
 	assert(0 == memcmp(digest, d, ESPRESS_STREAM_HASH_DIGEST_SIZE));
 
@@ -73,12 +73,12 @@ void espress_stream_hash_test()
 			"\x81\xa1\xc7\xe2\x84\xd7\x3e\x67"
 			"\xf1\x80\x9a\x48\xa4\x97\x20\x0e"
 			"\x04\x6d\x39\xcc\xc7\x11\x2c\xd0";
-		espress_stream_hash->init(h);
+		espress_stream_hash->initialize(h);
 		for (i = 0 ; i < 1000000 ; i++)
 		{
 			espress_stream_hash->update(h, message, message_size);
 		}
-		espress_stream_hash->final(h, d);
+		espress_stream_hash->finalize(h, d);
 		printf("hash: (\"%s\" repeated 1,000,000 times) -> ", message); _dump(d, ESPRESS_STREAM_HASH_DIGEST_SIZE); printf("\n");
 		assert(0 == memcmp(digest, d, ESPRESS_STREAM_HASH_DIGEST_SIZE));
 #	endif

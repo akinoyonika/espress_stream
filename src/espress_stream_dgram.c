@@ -8,8 +8,8 @@
 #include "espress_stream/ring.h"
 #include "espress_stream/dgram.h"
 
-static i_t _init(struct espress_stream_dgram *this, struct espress_stream_dgram_address const *bind_address, struct espress_stream_event *send_event, struct espress_stream_event *recv_event);
-static void _final(struct espress_stream_dgram *this);
+static i_t _initialize(struct espress_stream_dgram *this, struct espress_stream_dgram_address const *bind_address, struct espress_stream_event *send_event, struct espress_stream_event *recv_event);
+static void _finalize(struct espress_stream_dgram *this);
 static i_t _send_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num);
 static i_t _send_result(struct espress_stream_dgram *this, u_t *num);
 static i_t _recv_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num);
@@ -22,8 +22,8 @@ static void _recv_yield_break(struct espress_stream_dgram *this);
 
 struct espress_stream_dgram_ops const espress_stream_dgram[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_send_request,
 	_send_result,
 	_recv_request,
@@ -35,7 +35,7 @@ struct espress_stream_dgram_ops const espress_stream_dgram[] =
 	_recv_yield_break
 }};
 
-static i_t _init(struct espress_stream_dgram *this, struct espress_stream_dgram_address const *bind_address, struct espress_stream_event *send_event, struct espress_stream_event *recv_event)
+static i_t _initialize(struct espress_stream_dgram *this, struct espress_stream_dgram_address const *bind_address, struct espress_stream_event *send_event, struct espress_stream_event *recv_event)
 {
 	i_t ret = 0;
 	i_t i;
@@ -47,10 +47,10 @@ static i_t _init(struct espress_stream_dgram *this, struct espress_stream_dgram_
 	this->send_outer_event = send_event;
 	this->recv_outer_event = recv_event;
 
-	espress_stream_event->init(this->send_event);
-	espress_stream_event->init(this->recv_event);
-	espress_stream_mutex->init(this->send_mutex);
-	espress_stream_mutex->init(this->recv_mutex);
+	espress_stream_event->initialize(this->send_event);
+	espress_stream_event->initialize(this->recv_event);
+	espress_stream_mutex->initialize(this->send_mutex);
+	espress_stream_mutex->initialize(this->recv_mutex);
 
 	this->sock = socket(bind_address->storage->ss_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
 	if (-1 == this->sock)
@@ -98,24 +98,24 @@ EXIT:
 		{
 			close(this->sock);
 		}
-		espress_stream_mutex->final(this->recv_mutex);
-		espress_stream_mutex->final(this->send_mutex);
-		espress_stream_event->final(this->recv_event);
-		espress_stream_event->final(this->send_event);
+		espress_stream_mutex->finalize(this->recv_mutex);
+		espress_stream_mutex->finalize(this->send_mutex);
+		espress_stream_event->finalize(this->recv_event);
+		espress_stream_event->finalize(this->send_event);
 	}
 
 	return ret;
 }
 
-static void _final(struct espress_stream_dgram *this)
+static void _finalize(struct espress_stream_dgram *this)
 {
 	close(this->recv_eventfd);
 	close(this->send_eventfd);
 	close(this->sock);
-	espress_stream_mutex->final(this->recv_mutex);
-	espress_stream_mutex->final(this->send_mutex);
-	espress_stream_event->final(this->recv_event);
-	espress_stream_event->final(this->send_event);
+	espress_stream_mutex->finalize(this->recv_mutex);
+	espress_stream_mutex->finalize(this->send_mutex);
+	espress_stream_event->finalize(this->recv_event);
+	espress_stream_event->finalize(this->send_event);
 	memset(this, 0, sizeof(*this));
 }
 

@@ -6,18 +6,18 @@
 #include "espress_stream/hkdf.h"
 #include "espress_stream/key_exp.h"
 
-static void _init(struct espress_stream_key_exp *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size);
-static void _final(struct espress_stream_key_exp *this);
+static void _initialize(struct espress_stream_key_exp *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size);
+static void _finalize(struct espress_stream_key_exp *this);
 static void _expand(struct espress_stream_key_exp *this, b_t *exp_key, u_t exp_key_size, b_t const *info, u_t info_size);
 
 struct espress_stream_key_exp_ops const espress_stream_key_exp[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_expand
 }};
 
-static void _init(struct espress_stream_key_exp *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size)
+static void _initialize(struct espress_stream_key_exp *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size)
 {
 	espress_stream_hkdf->extract(this->prk, salt, salt_size, key, key_size);
 	memset(this->t1, 0, ESPRESS_STREAM_HKDF_HASH_SIZE);
@@ -26,7 +26,7 @@ static void _init(struct espress_stream_key_exp *this, b_t const *key, u_t key_s
 	this->count = 0;
 }
 
-static void _final(struct espress_stream_key_exp *this)
+static void _finalize(struct espress_stream_key_exp *this)
 {
 	memset(this, 0, sizeof(*this));
 }

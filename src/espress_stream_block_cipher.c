@@ -13,14 +13,14 @@
 #define _NK (ESPRESS_STREAM_BLOCK_CIPHER_NK)
 #define _NR (ESPRESS_STREAM_BLOCK_CIPHER_NR)
 
-static void _init(struct espress_stream_block_cipher *this, b_t const *key);
-static void _final(struct espress_stream_block_cipher *this);
+static void _initialize(struct espress_stream_block_cipher *this, b_t const *key);
+static void _finalize(struct espress_stream_block_cipher *this);
 static void _encrypt(struct espress_stream_block_cipher *this, b_t *block);
 
 struct espress_stream_block_cipher_ops espress_stream_block_cipher[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_encrypt
 }};
 
@@ -230,12 +230,12 @@ static void _cipher(b_t *block, struct espress_stream_uint32 const *round_key)
 	}
 }
 
-static void _init(struct espress_stream_block_cipher *this, b_t const *key)
+static void _initialize(struct espress_stream_block_cipher *this, b_t const *key)
 {
 	_key_expansion(this->round_key, key);
 }
 
-static void _final(struct espress_stream_block_cipher *this)
+static void _finalize(struct espress_stream_block_cipher *this)
 {
 	memset(this, 0, sizeof(*this));
 }

@@ -33,8 +33,8 @@ int main(int argc, char **argv)
 {
 	int i;
 
-	espress_stream_tick->init();
-	espress_stream_rand->init();
+	espress_stream_tick->initialize();
+	espress_stream_rand->initialize();
 
 	if (argc < 2)
 	{
@@ -156,8 +156,8 @@ int main(int argc, char **argv)
 		}
 	}
 
-	espress_stream_rand->final();
-	espress_stream_tick->final();
+	espress_stream_rand->finalize();
+	espress_stream_tick->finalize();
 
 	return 0;
 }

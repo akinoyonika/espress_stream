@@ -136,20 +136,20 @@ void espress_stream_session_test()
 	((struct sockaddr_in *)(address->storage))->sin_family = AF_INET;
 	((struct sockaddr_in *)(address->storage))->sin_port = htons(1234);
 	((struct sockaddr_in *)(address->storage))->sin_addr.s_addr = htonl(INADDR_ANY);
-	i = espress_stream_trans_packet->init(interface, address);
+	i = espress_stream_trans_packet->initialize(interface, address);
 	assert(0 == i);
 
-	espress_stream_ring_buffer->init(client_send_ring_buffer, client_send_buffer, sizeof(client_send_buffer));
-	espress_stream_ring_buffer->init(client_recv_ring_buffer, client_recv_buffer, sizeof(client_recv_buffer));
-	espress_stream_ring_buffer->init(server_send_ring_buffer, server_send_buffer, sizeof(server_send_buffer));
-	espress_stream_ring_buffer->init(server_recv_ring_buffer, server_recv_buffer, sizeof(server_recv_buffer));
+	espress_stream_ring_buffer->initialize(client_send_ring_buffer, client_send_buffer, sizeof(client_send_buffer));
+	espress_stream_ring_buffer->initialize(client_recv_ring_buffer, client_recv_buffer, sizeof(client_recv_buffer));
+	espress_stream_ring_buffer->initialize(server_send_ring_buffer, server_send_buffer, sizeof(server_send_buffer));
+	espress_stream_ring_buffer->initialize(server_recv_ring_buffer, server_recv_buffer, sizeof(server_recv_buffer));
 
 	espress_stream_event_flags->reset_all(client_flags);
 	espress_stream_event_flags->reset_all(server_flags);
-	espress_stream_event->init(client_event);
-	espress_stream_event->init(server_event);
+	espress_stream_event->initialize(client_event);
+	espress_stream_event->initialize(server_event);
 
-	i = espress_stream_session->init(client_session,
+	i = espress_stream_session->initialize(client_session,
 		interface,
 		client_event,
 		0,
@@ -160,7 +160,7 @@ void espress_stream_session_test()
 		_send_disconnect_payload, "send",
 		_recv_disconnect_payload, "recv");
 	assert(0 == i);
-	i = espress_stream_session->init(server_session,
+	i = espress_stream_session->initialize(server_session,
 		interface,
 		server_event,
 		1,
@@ -548,16 +548,16 @@ void espress_stream_session_test()
 	}
 	printf("session: client: disconnect_detect\n");
 
-	espress_stream_session->final(server_session);
-	espress_stream_session->final(client_session);
+	espress_stream_session->finalize(server_session);
+	espress_stream_session->finalize(client_session);
 
-	espress_stream_event->final(server_event);
-	espress_stream_event->final(client_event);
+	espress_stream_event->finalize(server_event);
+	espress_stream_event->finalize(client_event);
 
-	espress_stream_ring_buffer->final(server_recv_ring_buffer);
-	espress_stream_ring_buffer->final(server_send_ring_buffer);
-	espress_stream_ring_buffer->final(client_recv_ring_buffer);
-	espress_stream_ring_buffer->final(client_send_ring_buffer);
+	espress_stream_ring_buffer->finalize(server_recv_ring_buffer);
+	espress_stream_ring_buffer->finalize(server_send_ring_buffer);
+	espress_stream_ring_buffer->finalize(client_recv_ring_buffer);
+	espress_stream_ring_buffer->finalize(client_send_ring_buffer);
 
-	espress_stream_trans_packet->final(interface);
+	espress_stream_trans_packet->finalize(interface);
 }

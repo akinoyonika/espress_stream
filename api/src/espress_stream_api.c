@@ -95,7 +95,7 @@ struct session {
 	b_t send_buffer[ESPRESS_STREAM_SEND_BUFFER_SIZE];
 	b_t recv_buffer[ESPRESS_STREAM_RECV_BUFFER_SIZE];
 	struct espress_stream_session session[1];
-	struct sockaddr_in address[1];
+	struct sockaddr_storage address[1];
 	struct espress_stream_uint32 start_time[1];
 	int is_in_progress;
 	int is_broken;
@@ -146,7 +146,7 @@ static struct espress_stream_mutex local_mutex[1];
 		}
 		if (i < ESPRESS_STREAM_MAX_NUM_INTERFACE) {
 			interface[i].state = SET;
-			ret = (void *)(interface + 1);
+			ret = (void *)(interface + i);
 		}
 		return ret;
 	}
@@ -573,6 +573,7 @@ static struct espress_stream_mutex local_mutex[1];
 		struct espress_stream_uint32 start_time[1];
 		espress_stream_tick->get_us(start_time);
 		do {
+			sched_yield();
 			espress_stream_mutex->lock(local_mutex);
 			interface_yield();
 			session_yield();
@@ -593,6 +594,7 @@ static struct espress_stream_mutex local_mutex[1];
 		struct espress_stream_uint32 start_time[1];
 		espress_stream_tick->get_us(start_time);
 		do {
+			sched_yield();
 			espress_stream_mutex->lock(local_mutex);
 			interface_yield();
 			session_yield();
@@ -618,9 +620,9 @@ static struct espress_stream_mutex local_mutex[1];
 
 int espress_stream_begin()
 {
-	espress_stream_tick->init();
-	espress_stream_rand->init();
-	espress_stream_mutex->init(local_mutex);
+	espress_stream_tick->initialize();
+	espress_stream_rand->initialize();
+	espress_stream_mutex->initialize(local_mutex);
 	begin_interface();
 
 	return 0;
@@ -629,9 +631,9 @@ int espress_stream_begin()
 void espress_stream_end()
 {
 	end_interface();
-	espress_stream_mutex->final(local_mutex);
-	espress_stream_rand->final();
-	espress_stream_tick->final();
+	espress_stream_mutex->finalize(local_mutex);
+	espress_stream_rand->finalize();
+	espress_stream_tick->finalize();
 }
 
 char const *espress_stream_copyright()
@@ -677,7 +679,7 @@ int espress_stream_begin_interface(void **ifd, struct sockaddr_storage const *ad
 	this = get_interface(i);
 
 	memcpy(dgram_address->storage, address, sizeof(*(dgram_address->storage)));
-	j = espress_stream_trans_packet->init(this->interface, dgram_address);
+	j = espress_stream_trans_packet->initialize(this->interface, dgram_address);
 	if (j != 0) {
 		ret = 1;
 		goto INTERFACE_INIT_FAIL_EXIT;
@@ -695,7 +697,7 @@ int espress_stream_begin_interface(void **ifd, struct sockaddr_storage const *ad
 
 CREATE_THREAD_FAIL_EXIT:
 	if (ret != 0) this->state = SET;
-	if (ret != 0) espress_stream_trans_packet->final(this->interface);
+	if (ret != 0) espress_stream_trans_packet->finalize(this->interface);
 INTERFACE_INIT_FAIL_EXIT:
 	if (ret != 0) end_session(i);
 	if (ret != 0) delete_interface(i);
@@ -718,7 +720,7 @@ void espress_stream_end_interface(void *ifd)
 
 	destroy_interface_yield_thread(this);
 
-	espress_stream_trans_packet->final(this->interface);
+	espress_stream_trans_packet->finalize(this->interface);
 
 	end_session(ifd);
 	delete_interface(ifd);
@@ -843,11 +845,11 @@ static int local_begin_session(struct session *this)
 	int ret = 0;
 	i_t i;
 
-	espress_stream_event->init(this->event);
+	espress_stream_event->initialize(this->event);
 	espress_stream_event_flags->reset_all(this->flags);
-	espress_stream_ring_buffer->init(this->send_ring_buffer, this->send_buffer, sizeof(this->send_buffer));
-	espress_stream_ring_buffer->init(this->recv_ring_buffer, this->recv_buffer, sizeof(this->recv_buffer));
-	i = espress_stream_session->init(this->session,
+	espress_stream_ring_buffer->initialize(this->send_ring_buffer, this->send_buffer, sizeof(this->send_buffer));
+	espress_stream_ring_buffer->initialize(this->recv_ring_buffer, this->recv_buffer, sizeof(this->recv_buffer));
+	i = espress_stream_session->initialize(this->session,
 		get_interface(this->ifd)->interface,
 		this->event,
 		this->is_server,
@@ -870,11 +872,11 @@ static int local_begin_session(struct session *this)
 
 CREATE_THREAD_FAIL_EXIT:
 	if (ret != 0) this->state = SET;
-	if (ret != 0) espress_stream_session->final(this->session);
+	if (ret != 0) espress_stream_session->finalize(this->session);
 SESSION_INIT_FAIL_EXIT:
-	if (ret != 0) espress_stream_ring_buffer->final(this->recv_ring_buffer);
-	if (ret != 0) espress_stream_ring_buffer->final(this->send_ring_buffer);
-	if (ret != 0) espress_stream_event->final(this->event);
+	if (ret != 0) espress_stream_ring_buffer->finalize(this->recv_ring_buffer);
+	if (ret != 0) espress_stream_ring_buffer->finalize(this->send_ring_buffer);
+	if (ret != 0) espress_stream_event->finalize(this->event);
 
 	return ret;
 }
@@ -905,7 +907,7 @@ int espress_stream_begin_session(void **sid, void *ifd, int is_server, struct es
 	this->recv_connect_payload_callback = NULL;
 	this->send_disconnect_payload_callback = NULL;
 	this->recv_disconnect_payload_callback = NULL;
-	espress_stream_mutex->init(this->mutex);
+	espress_stream_mutex->initialize(this->mutex);
 	j = local_begin_session(this);
 	if (j != 0) {
 		ret = 1;
@@ -932,10 +934,10 @@ static void local_end_session(struct session *this)
 {
 	this->state = SET;
 	destroy_session_yield_thread(this);
-	espress_stream_session->final(this->session);
-	espress_stream_ring_buffer->final(this->recv_ring_buffer);
-	espress_stream_ring_buffer->final(this->send_ring_buffer);
-	espress_stream_event->final(this->event);
+	espress_stream_session->finalize(this->session);
+	espress_stream_ring_buffer->finalize(this->recv_ring_buffer);
+	espress_stream_ring_buffer->finalize(this->send_ring_buffer);
+	espress_stream_event->finalize(this->event);
 }
 
 void espress_stream_end_session(void *sid)
@@ -947,7 +949,7 @@ void espress_stream_end_session(void *sid)
 	this = get_session(sid);
 
 	local_end_session(this);
-	espress_stream_mutex->final(this->mutex);
+	espress_stream_mutex->finalize(this->mutex);
 
 	delete_session(sid);
 
@@ -960,7 +962,7 @@ static int local_connect(struct session *this)
 	struct espress_stream_dgram_address dgram_address[1] = {0};
 
 	espress_stream_tick->get_us(this->start_time);
-	memcpy(dgram_address, this->address, sizeof(*dgram_address));
+	memcpy(dgram_address->storage, this->address, sizeof(*(dgram_address->storage)));
 	ret = espress_stream_session->connect(this->session, dgram_address);
 
 	return ret;
@@ -1033,7 +1035,6 @@ int espress_stream_connect_result(void *sid, unsigned timeout)
 	struct espress_stream_uint32 t[1];
 	struct espress_stream_uint32 u[1];
 	struct espress_stream_uint32 v[1];
-	//struct espress_stream_uint32 w[1];
 	struct session *this = get_session(sid);
 	struct espress_stream_uint32 start_time[1];
 	struct espress_stream_uint32 timeout_time[1];
@@ -1067,32 +1068,6 @@ int espress_stream_connect_result(void *sid, unsigned timeout)
 		if (0 <= ret) {
 			break;
 		}
-
-		/*espress_stream_uint32_assign(w, u);
-
-		espress_stream_uint32_sub(w, this->start_time);
-		if (espress_stream_uint32_lt(w, espress_stream_connect_timeout_time)) {
-			espress_stream_uint32_assign(v, espress_stream_connect_timeout_time);
-			espress_stream_uint32_sub(v, w);
-		} else {
-			this->state = SET;
-			local_end_session(this);
-			ret = local_begin_session(this);
-			if (ret == 0) {
-				this->state = GO;
-				ret = local_connect(this);
-				if (ret == 0) {
-					ret = -1;
-				} else {
-					ret = 1;
-					break;
-				}
-			} else {
-				ret = 1;
-				break;
-			}
-			espress_stream_uint32_assign(v, espress_stream_connect_timeout_time);
-		}*/
 
 		espress_stream_uint32_sub(u, start_time);
 		if (!this->is_broken && espress_stream_uint32_lt(u, timeout_time)) {
@@ -1819,9 +1794,9 @@ void espress_stream_session_hash(void *sid, void *session_hash)
 	espress_stream_mutex->lock(this->mutex);
 
 	espress_stream_session->shared_key(this->session, shared_key);
-	espress_stream_hash->init(hash);
+	espress_stream_hash->initialize(hash);
 	espress_stream_hash->update(hash, shared_key, ESPRESS_STREAM_KEY_EX_KEY_SIZE);
-	espress_stream_hash->final(hash, session_hash);
+	espress_stream_hash->finalize(hash, session_hash);
 
 	espress_stream_mutex->unlock(this->mutex);
 }

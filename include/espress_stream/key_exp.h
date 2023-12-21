@@ -12,8 +12,8 @@ struct espress_stream_key_exp
 
 struct espress_stream_key_exp_ops
 {
-	void (*init)(struct espress_stream_key_exp *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size);
-	void (*final)(struct espress_stream_key_exp *this);
+	void (*initialize)(struct espress_stream_key_exp *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size);
+	void (*finalize)(struct espress_stream_key_exp *this);
 	void (*expand)(struct espress_stream_key_exp *this, b_t *exp_key, u_t exp_key_size, b_t const *info, u_t info_size);
 };
 

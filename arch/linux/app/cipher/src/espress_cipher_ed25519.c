@@ -32961,9 +32961,9 @@ static void _ed25519_keypair(b_t *pk, b_t const *sk)
 	struct sc25519 scsk[1];
 	struct ge25519 gepk[1];
 
-	espress_cipher_sha512->init(h);
+	espress_cipher_sha512->initialize(h);
 	espress_cipher_sha512->update(h, sk, 32);
-	espress_cipher_sha512->final(h, az);
+	espress_cipher_sha512->finalize(h, az);
 	az[0] &= 248;
 	az[31] &= 127;
 	az[31] |= 64;
@@ -32985,27 +32985,27 @@ static void _ed25519_sign(b_t *sig, b_t const *sk, b_t const *pk, b_t const *m, 
 	struct sc25519 scsk[1];
 	struct ge25519 ger[1];
 
-	espress_cipher_sha512->init(h);
+	espress_cipher_sha512->initialize(h);
 	espress_cipher_sha512->update(h, sk, 32);
-	espress_cipher_sha512->final(h, az);
+	espress_cipher_sha512->finalize(h, az);
 	az[0] &= 248;
 	az[31] &= 127;
 	az[31] |= 64;
 
-	espress_cipher_sha512->init(h);
+	espress_cipher_sha512->initialize(h);
 	espress_cipher_sha512->update(h, az + 32, 32);
 	espress_cipher_sha512->update(h, m, mlen);
-	espress_cipher_sha512->final(h, nonce);
+	espress_cipher_sha512->finalize(h, nonce);
 
 	_sc25519_from_64bytes(sck, nonce);
 	_ge25519_scalar_mult_base((struct ge25519_p3 *)ger, sck);
 	_ge25519_pack(sig, (struct ge25519_p3 *)ger);
 
-	espress_cipher_sha512->init(h);
+	espress_cipher_sha512->initialize(h);
 	espress_cipher_sha512->update(h, sig, 32);
 	espress_cipher_sha512->update(h, pk, 32);
 	espress_cipher_sha512->update(h, m, mlen);
-	espress_cipher_sha512->final(h, hram);
+	espress_cipher_sha512->finalize(h, hram);
 
 	_sc25519_from_64bytes(scs, hram);
 	_sc25519_from_32bytes(scsk, az);
@@ -33044,11 +33044,11 @@ static i_t _ed25519_open(b_t const *sig, b_t const *pk, b_t const *m, u_t mlen)
 
 	_sc25519_from_32bytes(scs, sig + 32);
 
-	espress_cipher_sha512->init(h);
+	espress_cipher_sha512->initialize(h);
 	espress_cipher_sha512->update(h, sig, 32);
 	espress_cipher_sha512->update(h, pkcopy, 32);
 	espress_cipher_sha512->update(h, m, mlen);
-	espress_cipher_sha512->final(h, hram);
+	espress_cipher_sha512->finalize(h, hram);
 
 	_sc25519_from_64bytes(schram, hram);
 

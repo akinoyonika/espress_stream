@@ -2,8 +2,8 @@
 #include "espress_stream/depend.h"
 #include "espress_stream/ring.h"
 
-static void _init(struct espress_stream_ring *this, void * const *buffer, u_t size);
-static void _final(struct espress_stream_ring *this);
+static void _initialize(struct espress_stream_ring *this, void * const *buffer, u_t size);
+static void _finalize(struct espress_stream_ring *this);
 static u_t _en(struct espress_stream_ring *this, u_t num);
 static u_t _de(struct espress_stream_ring *this, u_t num);
 static i_t _is_empty(struct espress_stream_ring *this);
@@ -16,8 +16,8 @@ static void * const *_tail(struct espress_stream_ring *this, u_t offset);
 
 struct espress_stream_ring_ops const espress_stream_ring[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_en,
 	_de,
 	_is_empty,
@@ -29,7 +29,7 @@ struct espress_stream_ring_ops const espress_stream_ring[] =
 	_tail
 }};
 
-static void _init(struct espress_stream_ring *this, void * const *buffer, u_t size)
+static void _initialize(struct espress_stream_ring *this, void * const *buffer, u_t size)
 {
 	this->buffer = buffer;
 	for (this->mask = 1 ; this->mask <= size ; this->mask <<= 1);
@@ -38,7 +38,7 @@ static void _init(struct espress_stream_ring *this, void * const *buffer, u_t si
 	this->tail = 0;
 }
 
-static void _final(struct espress_stream_ring *this)
+static void _finalize(struct espress_stream_ring *this)
 {
 	memset(this, 0, sizeof(*this));
 }

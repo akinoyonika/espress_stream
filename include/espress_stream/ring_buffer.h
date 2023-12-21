@@ -15,8 +15,8 @@ struct espress_stream_ring_buffer
 
 struct espress_stream_ring_buffer_ops
 {
-	void (*init)(struct espress_stream_ring_buffer *this, b_t *buffer, u_t size);
-	void (*final)(struct espress_stream_ring_buffer *this);
+	void (*initialize)(struct espress_stream_ring_buffer *this, b_t *buffer, u_t size);
+	void (*finalize)(struct espress_stream_ring_buffer *this);
 	u_t (*en)(struct espress_stream_ring_buffer *this, u_t num);
 	u_t (*de)(struct espress_stream_ring_buffer *this, u_t num);
 	i_t (*is_empty)(struct espress_stream_ring_buffer *this);

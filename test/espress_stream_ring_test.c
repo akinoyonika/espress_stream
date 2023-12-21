@@ -16,7 +16,7 @@ void espress_stream_ring_test()
 	u_t * const buffer[4] = {buffer1[0], buffer1[1], buffer1[2], buffer1[3]};
 	char *data[] = {"0123", "4567", "89AB", "CDEF"};
 
-	espress_stream_ring->init(ring, (void * const *)buffer, 5);
+	espress_stream_ring->initialize(ring, (void * const *)buffer, 5);
 	p = espress_stream_ring->head(ring, 0);
 	assert((void * const *)buffer == p);
 	p = espress_stream_ring->tail(ring, 0);
@@ -90,5 +90,5 @@ void espress_stream_ring_test()
 	u = espress_stream_ring->num_invalid(ring);
 	assert(4 == u);
 
-	espress_stream_ring->final(ring);
+	espress_stream_ring->finalize(ring);
 }

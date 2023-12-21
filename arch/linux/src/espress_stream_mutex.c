@@ -3,25 +3,25 @@
 #include "espress_stream/uint.h"
 #include "espress_stream/mutex.h"
 
-static void _init(struct espress_stream_mutex *this);
-static void _final(struct espress_stream_mutex *this);
+static void _initialize(struct espress_stream_mutex *this);
+static void _finalize(struct espress_stream_mutex *this);
 static void _lock(struct espress_stream_mutex *this);
 static void _unlock(struct espress_stream_mutex *this);
 static i_t _try_lock(struct espress_stream_mutex *this);
 
 struct espress_stream_mutex_ops const espress_stream_mutex[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_lock,
 	_unlock,
 	_try_lock
 }};
 
-static void _init(struct espress_stream_mutex *this)
+static void _initialize(struct espress_stream_mutex *this)
 {
 #	if ESPRESS_STREAM_MUTEX_IS_SEMAPHRE
-		sem_init(this->sem, 0, 1);
+		sem_initialize(this->sem, 0, 1);
 #	else /* ESPRESS_STREAM_MUTEX_IS_MUTEX */
 		pthread_mutexattr_t attr[1];
 		pthread_mutexattr_init(attr);
@@ -34,7 +34,7 @@ static void _init(struct espress_stream_mutex *this)
 #	endif
 }
 
-static void _final(struct espress_stream_mutex *this)
+static void _finalize(struct espress_stream_mutex *this)
 {
 #	if ESPRESS_STREAM_MUTEX_IS_SEMAPHRE
 		sem_destroy(this->sem);

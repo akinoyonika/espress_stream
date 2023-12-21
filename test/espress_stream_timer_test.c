@@ -29,9 +29,9 @@ void espress_stream_timer_test()
 	struct espress_stream_event_flags flags[1];
 	struct espress_stream_timer timer[1];
 
-	espress_stream_event->init(event);
+	espress_stream_event->initialize(event);
 
-	espress_stream_timer->init(timer);
+	espress_stream_timer->initialize(timer);
 
 	espress_stream_uint32_assign(t, espress_stream_uint32_0);
 	for (i = 0 ; i < 4 ; i++)
@@ -53,7 +53,7 @@ void espress_stream_timer_test()
 		espress_stream_uint32_add(t, espress_stream_tick_us_1_sec);
 	}
 
-	espress_stream_timer->final(timer);
+	espress_stream_timer->finalize(timer);
 
-	espress_stream_event->final(event);
+	espress_stream_event->finalize(event);
 }

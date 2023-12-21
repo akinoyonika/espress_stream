@@ -15,15 +15,15 @@
 #define _cur_key_idx(i) (((i) + 1) % 3)
 #define _nxt_key_idx(i) (((i) + 2) % 3)
 
-static void _init(struct espress_stream_key *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size);
-static void _final(struct espress_stream_key *this);
+static void _initialize(struct espress_stream_key *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size);
+static void _finalize(struct espress_stream_key *this);
 static i_t _get(struct espress_stream_key *this, b_t *mac_key, b_t *cipher_key, struct espress_stream_uint32 const *counter_num);
 static i_t _update(struct espress_stream_key *this, struct espress_stream_uint32 const *counter_num);
 
 struct espress_stream_key_ops const espress_stream_key[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_get,
 	_update
 }};
@@ -38,10 +38,10 @@ static i_t _uint32_lt(struct espress_stream_uint32 const *this, struct espress_s
 	return espress_stream_uint32_eq(u, espress_stream_uint32_1);
 }
 
-static void _init(struct espress_stream_key *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size)
+static void _initialize(struct espress_stream_key *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size)
 {
-	espress_stream_mutex->init(this->mutex);
-	espress_stream_key_exp->init(this->key_exp, key, key_size, salt, salt_size);
+	espress_stream_mutex->initialize(this->mutex);
+	espress_stream_key_exp->initialize(this->key_exp, key, key_size, salt, salt_size);
 	this->key_idx = 0;
 	espress_stream_key_exp->expand(this->key_exp,
 		this->mac_key[_nxt_key_idx(this->key_idx)],
@@ -57,10 +57,10 @@ static void _init(struct espress_stream_key *this, b_t const *key, u_t key_size,
 	espress_stream_uint32_assign(this->current, espress_stream_uint32_max);
 }
 
-static void _final(struct espress_stream_key *this)
+static void _finalize(struct espress_stream_key *this)
 {
-	espress_stream_mutex->final(this->mutex);
-	espress_stream_key_exp->final(this->key_exp);
+	espress_stream_mutex->finalize(this->mutex);
+	espress_stream_key_exp->finalize(this->key_exp);
 	memset(this, 0, sizeof(*this));
 }
 

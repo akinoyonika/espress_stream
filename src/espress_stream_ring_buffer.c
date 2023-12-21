@@ -6,8 +6,8 @@
 #endif
 #include "espress_stream/ring_buffer.h"
 
-static void _init(struct espress_stream_ring_buffer *this, b_t *buffer, u_t size);
-static void _final(struct espress_stream_ring_buffer *this);
+static void _initialize(struct espress_stream_ring_buffer *this, b_t *buffer, u_t size);
+static void _finalize(struct espress_stream_ring_buffer *this);
 static u_t _en(struct espress_stream_ring_buffer *this, u_t num);
 static u_t _de(struct espress_stream_ring_buffer *this, u_t num);
 static i_t _is_empty(struct espress_stream_ring_buffer *this);
@@ -23,8 +23,8 @@ static b_t *_invalid_data(struct espress_stream_ring_buffer *this, struct espres
 
 struct espress_stream_ring_buffer_ops const espress_stream_ring_buffer[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_en,
 	_de,
 	_is_empty,
@@ -40,20 +40,20 @@ struct espress_stream_ring_buffer_ops const espress_stream_ring_buffer[] =
 }};
 
 #if MAX_U_T_WIDTH < 4
-#	define _mutex_init(m) espress_stream_mutex->init(m)
-#	define _mutex_final(m) espress_stream_mutex->final(m)
+#	define _mutex_initialize(m) espress_stream_mutex->initialize(m)
+#	define _mutex_finalize(m) espress_stream_mutex->finalize(m)
 #	define _mutex_lock(m) espress_stream_mutex->lock(m)
 #	define _mutex_unlock(m) espress_stream_mutex->unlock(m)
 #else
-#	define _mutex_init(m) (void)0
-#	define _mutex_final(m) (void)0
+#	define _mutex_initialize(m) (void)0
+#	define _mutex_finalize(m) (void)0
 #	define _mutex_lock(m) (void)0
 #	define _mutex_unlock(m) (void)0
 #endif
 
-static void _init(struct espress_stream_ring_buffer *this, b_t *buffer, u_t size)
+static void _initialize(struct espress_stream_ring_buffer *this, b_t *buffer, u_t size)
 {
-	_mutex_init(this->mutex);
+	_mutex_initialize(this->mutex);
 	this->buffer = buffer;
 	for (this->mask = 1 ; this->mask <= size ; this->mask <<= 1);
 	this->mask = (this->mask >> 1) - 1;
@@ -61,9 +61,9 @@ static void _init(struct espress_stream_ring_buffer *this, b_t *buffer, u_t size
 	espress_stream_uint32_assign(this->tail, espress_stream_uint32_0);
 }
 
-static void _final(struct espress_stream_ring_buffer *this)
+static void _finalize(struct espress_stream_ring_buffer *this)
 {
-	_mutex_final(this->mutex);
+	_mutex_finalize(this->mutex);
 	memset(this, 0, sizeof(*this));
 }
 

@@ -26,9 +26,9 @@
 struct espress_stream_uint32 const espress_stream_min_rto[1] = {ESPRESS_STREAM_UINT32(0x00, 0x03, 0x0d, 0x40)};
 struct espress_stream_uint32 const espress_stream_max_rto[1] = {ESPRESS_STREAM_SESSION_TIMEOUT_TIME};
 
-static i_t _init(struct espress_stream_trans_packet_interface *this,
+static i_t _initialize(struct espress_stream_trans_packet_interface *this,
 	struct espress_stream_dgram_address const *address);
-static void _final(struct espress_stream_trans_packet_interface *this);
+static void _finalize(struct espress_stream_trans_packet_interface *this);
 static u_t _mtu(struct espress_stream_trans_packet_interface *this);
 static i_t _open(struct espress_stream_trans_packet *this,
 	struct espress_stream_trans_packet_interface *interface,
@@ -116,8 +116,8 @@ static void _this_yield_break(struct espress_stream_trans_packet_interface *this
 
 struct espress_stream_trans_packet_ops const espress_stream_trans_packet[] =
 {{
-	_init,
-	_final,
+	_initialize,
+	_finalize,
 	_mtu,
 	_open,
 	_close,
@@ -393,7 +393,7 @@ struct espress_stream_trans_packet_ops const espress_stream_trans_packet[] =
 	}
 #endif
 
-static i_t _init(struct espress_stream_trans_packet_interface *this,
+static i_t _initialize(struct espress_stream_trans_packet_interface *this,
 	struct espress_stream_dgram_address const *address)
 {
 	i_t ret = 0;
@@ -401,10 +401,10 @@ static i_t _init(struct espress_stream_trans_packet_interface *this,
 	u_t u;
 	struct espress_stream_packet *p;
 
-	espress_stream_mutex->init(this->mutex);
-	espress_stream_event->init(this->event);
+	espress_stream_mutex->initialize(this->mutex);
+	espress_stream_event->initialize(this->event);
 	memcpy(this->address, address, sizeof(*(this->address)));
-	if (0 != espress_stream_dgram->init(this->dgram, address, this->event, this->event))
+	if (0 != espress_stream_dgram->initialize(this->dgram, address, this->event, this->event))
 	{
 		ret = 1;
 		goto DGRAM_INIT_FAIL_EXIT;
@@ -417,17 +417,17 @@ static i_t _init(struct espress_stream_trans_packet_interface *this,
 	{
 		this->recv_buffers[i] = (struct espress_stream_dgram_buffer *)(this->recv_packet + i);
 	}
-	espress_stream_trans_ring->init(this->send_ring, this->send_buffers, ESPRESS_STREAM_SEND_QUEUE_SIZE, this->dgram);
-	espress_stream_trans_ring->init(this->recv_ring, this->recv_buffers, ESPRESS_STREAM_RECV_QUEUE_SIZE, this->dgram);
+	espress_stream_trans_ring->initialize(this->send_ring, this->send_buffers, ESPRESS_STREAM_SEND_QUEUE_SIZE, this->dgram);
+	espress_stream_trans_ring->initialize(this->recv_ring, this->recv_buffers, ESPRESS_STREAM_RECV_QUEUE_SIZE, this->dgram);
 	for (u = 0 ; NULL != espress_stream_trans_ring->head(this->send_ring, u) ; u++)
 	{
 		p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(this->send_ring, u)[0]);
-		espress_stream_packet->init(p, this->event);
+		espress_stream_packet->initialize(p, this->event);
 	}
 	for ( ; NULL != espress_stream_trans_ring->head(this->recv_ring, 0) ; )
 	{
 		p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(this->recv_ring, 0)[0]);
-		espress_stream_packet->init(p, this->event);
+		espress_stream_packet->initialize(p, this->event);
 		p->data_size = espress_stream_dgram->mtu(this->dgram);
 		espress_stream_trans_ring->en(this->recv_ring, 1);
 	}
@@ -437,20 +437,20 @@ static i_t _init(struct espress_stream_trans_packet_interface *this,
 
 DGRAM_INIT_FAIL_EXIT:
 
-	if (0 != ret) espress_stream_event->final(this->event);
-	if (0 != ret) espress_stream_mutex->final(this->mutex);
+	if (0 != ret) espress_stream_event->finalize(this->event);
+	if (0 != ret) espress_stream_mutex->finalize(this->mutex);
 
 	return ret;
 }
 
-static void _final(struct espress_stream_trans_packet_interface *this)
+static void _finalize(struct espress_stream_trans_packet_interface *this)
 {
 	_final_trans_packet(this);
-	espress_stream_trans_ring->final(this->recv_ring);
-	espress_stream_trans_ring->final(this->send_ring);
-	espress_stream_dgram->final(this->dgram);
-	espress_stream_event->final(this->event);
-	espress_stream_mutex->final(this->mutex);
+	espress_stream_trans_ring->finalize(this->recv_ring);
+	espress_stream_trans_ring->finalize(this->send_ring);
+	espress_stream_dgram->finalize(this->dgram);
+	espress_stream_event->finalize(this->event);
+	espress_stream_mutex->finalize(this->mutex);
 }
 
 static u_t _mtu(struct espress_stream_trans_packet_interface *this)
@@ -628,8 +628,8 @@ static i_t _open(struct espress_stream_trans_packet *this,
 	this->is_server = is_server;
 	this->src_address = this->interface->address;
 
-	espress_stream_key->init(this->send_key, (b_t const *)espress_stream_uint256_0, 32, (b_t const *)espress_stream_uint256_0, 32);
-	espress_stream_key->init(this->recv_key, (b_t const *)espress_stream_uint256_0, 32, (b_t const *)espress_stream_uint256_0, 32);
+	espress_stream_key->initialize(this->send_key, (b_t const *)espress_stream_uint256_0, 32, (b_t const *)espress_stream_uint256_0, 32);
+	espress_stream_key->initialize(this->recv_key, (b_t const *)espress_stream_uint256_0, 32, (b_t const *)espress_stream_uint256_0, 32);
 
 	espress_stream_rand->get(this->src_private_key, ESPRESS_STREAM_KEY_EX_KEY_SIZE);
 	espress_stream_key_ex->get_public_key(this->src_public_key, this->src_private_key);
@@ -705,8 +705,8 @@ static void _close(struct espress_stream_trans_packet *this)
 	_final_duplicate_ack_count(this->duplicate_ack_count);
 	_final_rto_measurement(this->rto_measurement);
 	_del_trans_packet(this->interface, this);
-	espress_stream_key->final(this->recv_key);
-	espress_stream_key->final(this->send_key);
+	espress_stream_key->finalize(this->recv_key);
+	espress_stream_key->finalize(this->send_key);
 	espress_stream_mutex->unlock(this->interface->mutex);
 	memset(this, 0, sizeof(*this));
 }
@@ -806,11 +806,11 @@ static i_t _send_connect(struct espress_stream_trans_packet *this,
 		espress_stream_uint32_and(connection_param_var, reject_param_val);
 		if (espress_stream_uint32_eq(connection_param_var, espress_stream_uint32_0))
 		{
-			espress_stream_key->final(this->recv_key);
-			espress_stream_key->final(this->send_key);
+			espress_stream_key->finalize(this->recv_key);
+			espress_stream_key->finalize(this->send_key);
 			espress_stream_key_ex->get_shared_key(this->shared_key, this->src_private_key, this->dst_public_key);
-			espress_stream_key->init(this->send_key, this->shared_key, sizeof(this->shared_key), this->src_random, sizeof(this->src_random));
-			espress_stream_key->init(this->recv_key, this->shared_key, sizeof(this->shared_key), this->dst_random, sizeof(this->dst_random));
+			espress_stream_key->initialize(this->send_key, this->shared_key, sizeof(this->shared_key), this->src_random, sizeof(this->src_random));
+			espress_stream_key->initialize(this->recv_key, this->shared_key, sizeof(this->shared_key), this->dst_random, sizeof(this->dst_random));
 		}
 	}
 
@@ -934,11 +934,11 @@ static i_t _recv_connect(struct espress_stream_trans_packet *this,
 		espress_stream_uint32_and(connection_param, reject_param_val);
 		if (espress_stream_uint32_eq(connection_param, espress_stream_uint32_0))
 		{
-			espress_stream_key->final(this->recv_key);
-			espress_stream_key->final(this->send_key);
+			espress_stream_key->finalize(this->recv_key);
+			espress_stream_key->finalize(this->send_key);
 			espress_stream_key_ex->get_shared_key(this->shared_key, this->src_private_key, this->dst_public_key);
-			espress_stream_key->init(this->send_key, this->shared_key, sizeof(this->shared_key), this->src_random, sizeof(this->src_random));
-			espress_stream_key->init(this->recv_key, this->shared_key, sizeof(this->shared_key), this->dst_random, sizeof(this->dst_random));
+			espress_stream_key->initialize(this->send_key, this->shared_key, sizeof(this->shared_key), this->src_random, sizeof(this->src_random));
+			espress_stream_key->initialize(this->recv_key, this->shared_key, sizeof(this->shared_key), this->dst_random, sizeof(this->dst_random));
 		}
 	}
 

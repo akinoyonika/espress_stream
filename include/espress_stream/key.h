@@ -20,8 +20,8 @@ struct espress_stream_key
 
 struct espress_stream_key_ops
 {
-	void (*init)(struct espress_stream_key *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size);
-	void (*final)(struct espress_stream_key *this);
+	void (*initialize)(struct espress_stream_key *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size);
+	void (*finalize)(struct espress_stream_key *this);
 	i_t (*get)(struct espress_stream_key *this, b_t *mac_key, b_t *cipher_key, struct espress_stream_uint32 const *counter_num);
 	i_t (*update)(struct espress_stream_key *this, struct espress_stream_uint32 const *counter_num);
 };

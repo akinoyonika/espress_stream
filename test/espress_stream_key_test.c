@@ -41,7 +41,7 @@ void espress_stream_key_test()
 	b_t prev_mac_key[ESPRESS_STREAM_KEY_MAC_KEY_SIZE];
 	b_t prev_cipher_key[ESPRESS_STREAM_KEY_CIPHER_KEY_SIZE];
 
-	espress_stream_key->init(key, (b_t const *)"", 0, (b_t const *)"", 0);
+	espress_stream_key->initialize(key, (b_t const *)"", 0, (b_t const *)"", 0);
 
 	espress_stream_uint32_assign(counter_num, espress_stream_uint32_0);
 	espress_stream_uint32_set(u, 0x00, 0x00, 0x00, ESPRESS_STREAM_KEY_HISTORY_SIZE);
@@ -163,5 +163,5 @@ void espress_stream_key_test()
 		(0 == memcmp(curr_mac_key, mac_key, ESPRESS_STREAM_KEY_MAC_KEY_SIZE)) &&
 		(0 == memcmp(curr_cipher_key, cipher_key, ESPRESS_STREAM_KEY_CIPHER_KEY_SIZE)));
 
-	espress_stream_key->final(key);
+	espress_stream_key->finalize(key);
 }

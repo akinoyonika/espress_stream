@@ -62,21 +62,21 @@ void espress_stream_packet_test()
 	struct espress_stream_trans_ring send_ring[1];
 	struct espress_stream_trans_ring recv_ring[1];
 
-	espress_stream_event->init(event);
+	espress_stream_event->initialize(event);
 	((struct sockaddr_in *)(address->storage))->sin_family = AF_INET;
 	((struct sockaddr_in *)(address->storage))->sin_port = htons(1234);
 	((struct sockaddr_in *)(address->storage))->sin_addr.s_addr = htonl(INADDR_ANY);
-	i = espress_stream_dgram->init(dgram, address, event, event);
+	i = espress_stream_dgram->initialize(dgram, address, event, event);
 	assert(0 == i);
-	espress_stream_trans_ring->init(send_ring, send_buffers, 4, dgram);
-	espress_stream_trans_ring->init(recv_ring, recv_buffers, 4, dgram);
-	espress_stream_key->init(send_key, (b_t const *)"0123456789ABCDEFGHIJKLMNOPQRSTU", 32, (b_t const *)"0123456789abcdefghijklmnopqrstu", 32);
-	espress_stream_key->init(recv_key, (b_t const *)"0123456789ABCDEFGHIJKLMNOPQRSTU", 32, (b_t const *)"0123456789abcdefghijklmnopqrstu", 32);
+	espress_stream_trans_ring->initialize(send_ring, send_buffers, 4, dgram);
+	espress_stream_trans_ring->initialize(recv_ring, recv_buffers, 4, dgram);
+	espress_stream_key->initialize(send_key, (b_t const *)"0123456789ABCDEFGHIJKLMNOPQRSTU", 32, (b_t const *)"0123456789abcdefghijklmnopqrstu", 32);
+	espress_stream_key->initialize(recv_key, (b_t const *)"0123456789ABCDEFGHIJKLMNOPQRSTU", 32, (b_t const *)"0123456789abcdefghijklmnopqrstu", 32);
 
 	for ( ; NULL != espress_stream_trans_ring->head(recv_ring, 0) ; )
 	{
 		p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(recv_ring, 0)[0]);
-		espress_stream_packet->init(p, event);
+		espress_stream_packet->initialize(p, event);
 		p->data_size = espress_stream_dgram->mtu(dgram);
 		espress_stream_trans_ring->en(recv_ring, 1);
 	}
@@ -85,7 +85,7 @@ void espress_stream_packet_test()
 	for (i = 0 ; NULL != espress_stream_trans_ring->head(send_ring, i) ; i++)
 	{
 		p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(send_ring, i)[0]);
-		espress_stream_packet->init(p, event);
+		espress_stream_packet->initialize(p, event);
 	}
 
 	p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(send_ring, 0)[0]);
@@ -313,16 +313,16 @@ void espress_stream_packet_test()
 	for (i = 0 ; NULL != espress_stream_trans_ring->head(send_ring, i) ; i++)
 	{
 		p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(send_ring, i)[0]);
-		espress_stream_packet->final(p);
+		espress_stream_packet->finalize(p);
 	}
 	espress_stream_trans_ring->de(recv_ring, espress_stream_trans_ring->num_valid(recv_ring));
 	for (i = 0 ; NULL != espress_stream_trans_ring->head(recv_ring, i) ; i++)
 	{
 		p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(recv_ring, i)[0]);
-		espress_stream_packet->final(p);
+		espress_stream_packet->finalize(p);
 	}
-	espress_stream_trans_ring->final(send_ring);
-	espress_stream_trans_ring->final(recv_ring);
-	espress_stream_dgram->final(dgram);
-	espress_stream_event->final(event);
+	espress_stream_trans_ring->finalize(send_ring);
+	espress_stream_trans_ring->finalize(recv_ring);
+	espress_stream_dgram->finalize(dgram);
+	espress_stream_event->finalize(event);
 }

@@ -15,8 +15,8 @@ struct espress_stream_hash
 
 struct espress_stream_hash_ops
 {
-	void (*init)(struct espress_stream_hash *this);
-	void (*final)(struct espress_stream_hash *this, b_t *digest);
+	void (*initialize)(struct espress_stream_hash *this);
+	void (*finalize)(struct espress_stream_hash *this, b_t *digest);
 	void (*update)(struct espress_stream_hash *this, b_t const *message, u_t size);
 };
 

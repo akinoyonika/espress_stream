@@ -44,14 +44,14 @@ void espress_stream_key_exp_test()
 		"\xb8\xa1\x1f\x5c\x5e\xe1\x87\x9e\xc3\x45\x4e\x5f\x3c\x73\x8d\x2d"
 		"\x9d\x20\x13\x95\xfa\xa4\xb6\x1a\x96\xc8";
 	exp_key_size = 42;
-	espress_stream_key_exp->init(key_exp, key, key_size, salt, salt_size);
+	espress_stream_key_exp->initialize(key_exp, key, key_size, salt, salt_size);
 	espress_stream_key_exp->expand(key_exp, buffer, sizeof(buffer), info, info_size);
 	printf("key_exp: key = "); _dump(key, key_size); printf("\n");
 	printf("\tsalt = (null),\n");
 	printf("\tinfo = (null) ->\n");
 	printf("\texp_key = "); _dump(buffer, sizeof(buffer)); printf("\n");
 	assert(0 == memcmp(exp_key, buffer, exp_key_size));
-	espress_stream_key_exp->final(key_exp);
+	espress_stream_key_exp->finalize(key_exp);
 
 	key = (b_t const *)
 		"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
@@ -82,12 +82,12 @@ void espress_stream_key_exp_test()
 		"\xcc\x30\xc5\x81\x79\xec\x3e\x87\xc1\x4c\x01\xd5\xc1\xf3\x43\x4f"
 		"\x1d\x87";
 	exp_key_size = 82;
-	espress_stream_key_exp->init(key_exp, key, key_size, salt, salt_size);
+	espress_stream_key_exp->initialize(key_exp, key, key_size, salt, salt_size);
 	espress_stream_key_exp->expand(key_exp, buffer, sizeof(buffer), info, info_size);
 	printf("key_exp: key = "); _dump(key, key_size); printf("\n");
 	printf("\tsalt = "); _dump(salt, salt_size); printf("\n");
 	printf("\tinfo = "); _dump(info, info_size); printf("\n");
 	printf("\texp_key = "); _dump(buffer, sizeof(buffer)); printf("\n");;
 	assert(0 == memcmp(exp_key, buffer, exp_key_size));
-	espress_stream_key_exp->final(key_exp);
+	espress_stream_key_exp->finalize(key_exp);
 }

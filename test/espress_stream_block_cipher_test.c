@@ -29,11 +29,11 @@ void espress_stream_block_cipher_test()
 	encrypted = (b_t const *)"\x8e\xa2\xb7\xca\x51\x67\x45\xbf\xea\xfc\x49\x90\x4b\x49\x60\x89";
 	printf("block_cipher: key = "); _dump(key, ESPRESS_STREAM_BLOCK_CIPHER_KEY_SIZE); printf(",\n");
 	printf("\tplain = "); _dump(block, ESPRESS_STREAM_BLOCK_CIPHER_BLOCK_SIZE); printf(" ->\n");
-	espress_stream_block_cipher->init(cipher, key);
+	espress_stream_block_cipher->initialize(cipher, key);
 	espress_stream_block_cipher->encrypt(cipher, block);
 	printf("\tcipher = "); _dump(block, ESPRESS_STREAM_BLOCK_CIPHER_BLOCK_SIZE); printf("\n");
 	assert(0 == memcmp(encrypted, block, ESPRESS_STREAM_BLOCK_CIPHER_BLOCK_SIZE));
-	espress_stream_block_cipher->final(cipher);
+	espress_stream_block_cipher->finalize(cipher);
 
 	key = (b_t const *)
 		"\x60\x3D\xEB\x10\x15\xCA\x71\xBE\x2B\x73\xAE\xF0\x85\x7D\x77\x81"
@@ -42,9 +42,9 @@ void espress_stream_block_cipher_test()
 	encrypted = (b_t const *)"\xF3\xEE\xD1\xBD\xB5\xD2\xA0\x3C\x06\x4B\x5A\x7E\x3D\xB1\x81\xF8";
 	printf("block_cipher: key = "); _dump(key, ESPRESS_STREAM_BLOCK_CIPHER_KEY_SIZE); printf(",\n");
 	printf("\tplain = "); _dump(block, ESPRESS_STREAM_BLOCK_CIPHER_BLOCK_SIZE); printf(" ->\n");
-	espress_stream_block_cipher->init(cipher, key);
+	espress_stream_block_cipher->initialize(cipher, key);
 	espress_stream_block_cipher->encrypt(cipher, block);
 	printf("\tcipher = "); _dump(block, ESPRESS_STREAM_BLOCK_CIPHER_BLOCK_SIZE); printf("\n");
 	assert(0 == memcmp(encrypted, block, ESPRESS_STREAM_BLOCK_CIPHER_BLOCK_SIZE));
-	espress_stream_block_cipher->final(cipher);
+	espress_stream_block_cipher->finalize(cipher);
 }

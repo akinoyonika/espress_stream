@@ -42,14 +42,14 @@ void espress_stream_trans_ring_test()
 	struct espress_stream_trans_ring send_ring[1];
 	struct espress_stream_trans_ring recv_ring[1];
 
-	espress_stream_event->init(event);
+	espress_stream_event->initialize(event);
 	((struct sockaddr_in *)(address->storage))->sin_family = AF_INET;
 	((struct sockaddr_in *)(address->storage))->sin_port = htons(1234);
 	((struct sockaddr_in *)(address->storage))->sin_addr.s_addr = htonl(INADDR_ANY);
-	i = espress_stream_dgram->init(dgram, address, event, event);
+	i = espress_stream_dgram->initialize(dgram, address, event, event);
 	assert(0 == i);
-	espress_stream_trans_ring->init(send_ring, send_buffers, 4, dgram);
-	espress_stream_trans_ring->init(recv_ring, recv_buffers, 4, dgram);
+	espress_stream_trans_ring->initialize(send_ring, send_buffers, 4, dgram);
+	espress_stream_trans_ring->initialize(recv_ring, recv_buffers, 4, dgram);
 
 	for ( ; NULL != espress_stream_trans_ring->head(recv_ring, 0) ; )
 	{
@@ -108,8 +108,8 @@ void espress_stream_trans_ring_test()
 		}
 	}
 
-	espress_stream_trans_ring->final(send_ring);
-	espress_stream_trans_ring->final(recv_ring);
-	espress_stream_dgram->final(dgram);
-	espress_stream_event->final(event);
+	espress_stream_trans_ring->finalize(send_ring);
+	espress_stream_trans_ring->finalize(recv_ring);
+	espress_stream_dgram->finalize(dgram);
+	espress_stream_event->finalize(event);
 }

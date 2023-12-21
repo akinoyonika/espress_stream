@@ -15,8 +15,8 @@ struct espress_stream_ctr_cipher
 
 struct espress_stream_ctr_cipher_ops
 {
-	void (*init)(struct espress_stream_ctr_cipher *this, b_t const *nonce, struct espress_stream_uint32 const *init_counter, b_t const *key);
-	void (*final)(struct espress_stream_ctr_cipher *this);
+	void (*initialize)(struct espress_stream_ctr_cipher *this, b_t const *nonce, struct espress_stream_uint32 const *init_counter, b_t const *key);
+	void (*finalize)(struct espress_stream_ctr_cipher *this);
 	void (*encrypt)(struct espress_stream_ctr_cipher *this, b_t *text, u_t text_size);
 	void (*decrypt)(struct espress_stream_ctr_cipher *this, b_t *text, u_t text_size);
 };

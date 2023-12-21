@@ -12,8 +12,8 @@ struct espress_stream_cond
 
 struct espress_stream_cond_ops
 {
-	void (*init)(struct espress_stream_cond *this);
-	void (*final)(struct espress_stream_cond *this);
+	void (*initialize)(struct espress_stream_cond *this);
+	void (*finalize)(struct espress_stream_cond *this);
 	void (*signal_lock)(struct espress_stream_cond *this);
 	void (*signal_unlock)(struct espress_stream_cond *this);
 	void (*signal)(struct espress_stream_cond *this);

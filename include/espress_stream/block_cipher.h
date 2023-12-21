@@ -15,8 +15,8 @@ struct espress_stream_block_cipher
 
 struct espress_stream_block_cipher_ops
 {
-	void (*init)(struct espress_stream_block_cipher *this, b_t const *key);
-	void (*final)(struct espress_stream_block_cipher *this);
+	void (*initialize)(struct espress_stream_block_cipher *this, b_t const *key);
+	void (*finalize)(struct espress_stream_block_cipher *this);
 	void (*encrypt)(struct espress_stream_block_cipher *this, b_t *block);
 };
 
