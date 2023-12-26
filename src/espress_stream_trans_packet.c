@@ -401,8 +401,16 @@ static i_t _initialize(struct espress_stream_trans_packet_interface *this,
 	u_t u;
 	struct espress_stream_packet *p;
 
-	espress_stream_mutex->initialize(this->mutex);
-	espress_stream_event->initialize(this->event);
+	if (0 != espress_stream_mutex->initialize(this->mutex))
+	{
+		ret = 1;
+		goto MUTEX_INIT_FAIL_EXIT;
+	}
+	if (0 != espress_stream_event->initialize(this->event))
+	{
+		ret = 1;
+		goto EVENT_INIT_FAIL_EXIT;
+	}
 	memcpy(this->address, address, sizeof(*(this->address)));
 	if (0 != espress_stream_dgram->initialize(this->dgram, address, this->event, this->event))
 	{
@@ -422,12 +430,20 @@ static i_t _initialize(struct espress_stream_trans_packet_interface *this,
 	for (u = 0 ; NULL != espress_stream_trans_ring->head(this->send_ring, u) ; u++)
 	{
 		p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(this->send_ring, u)[0]);
-		espress_stream_packet->initialize(p, this->event);
+		if (0 != espress_stream_packet->initialize(p, this->event))
+		{
+			ret = 1;
+			goto PACKET_INIT_FAIL_EXIT;
+		}
 	}
 	for ( ; NULL != espress_stream_trans_ring->head(this->recv_ring, 0) ; )
 	{
 		p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(this->recv_ring, 0)[0]);
-		espress_stream_packet->initialize(p, this->event);
+		if (0 != espress_stream_packet->initialize(p, this->event))
+		{
+			ret = 1;
+			goto PACKET_INIT_FAIL_EXIT;
+		}
 		p->data_size = espress_stream_dgram->mtu(this->dgram);
 		espress_stream_trans_ring->en(this->recv_ring, 1);
 	}
@@ -435,10 +451,13 @@ static i_t _initialize(struct espress_stream_trans_packet_interface *this,
 
 	_init_trans_packet(this);
 
+PACKET_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_dgram->finalize(this->dgram);
 DGRAM_INIT_FAIL_EXIT:
-
 	if (0 != ret) espress_stream_event->finalize(this->event);
+EVENT_INIT_FAIL_EXIT:
 	if (0 != ret) espress_stream_mutex->finalize(this->mutex);
+MUTEX_INIT_FAIL_EXIT:
 
 	return ret;
 }

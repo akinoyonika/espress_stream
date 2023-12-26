@@ -73,9 +73,10 @@
 #	define swap_endian_64(n) (*(n) = bswap_64(*(n)))
 #endif
 #if (16 <= MAX_I_T_WIDTH) && (16 <= MAX_U_T_WIDTH)
+#	define bswap_128(n) (((u128_t)bswap_64((u64_t)(n)) << 64) | (u128_t)bswap_64((u64_t)((n) >> 64)))
 #	define i128_t __int128_t
 #	define u128_t __uint128_t
-#	define swap_endian_128(n)(*(n) = ((u128_t)bswap_64((u64_t)(*(n))) << 64) | bswap_64((u64_t)(*(n) >> 64)))
+#	define swap_endian_128(n) (*(n) = bswap_128(*(n)))
 #endif
 #if (2 == I_T_WIDTH) && (2 == U_T_WIDTH)
 #	define i_t int16_t

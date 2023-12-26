@@ -5,7 +5,7 @@
 #include "espress_stream/mutex.h"
 #include "espress_stream/cond.h"
 
-static void _initialize(struct espress_stream_cond *this);
+static i_t _initialize(struct espress_stream_cond *this);
 static void _finalize(struct espress_stream_cond *this);
 static void _signal_lock(struct espress_stream_cond *this);
 static void _signal_unlock(struct espress_stream_cond *this);
@@ -28,11 +28,18 @@ struct espress_stream_cond_ops const espress_stream_cond[] =
 	_poll
 }};
 
-static void _initialize(struct espress_stream_cond *this)
+static i_t _initialize(struct espress_stream_cond *this)
 {
+	i_t ret = 0;
+	if (0 != espress_stream_mutex->initialize(this->mutex))
+	{
+		ret = 1;
+		goto EXIT;
+	}
 	this->cond = 0;
-	espress_stream_mutex->initialize(this->mutex);
 	this->is_signaled = 0;
+EXIT:
+	return ret;
 }
 
 static void _finalize(struct espress_stream_cond *this)

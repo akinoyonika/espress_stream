@@ -62,7 +62,8 @@ void espress_stream_packet_test()
 	struct espress_stream_trans_ring send_ring[1];
 	struct espress_stream_trans_ring recv_ring[1];
 
-	espress_stream_event->initialize(event);
+	i = espress_stream_event->initialize(event);
+	assert(0 == i);
 	((struct sockaddr_in *)(address->storage))->sin_family = AF_INET;
 	((struct sockaddr_in *)(address->storage))->sin_port = htons(1234);
 	((struct sockaddr_in *)(address->storage))->sin_addr.s_addr = htonl(INADDR_ANY);
@@ -76,7 +77,8 @@ void espress_stream_packet_test()
 	for ( ; NULL != espress_stream_trans_ring->head(recv_ring, 0) ; )
 	{
 		p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(recv_ring, 0)[0]);
-		espress_stream_packet->initialize(p, event);
+		i = espress_stream_packet->initialize(p, event);
+		assert(0 == i);
 		p->data_size = espress_stream_dgram->mtu(dgram);
 		espress_stream_trans_ring->en(recv_ring, 1);
 	}
@@ -85,7 +87,8 @@ void espress_stream_packet_test()
 	for (i = 0 ; NULL != espress_stream_trans_ring->head(send_ring, i) ; i++)
 	{
 		p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(send_ring, i)[0]);
-		espress_stream_packet->initialize(p, event);
+		j = espress_stream_packet->initialize(p, event);
+		assert(0 == j);
 	}
 
 	p = (struct espress_stream_packet *)(espress_stream_trans_ring->head(send_ring, 0)[0]);

@@ -70,7 +70,7 @@ struct espress_stream_event
 
 struct espress_stream_event_ops
 {
-	void (*initialize)(struct espress_stream_event *this);
+	i_t (*initialize)(struct espress_stream_event *this);
 	void (*finalize)(struct espress_stream_event *this);
 	void (*set)(struct espress_stream_event *this, u_t flag);
 	void (*wait)(struct espress_stream_event *this, struct espress_stream_event_flags *flags, struct espress_stream_uint32 const *timeout);

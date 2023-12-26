@@ -3,7 +3,7 @@
 #include "espress_stream/uint.h"
 #include "espress_stream/mutex.h"
 
-static void _initialize(struct espress_stream_mutex *this);
+static i_t _initialize(struct espress_stream_mutex *this);
 static void _finalize(struct espress_stream_mutex *this);
 static void _lock(struct espress_stream_mutex *this);
 static void _unlock(struct espress_stream_mutex *this);
@@ -18,9 +18,10 @@ struct espress_stream_mutex_ops const espress_stream_mutex[] =
 	_try_lock
 }};
 
-static void _initialize(struct espress_stream_mutex *this)
+static i_t _initialize(struct espress_stream_mutex *this)
 {
 	this->counter = 0;
+	return 0;
 }
 
 static void _finalize(struct espress_stream_mutex *this)

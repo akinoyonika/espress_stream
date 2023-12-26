@@ -8,7 +8,7 @@ struct espress_stream_mutex
 
 struct espress_stream_mutex_ops
 {
-	void (*initialize)(struct espress_stream_mutex *this);
+	i_t (*initialize)(struct espress_stream_mutex *this);
 	void (*finalize)(struct espress_stream_mutex *this);
 	void (*lock)(struct espress_stream_mutex *this);
 	void (*unlock)(struct espress_stream_mutex *this);

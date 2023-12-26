@@ -13,7 +13,7 @@ struct espress_stream_timer
 
 struct espress_stream_timer_op
 {
-	void (*initialize)(struct espress_stream_timer *this);
+	i_t (*initialize)(struct espress_stream_timer *this);
 	void (*finalize)(struct espress_stream_timer *this);
 	i_t (*start)(struct espress_stream_timer *this,
 		void (*callback)(struct espress_stream_timer *this, void *param),

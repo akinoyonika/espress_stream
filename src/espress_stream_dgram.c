@@ -47,29 +47,49 @@ static i_t _initialize(struct espress_stream_dgram *this, struct espress_stream_
 	this->send_outer_event = send_event;
 	this->recv_outer_event = recv_event;
 
-	espress_stream_event->initialize(this->send_event);
-	espress_stream_event->initialize(this->recv_event);
-	espress_stream_mutex->initialize(this->send_mutex);
-	espress_stream_mutex->initialize(this->recv_mutex);
+	i = espress_stream_event->initialize(this->send_event);
+	if (0 != i)
+	{
+		ret = 1;
+		goto SEND_EVENT_INIT_FAIL_EXIT;
+	}
+	i = espress_stream_event->initialize(this->recv_event);
+	if (0 != i)
+	{
+		ret = 1;
+		goto RECV_EVENT_INIT_FAIL_EXIT;
+	}
+	i = espress_stream_mutex->initialize(this->send_mutex);
+	if (0 != i)
+	{
+		ret = 1;
+		goto SEND_MUTEX_INIT_FAIL_EXIT;
+	}
+	i = espress_stream_mutex->initialize(this->recv_mutex);
+	if (0 != i)
+	{
+		ret = 1;
+		goto RECV_MUTEX_INIT_FAIL_EXIT;
+	}
 
 	this->sock = socket(bind_address->storage->ss_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
 	if (-1 == this->sock)
 	{
 		ret = errno;
-		goto EXIT;
+		goto SOCKET_INIT_FAIL_EXIT;
 	}
 	i = bind(this->sock, (struct sockaddr const *)bind_address->storage, sizeof(*(bind_address->storage)));
 	if (-1 == i)
 	{
 		ret = errno;
-		goto EXIT;
+		goto BIND_FAIL_EXIT;
 	}
 
 	this->send_eventfd = eventfd(0, 0);
 	if (-1 == this->send_eventfd)
 	{
 		ret = errno;
-		goto EXIT;
+		goto SEND_EVENTFD_INIT_FAIL_EXIT;
 	}
 	this->num_send_buffer = 0;
 	this->num_sent_buffer = 0;
@@ -77,32 +97,25 @@ static i_t _initialize(struct espress_stream_dgram *this, struct espress_stream_
 	if (-1 == this->recv_eventfd)
 	{
 		ret = errno;
-		goto EXIT;
+		goto RECV_EVENTFD_INIT_FAIL_EXIT;
 	}
 	this->num_recv_buffer = 0;
 	this->num_rcvd_buffer = 0;
 
-EXIT:
-
-	if (0 != ret)
-	{
-		if (-1 != this->recv_eventfd)
-		{
-			close(this->recv_eventfd);
-		}
-		if (-1 != this->send_eventfd)
-		{
-			close(this->send_eventfd);
-		}
-		if (-1 != this->sock)
-		{
-			close(this->sock);
-		}
-		espress_stream_mutex->finalize(this->recv_mutex);
-		espress_stream_mutex->finalize(this->send_mutex);
-		espress_stream_event->finalize(this->recv_event);
-		espress_stream_event->finalize(this->send_event);
-	}
+RECV_EVENTFD_INIT_FAIL_EXIT:
+	if (0 != ret) close(this->send_eventfd);
+SEND_EVENTFD_INIT_FAIL_EXIT:
+BIND_FAIL_EXIT:
+	if (0 != ret) close(this->sock);
+SOCKET_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_mutex->finalize(this->recv_mutex);
+RECV_MUTEX_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_mutex->finalize(this->send_mutex);
+SEND_MUTEX_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_event->finalize(this->recv_event);
+RECV_EVENT_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_event->finalize(this->send_event);
+SEND_EVENT_INIT_FAIL_EXIT:
 
 	return ret;
 }

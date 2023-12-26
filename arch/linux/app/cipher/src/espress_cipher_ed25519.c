@@ -969,7 +969,7 @@ static struct fe25519 const _ge25519_ec2d[1] =
 	}
 }};
 
-static struct fe25519 _ge25519_sqrtm1[1] =
+static struct fe25519 const _ge25519_sqrtm1[1] =
 {{
 	{
 		ESPRESS_CIPHER_UINT32(0x00, 0x00, 0x00, 0xb0),
@@ -1155,7 +1155,7 @@ static struct ge25519 const _ge25519_base[1] =
 	}}
 }};
 
-static struct ge25519_aff _ge25519_base_multiples_affine[425] =
+static struct ge25519_aff const _ge25519_base_multiples_affine[425] =
 {
 	{
 		{{

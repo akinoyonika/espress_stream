@@ -8,7 +8,7 @@
 
 struct espress_stream_tick_ops
 {
-	void (*initialize)(void);
+	i_t (*initialize)(void);
 	void (*finalize)(void);
 	void (*get_us)(struct espress_stream_uint32 *tick);
 };

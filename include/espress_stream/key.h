@@ -9,6 +9,7 @@
 
 struct espress_stream_key
 {
+	i_t is_valid;
 	struct espress_stream_mutex mutex[1];
 	struct espress_stream_key_exp key_exp[1];
 	b_t mac_key[3][ESPRESS_STREAM_KEY_MAC_KEY_SIZE];

@@ -7,7 +7,7 @@
 #include "espress_stream/event.h"
 #include "espress_stream/timer.h"
 
-static void _initialize(struct espress_stream_timer *this);
+static i_t _initialize(struct espress_stream_timer *this);
 static void _finalize(struct espress_stream_timer *this);
 static i_t _start(struct espress_stream_timer *this,
 	void (*callback)(struct espress_stream_timer *this, void *callback_param),
@@ -27,12 +27,12 @@ struct espress_stream_timer_op const espress_stream_timer[] =
 	_yield_break
 }};
 
-static void _initialize(struct espress_stream_timer *this)
+static i_t _initialize(struct espress_stream_timer *this)
 {
+	this->is_active = 0;
 	espress_stream_tick->get_us(this->start_time);
 	espress_stream_uint32_assign(this->timeout, espress_stream_uint32_0);
-	espress_stream_cond->initialize(this->cond);
-	this->is_active = 0;
+	return espress_stream_cond->initialize(this->cond);
 }
 
 static void _finalize(struct espress_stream_timer *this)

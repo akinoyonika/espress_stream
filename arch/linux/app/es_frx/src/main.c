@@ -292,14 +292,18 @@ static struct standby_attr standby_attr[NUM_STANDBY];
 
 static int send_connect_payload(void *sid, int (*callback)(void *sid, void const *payload, unsigned payload_size, int is_rejected), void *param)
 {
+	int ret;
 	unsigned char *message = ((struct standby_attr *)param)->message;
 	unsigned message_size = ((struct standby_attr *)param)->message_size;
 	unsigned char sign_message[CIPHER_ED25519_SIGNATURE_SIZE + CONNECT_MESSAGE_SIZE];
-	unsigned sign_message_size;
-	cipher_ed25519_sign(sign_message, secret_key, message, message_size);
-	memcpy(sign_message + CIPHER_ED25519_SIGNATURE_SIZE, message, message_size);
-	sign_message_size = CIPHER_ED25519_SIGNATURE_SIZE + message_size;
-	return callback(sid, sign_message, sign_message_size, 0);
+	if (message_size == CONNECT_MESSAGE_SIZE) {
+		cipher_ed25519_sign(sign_message, secret_key, message, message_size);
+		memcpy(sign_message + CIPHER_ED25519_SIGNATURE_SIZE, message, message_size);
+		ret = callback(sid, sign_message, CIPHER_ED25519_SIGNATURE_SIZE + message_size, 0);
+	} else {
+		ret = callback(sid, NULL, 0, 0);
+	}
+	return ret;
 }
 
 static int recv_connect_payload(void *sid, int (*callback)(void *sid, void *payload, unsigned *payload_size), void *param)
@@ -449,9 +453,9 @@ int main(int argc, char const **argv)
 	}
 	printf("\n");
 	printf("bind address: %s%s%s\n",
-		(arg_address == NULL) ? "(" : "\"",
+		(arg_address == NULL) ? "(" : "",
 		(arg_address == NULL) ? "any" : arg_address,
-		(arg_address == NULL) ? ")" : "\"");
+		(arg_address == NULL) ? ")" : "");
 	printf("bind port: %s\n", arg_port);
 	printf("receiving file overwrite: %s\n", arg_is_overwrite ? "available" : "unavailable");
 	printf("receiving file store dir: \"%s\"\n", arg_dir_name);

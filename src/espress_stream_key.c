@@ -40,7 +40,11 @@ static i_t _uint32_lt(struct espress_stream_uint32 const *this, struct espress_s
 
 static void _initialize(struct espress_stream_key *this, b_t const *key, u_t key_size, b_t const *salt, u_t salt_size)
 {
-	espress_stream_mutex->initialize(this->mutex);
+	this->is_valid = (0 == espress_stream_mutex->initialize(this->mutex));
+	if (!this->is_valid)
+	{
+		goto EXIT;
+	}
 	espress_stream_key_exp->initialize(this->key_exp, key, key_size, salt, salt_size);
 	this->key_idx = 0;
 	espress_stream_key_exp->expand(this->key_exp,
@@ -55,13 +59,21 @@ static void _initialize(struct espress_stream_key *this, b_t const *key, u_t key
 		0);
 	espress_stream_key_history_uint_(assign)(this->checks, espress_stream_key_history_uint_(max));
 	espress_stream_uint32_assign(this->current, espress_stream_uint32_max);
+EXIT:
+	return;
 }
 
 static void _finalize(struct espress_stream_key *this)
 {
+	if (!this->is_valid)
+	{
+		goto EXIT;
+	}
 	espress_stream_mutex->finalize(this->mutex);
 	espress_stream_key_exp->finalize(this->key_exp);
 	memset(this, 0, sizeof(*this));
+EXIT:
+	return;
 }
 
 static void _check(struct espress_stream_key *this,
@@ -133,6 +145,12 @@ static i_t _get(struct espress_stream_key *this, b_t *mac_key, b_t *cipher_key, 
 	struct espress_stream_uint32 distance_counter[1];
 	struct espress_stream_key_history_uint check[1];
 
+	if (!this->is_valid)
+	{
+		is_counter_valid = 0;
+		goto EXIT;
+	}
+
 	espress_stream_mutex->lock(this->mutex);
 
 	_check(this, &is_counter_forward, &is_counter_flow, &is_counter_valid, distance_counter, check, counter_num);
@@ -169,6 +187,8 @@ static i_t _get(struct espress_stream_key *this, b_t *mac_key, b_t *cipher_key, 
 
 	espress_stream_mutex->unlock(this->mutex);
 
+EXIT:
+
 	return is_counter_valid;
 }
 
@@ -181,6 +201,12 @@ static i_t _update(struct espress_stream_key *this, struct espress_stream_uint32
 	struct espress_stream_uint32 distance_counter[1];
 	struct espress_stream_key_history_uint check[1];
 	struct espress_stream_uint32 const W[1] = {ESPRESS_STREAM_UINT32(0x00, 0x00, 0x00, ESPRESS_STREAM_KEY_HISTORY_SIZE)};
+
+	if (!this->is_valid)
+	{
+		is_counter_valid = 0;
+		goto EXIT;
+	}
 
 	espress_stream_mutex->lock(this->mutex);
 
@@ -224,6 +250,8 @@ static i_t _update(struct espress_stream_key *this, struct espress_stream_uint32
 	}
 
 	espress_stream_mutex->unlock(this->mutex);
+
+EXIT:
 
 	return is_counter_valid;
 }

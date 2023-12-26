@@ -40,10 +40,10 @@ struct espress_stream_ring_buffer_ops const espress_stream_ring_buffer[] =
 }};
 
 #if MAX_U_T_WIDTH < 4
-#	define _mutex_initialize(m) espress_stream_mutex->initialize(m)
-#	define _mutex_finalize(m) espress_stream_mutex->finalize(m)
-#	define _mutex_lock(m) espress_stream_mutex->lock(m)
-#	define _mutex_unlock(m) espress_stream_mutex->unlock(m)
+#	define _mutex_initialize(m) ((m)->is_valid = (espress_stream_mutex->initialize((m)->mutex) ? 0 : 1))
+#	define _mutex_finalize(m) do{if ((m)->is_valid) espress_stream_mutex->finalize((m)->mutex);}while (0);
+#	define _mutex_lock(m) do{if ((m)->is_valid) espress_stream_mutex->lock(m->mutex);}while (0)
+#	define _mutex_unlock(m) do{if ((m)->is_valid) espress_stream_mutex->unlock(m->mutex);}while (0)
 #else
 #	define _mutex_initialize(m) (void)0
 #	define _mutex_finalize(m) (void)0

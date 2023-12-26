@@ -412,8 +412,10 @@ void espress_stream_trans_packet_test()
 	espress_stream_event_flags->reset_all(client_flags);
 	espress_stream_event_flags->reset_all(server_flags);
 
-	espress_stream_event->initialize(client_event);
-	espress_stream_event->initialize(server_event);
+	i = espress_stream_event->initialize(client_event);
+	assert(0 == i);
+	i = espress_stream_event->initialize(server_event);
+	assert(0 == i);
 
 	((struct sockaddr_in *)(client_client_address->storage))->sin_family = AF_INET;
 	((struct sockaddr_in *)(client_client_address->storage))->sin_port = htons(1234);
@@ -447,7 +449,8 @@ void espress_stream_trans_packet_test()
 
 	espress_stream_event_flags->reset_all(client_flags);
 
-	espress_stream_event->initialize(client_event);
+	i = espress_stream_event->initialize(client_event);
+	assert(0 == i);
 
 	((struct sockaddr_in *)(client_client_address->storage))->sin_family = AF_INET;
 	((struct sockaddr_in *)(client_client_address->storage))->sin_port = htons(1234);

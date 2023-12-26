@@ -3,7 +3,7 @@
 
 struct espress_stream_rand_ops
 {
-	void (*initialize)(void);
+	i_t (*initialize)(void);
 	void (*finalize)(void);
 	void (*get)(b_t *buffer, u_t size);
 };

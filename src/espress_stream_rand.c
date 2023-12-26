@@ -5,7 +5,7 @@
 #include "espress_stream/tick.h"
 #include "espress_stream/rand.h"
 
-static void _initialize(void);
+static i_t _initialize(void);
 static void _finalize(void);
 static void _get(b_t *buffer, u_t size);
 
@@ -22,7 +22,7 @@ static struct espress_stream_uint128 _s1[1];
 static b_t _buffer[16];
 static u_t _size;
 
-static void _initialize(void)
+static i_t _initialize(void)
 {
 	struct espress_stream_uint32 tick[1];
 	espress_stream_tick->get_us(tick);
@@ -42,7 +42,7 @@ static void _initialize(void)
 	espress_stream_tick->get_us(tick);
 	memcpy((b_t *)(_s1) + 12, tick, 4);
 	_size = 0;
-	espress_stream_mutex->initialize(_mutex);
+	return espress_stream_mutex->initialize(_mutex);
 }
 
 static void _finalize(void)

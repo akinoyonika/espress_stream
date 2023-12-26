@@ -44,9 +44,19 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20231221.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20231221.tar.gz)
+- [espress_stream.20231228.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20231228.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20231228.tar.gz (0.9-0)
+: - 一部設定値を固定値から初期値付き変数に変更。
+ - いくつかのモジュールに関して、初期化時のエラーチェックを強化した。
+ - サンプルアプリケーション<tt>es_ftx</tt>において、サーバー公開鍵を指定しない場合、サーバー認証を行わないようにした。
+ - サンプルアプリケーション<tt>es_frx</tt>において、クライアントからのサーバー認証メッセージがない場合、サーバー認証応答もしないようにした。
+ - サンプルアプリケーションで使用する署名アルゴリズムの実装において固定テーブルの一部が変数になっていたのを固定値に修正。
+ - 多ビット長整数演算部のローカル変数が外部参照可能になっていたのを外部参照不可に修正。
+ - サンプルアプリケーション<tt>es_ftx</tt>において、データの送信タイミングが遅れる可能性があったため、これを修正。
+ - シングルスレッド動作設定時、<tt>espress_stream_poll</tt>内で少なくとも1度は一連のyield処理が呼び出されるようにした。
 
 espress_stream.20231221.tar.gz (0.8-0)
 : - 好ましくない関数名の修正、未削除のコメントアウトコードの削除、テストコードのバグ修正等、動作に影響のないソースコードの修正。
@@ -732,9 +742,10 @@ unsigned espress_stream_fast_retransmit_count(void *sid);
 static void *ifd;
 static const char *arg_address;
 static const char *arg_port;
-static const char ** arg_file_name;
+static const char **arg_file_name;
 static unsigned arg_num_file;
-static unsigned char arg_public_key[CIPHER_ED25519_PUBLIC_KEY_SIZE];
+static unsigned char *arg_public_key;
+static unsigned char _arg_public_key[CIPHER_ED25519_PUBLIC_KEY_SIZE];
 static char const *arg_user_id;
 static char const *arg_user_password;
 
@@ -769,7 +780,7 @@ static int scan_arg(int argc, char const **argv)
     arg_port = "12345";
     arg_file_name = NULL;
     arg_num_file = 0;
-    memset(arg_public_key, 0, CIPHER_ED25519_PUBLIC_KEY_SIZE);
+    arg_public_key = NULL;
     arg_user_id = NULL;
     arg_user_password = NULL;
 
@@ -810,13 +821,15 @@ static int scan_arg(int argc, char const **argv)
                     break;
                 }
                 if ((j & 1) == 0) {
-                    arg_public_key[j >> 1] = (k << 4) & 0xf0;
+                    _arg_public_key[j >> 1] = (k << 4) & 0xf0;
                 } else {
-                    arg_public_key[j >> 1] |= k & 0x0f;
+                    _arg_public_key[j >> 1] |= k & 0x0f;
                 }
             }
-            if (j < (CIPHER_ED25519_PUBLIC_KEY_SIZE * 2)) {
-                memset(arg_public_key, 0, CIPHER_ED25519_PUBLIC_KEY_SIZE);
+            if (j == (CIPHER_ED25519_PUBLIC_KEY_SIZE * 2)) {
+                arg_public_key = _arg_public_key;
+            } else {
+                arg_public_key = NULL;
             }
             c = '\0';
             break;
@@ -1038,6 +1051,7 @@ static struct file_tx_attr *file_tx_attr = NULL;
 
 static int send_connect_payload(void *sid, int (*callback)(void *sid, void const *payload, unsigned payload_size, int is_rejected), void *param)
 {
+    int ret;
     unsigned char *message = ((struct file_tx_attr *)param)->message;
     unsigned *message_size = &(((struct file_tx_attr *)param)->message_size);
 #   define get_random(buf, buf_sz) do \
@@ -1053,9 +1067,15 @@ static int send_connect_payload(void *sid, int (*callback)(void *sid, void const
             }                         \
         }                             \
     } while(0)
-    *message_size = CONNECT_MESSAGE_SIZE;
-    get_random(message, *message_size);
-    return callback(sid, message, *message_size, 0);
+    if (arg_public_key == NULL) {
+        *message_size = CONNECT_MESSAGE_SIZE; /* dummy size */
+        ret = callback(sid, NULL, 0, 0);
+    } else {
+        *message_size = CONNECT_MESSAGE_SIZE;
+        get_random(message, *message_size);
+        ret = callback(sid, message, *message_size, 0);
+    }
+    return ret;
 }
 
 static int recv_connect_payload(void *sid, int (*callback)(void *sid, void *payload, unsigned *payload_size), void *param)
@@ -1066,10 +1086,11 @@ static int recv_connect_payload(void *sid, int (*callback)(void *sid, void *payl
     unsigned char sign_message[CIPHER_ED25519_SIGNATURE_SIZE + CONNECT_MESSAGE_SIZE];
     unsigned sign_message_size = CIPHER_ED25519_SIGNATURE_SIZE + CONNECT_MESSAGE_SIZE;
     ret = callback(sid, sign_message, &sign_message_size);
-    if ((ret != 0) ||
-        (sign_message_size != CIPHER_ED25519_SIGNATURE_SIZE + CONNECT_MESSAGE_SIZE) ||
-        (memcmp(message, sign_message + CIPHER_ED25519_SIGNATURE_SIZE, CONNECT_MESSAGE_SIZE) != 0) ||
-        (cipher_ed25519_auth(sign_message, arg_public_key, sign_message + CIPHER_ED25519_SIGNATURE_SIZE, sign_message_size - CIPHER_ED25519_SIGNATURE_SIZE) != 0)) {
+    if ((arg_public_key != NULL) &&
+            ((ret != 0) ||
+                (sign_message_size != CIPHER_ED25519_SIGNATURE_SIZE + CONNECT_MESSAGE_SIZE) ||
+                (memcmp(message, sign_message + CIPHER_ED25519_SIGNATURE_SIZE, CONNECT_MESSAGE_SIZE) != 0) ||
+                (cipher_ed25519_auth(sign_message, arg_public_key, sign_message + CIPHER_ED25519_SIGNATURE_SIZE, sign_message_size - CIPHER_ED25519_SIGNATURE_SIZE) != 0))) {
         *message_size = 0;
     }
     return ret;
@@ -1137,7 +1158,7 @@ static int send_recv(struct file_tx_attr *attr,
     void *sid = attr->sid;
     unsigned const start_time = espress_stream_time();
 
-    for (i = -1, j = -1, t = 0 ; *is_running && (i == -1) && (j == -1) ; ) {
+    for (i = -1, j = -1, t = timeout ; *is_running && (i == -1) && (j == -1) ; ) {
         t = timeout - t;
         espress_stream_wait_any(sid, t);
         i = espress_stream_send(sid, send_data, send_data_size, 0);
@@ -1163,7 +1184,7 @@ static int flush_recv(struct file_tx_attr *attr,
     void *sid = attr->sid;
     unsigned const start_time = espress_stream_time();
 
-    for (i = -1, j = -1, t = 0 ; *is_running && (i == -1) && (j == -1) ; ) {
+    for (i = -1, j = -1, t = timeout ; *is_running && (i == -1) && (j == -1) ; ) {
         t = timeout - t;
         espress_stream_wait_any(sid, t);
         i = espress_stream_flush(sid, 0);
@@ -1443,17 +1464,21 @@ int main(int argc, char const **argv)
         goto EXIT;
     }
 
-    printf("destination address: \"%s\"\n", arg_address);
+    printf("destination address: %s\n", arg_address);
     printf("destination port: %s\n", arg_port);
     printf("destination public key: ");
-    for (i = 0 ; i < CIPHER_ED25519_PUBLIC_KEY_SIZE ; i++) {
-        printf("%02x", arg_public_key[i]);
+    if (arg_public_key == NULL) {
+        printf("(none)");
+    } else {
+        for (i = 0 ; i < CIPHER_ED25519_PUBLIC_KEY_SIZE ; i++) {
+            printf("%02x", arg_public_key[i]);
+        }
     }
     printf("\n");
     printf("number of sending files: %u\n", arg_num_file);
     printf("user id: ");
-    if (NULL == arg_user_id) {
-        if ((NULL == fgets(user_id, USER_ID_SIZE, stdin)) ||
+    if (arg_user_id == NULL) {
+        if ((fgets(user_id, USER_ID_SIZE, stdin) == NULL) ||
             (user_id[0] == '\n') ||
             (user_id[0] == '\0')) {
             user_id[0] = '\0';
@@ -1467,12 +1492,12 @@ int main(int argc, char const **argv)
     }
     arg_user_id = user_id;
     printf("user password: ");
-    if (NULL == arg_user_password) {
+    if (arg_user_password == NULL) {
 #       pragma GCC diagnostic push
 #       pragma GCC diagnostic ignored "-Wunused-result"
         system("stty -echo");
 #       pragma GCC diagnostic pop
-        if ((NULL == fgets(user_password, USER_PASSWORD_SIZE, stdin)) ||
+        if ((fgets(user_password, USER_PASSWORD_SIZE, stdin) == NULL) ||
             (user_password[0] == '\n') ||
             (user_password[0] == '\0')) {
             user_password[0] = '\0';
@@ -1533,7 +1558,7 @@ int main(int argc, char const **argv)
         ex_param->send_connect_payload_param = file_tx_attr + u;
         ex_param->recv_connect_payload_param = file_tx_attr + u;
         i = espress_stream_begin_session(&(file_tx_attr[u].sid), ifd, 0, ex_param);
-        if ((i == 0) && pthread_create(&(file_tx_attr[u].thread), NULL, file_tx, file_tx_attr + u)) {
+        if ((i != 0) || pthread_create(&(file_tx_attr[u].thread), NULL, file_tx, file_tx_attr + u)) {
             file_tx_attr[u].is_attached = 0;
             file_tx_attr[u].is_running = 0;
         }
@@ -1892,14 +1917,18 @@ static struct standby_attr standby_attr[NUM_STANDBY];
 
 static int send_connect_payload(void *sid, int (*callback)(void *sid, void const *payload, unsigned payload_size, int is_rejected), void *param)
 {
+    int ret;
     unsigned char *message = ((struct standby_attr *)param)->message;
     unsigned message_size = ((struct standby_attr *)param)->message_size;
     unsigned char sign_message[CIPHER_ED25519_SIGNATURE_SIZE + CONNECT_MESSAGE_SIZE];
-    unsigned sign_message_size;
-    cipher_ed25519_sign(sign_message, secret_key, message, message_size);
-    memcpy(sign_message + CIPHER_ED25519_SIGNATURE_SIZE, message, message_size);
-    sign_message_size = CIPHER_ED25519_SIGNATURE_SIZE + message_size;
-    return callback(sid, sign_message, sign_message_size, 0);
+    if (message_size == CONNECT_MESSAGE_SIZE) {
+        cipher_ed25519_sign(sign_message, secret_key, message, message_size);
+        memcpy(sign_message + CIPHER_ED25519_SIGNATURE_SIZE, message, message_size);
+        ret = callback(sid, sign_message, CIPHER_ED25519_SIGNATURE_SIZE + message_size, 0);
+    } else {
+        ret = callback(sid, NULL, 0, 0);
+    }
+    return ret;
 }
 
 static int recv_connect_payload(void *sid, int (*callback)(void *sid, void *payload, unsigned *payload_size), void *param)
@@ -2049,9 +2078,9 @@ int main(int argc, char const **argv)
     }
     printf("\n");
     printf("bind address: %s%s%s\n",
-        (arg_address == NULL) ? "(" : "\"",
+        (arg_address == NULL) ? "(" : "",
         (arg_address == NULL) ? "any" : arg_address,
-        (arg_address == NULL) ? ")" : "\"");
+        (arg_address == NULL) ? ")" : "");
     printf("bind port: %s\n", arg_port);
     printf("receiving file overwrite: %s\n", arg_is_overwrite ? "available" : "unavailable");
     printf("receiving file store dir: \"%s\"\n", arg_dir_name);
@@ -2141,7 +2170,7 @@ receiving file store dir: "~/Downloads"
 
 ```
 $ es_ftx -a foo -k 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae8069c9 ~/Documents/boo.doc ~/Music/boo.mp3 ~/Pictures/boo.jpg ~/Videos/boo.mp4
-destination address: "localhost"
+destination address: localhost
 destination port: 12345
 destination public key: 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae8069c9
 number of sending files: 4
@@ -2160,7 +2189,7 @@ user password:
 
 ```
 $ es_ftx -a 192.168.1.1 -p 12345 -k 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae8069c9 ~/Documents/boo.doc ~/Music/boo.mp3 ~/Pictures/boo.jpg ~/Videos/boo.mp4
-destination address: "192.168.1.1"
+destination address: 192.168.1.1
 destination port: 12345
 destination public key: 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae8069c9
 number of sending files: 4

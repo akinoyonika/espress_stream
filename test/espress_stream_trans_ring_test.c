@@ -42,7 +42,8 @@ void espress_stream_trans_ring_test()
 	struct espress_stream_trans_ring send_ring[1];
 	struct espress_stream_trans_ring recv_ring[1];
 
-	espress_stream_event->initialize(event);
+	i = espress_stream_event->initialize(event);
+	assert(0 == i);
 	((struct sockaddr_in *)(address->storage))->sin_family = AF_INET;
 	((struct sockaddr_in *)(address->storage))->sin_port = htons(1234);
 	((struct sockaddr_in *)(address->storage))->sin_addr.s_addr = htonl(INADDR_ANY);

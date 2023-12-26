@@ -3,7 +3,7 @@
 #include "espress_stream/uint.h"
 #include "espress_stream/tick.h"
 
-static void _initialize(void);
+static i_t _initialize(void);
 static void _finalize(void);
 static void _get_us(struct espress_stream_uint32 *tick);
 
@@ -19,8 +19,9 @@ struct espress_stream_uint32 const espress_stream_tick_us_1_sec[] = {ESPRESS_STR
 struct espress_stream_uint32 const espress_stream_tick_us_1_min[] = {ESPRESS_STREAM_TICK_US_1_MIN};
 struct espress_stream_uint32 const espress_stream_tick_us_1_hor[] = {ESPRESS_STREAM_TICK_US_1_HOR};
 
-static void _initialize()
+static i_t _initialize()
 {
+	return 0;
 }
 
 static void _finalize()

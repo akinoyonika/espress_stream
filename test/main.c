@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "espress_stream/config.h"
@@ -33,8 +35,10 @@ int main(int argc, char **argv)
 {
 	int i;
 
-	espress_stream_tick->initialize();
-	espress_stream_rand->initialize();
+	i = espress_stream_tick->initialize();
+	assert(0 == i);
+	i = espress_stream_rand->initialize();
+	assert(0 == i);
 
 	if (argc < 2)
 	{

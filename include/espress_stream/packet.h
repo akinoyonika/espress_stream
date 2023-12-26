@@ -50,7 +50,7 @@ struct espress_stream_packet
 
 struct espress_stream_packet_ops
 {
-	void (*initialize)(struct espress_stream_packet *this, struct espress_stream_event *event);
+	i_t (*initialize)(struct espress_stream_packet *this, struct espress_stream_event *event);
 	void (*finalize)(struct espress_stream_packet *this);
 	struct espress_stream_uint16 *(*packet_type)(struct espress_stream_packet *this);
 	struct espress_stream_uint16 *(*packet_size)(struct espress_stream_packet *this);

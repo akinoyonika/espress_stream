@@ -109,7 +109,7 @@ struct _var
 	u_t cipher_count;
 };
 
-static void _initialize(struct espress_stream_packet *this, struct espress_stream_event *event);
+static i_t _initialize(struct espress_stream_packet *this, struct espress_stream_event *event);
 static void _finalize(struct espress_stream_packet *this);
 static struct espress_stream_uint16 *_packet_type(struct espress_stream_packet *this);
 static struct espress_stream_uint16 *_packet_size(struct espress_stream_packet *this);
@@ -263,19 +263,34 @@ static void _set_var(struct espress_stream_packet *this, struct _var *var)
 	}
 }
 
-static void _initialize(struct espress_stream_packet *this, struct espress_stream_event *event)
+static i_t _initialize(struct espress_stream_packet *this, struct espress_stream_event *event)
 {
+	i_t ret = 0;
+
 	this->data_size = 0;
 	this->outer_event = event;
 	this->key = NULL;
-	espress_stream_event->initialize(this->event);
-	espress_stream_mutex->initialize(this->mutex);
+	if (0 != espress_stream_event->initialize(this->event))
+	{
+		ret = 1;
+		goto EVENT_INIT_FAIL_EXIT;
+	}
+	if (0 != espress_stream_mutex->initialize(this->mutex))
+	{
+		ret = 1;
+		goto MUTEX_INIT_FAIL_EXIT;
+	}
 
 	this->packet_type_connect = espress_stream_packet_type_client_connect;
 	this->packet_type_disconnect = espress_stream_packet_type_client_disconnect;
 	this->packet_type_envelope = espress_stream_packet_type_client_envelope;
 
 	this->id = NULL;
+
+MUTEX_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_event->finalize(this->event);
+EVENT_INIT_FAIL_EXIT:
+	return ret;
 }
 
 static void _finalize(struct espress_stream_packet *this)

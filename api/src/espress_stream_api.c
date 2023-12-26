@@ -52,7 +52,7 @@
 	espress_stream_uint32_set((n), c3, c2, c1, c0); \
 } while (0)
 
-struct espress_stream_uint32 const espress_stream_connect_timeout_time[1] = {ESPRESS_STREAM_CONNECT_TIMEOUT_TIME};
+struct espress_stream_uint32 /*const*/ espress_stream_connect_timeout_time[1] = {ESPRESS_STREAM_CONNECT_TIMEOUT_TIME};
 
 enum {
 	READY = 0,
@@ -620,12 +620,26 @@ static struct espress_stream_mutex local_mutex[1];
 
 int espress_stream_begin()
 {
-	espress_stream_tick->initialize();
-	espress_stream_rand->initialize();
-	espress_stream_mutex->initialize(local_mutex);
+	int ret = 0;
+	if (espress_stream_tick->initialize() != 0) {
+		ret = 1;
+		goto TICK_INIT_FAIL_EXIT;
+	}
+	if (espress_stream_rand->initialize() != 0) {
+		ret = 1;
+		goto RAND_INIT_FAIL_EXIT;
+	}
+	if (espress_stream_mutex->initialize(local_mutex) != 0) {
+		ret = 1;
+		goto MUTEX_INIT_FAIL_EXIT;
+	}
 	begin_interface();
-
-	return 0;
+MUTEX_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_rand->finalize();
+RAND_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_tick->finalize();
+TICK_INIT_FAIL_EXIT:
+	return ret;
 }
 
 void espress_stream_end()
@@ -845,7 +859,12 @@ static int local_begin_session(struct session *this)
 	int ret = 0;
 	i_t i;
 
-	espress_stream_event->initialize(this->event);
+	i = espress_stream_event->initialize(this->event);
+	if (0 != i)
+	{
+		ret = 1;
+		goto EVENT_INIT_FAIL_EXIT;
+	}
 	espress_stream_event_flags->reset_all(this->flags);
 	espress_stream_ring_buffer->initialize(this->send_ring_buffer, this->send_buffer, sizeof(this->send_buffer));
 	espress_stream_ring_buffer->initialize(this->recv_ring_buffer, this->recv_buffer, sizeof(this->recv_buffer));
@@ -877,7 +896,7 @@ SESSION_INIT_FAIL_EXIT:
 	if (ret != 0) espress_stream_ring_buffer->finalize(this->recv_ring_buffer);
 	if (ret != 0) espress_stream_ring_buffer->finalize(this->send_ring_buffer);
 	if (ret != 0) espress_stream_event->finalize(this->event);
-
+EVENT_INIT_FAIL_EXIT:
 	return ret;
 }
 
@@ -907,7 +926,11 @@ int espress_stream_begin_session(void **sid, void *ifd, int is_server, struct es
 	this->recv_connect_payload_callback = NULL;
 	this->send_disconnect_payload_callback = NULL;
 	this->recv_disconnect_payload_callback = NULL;
-	espress_stream_mutex->initialize(this->mutex);
+	j = espress_stream_mutex->initialize(this->mutex);
+	if (j != 0) {
+		ret = 1;
+		goto MUTEX_INIT_FAIL_EXIT;
+	}
 	j = local_begin_session(this);
 	if (j != 0) {
 		ret = 1;
@@ -922,6 +945,8 @@ int espress_stream_begin_session(void **sid, void *ifd, int is_server, struct es
 	*sid = i;
 
 SESSION_INIT_FAIL_EXIT:
+	if (ret != 0) espress_stream_mutex->finalize(this->mutex);
+MUTEX_INIT_FAIL_EXIT:
 	if (ret != 0) delete_session(i);
 SESSION_FULL_EXIT:
 
@@ -1625,6 +1650,15 @@ int espress_stream_poll(void * const *sids, unsigned num, unsigned timeout)
 	struct espress_stream_uint32 v[1];
 	struct espress_stream_uint32 start_time[1];
 	struct espress_stream_uint32 timeout_time[1];
+
+#	if !ESPRESS_STREAM_API_IS_THREAD_ENABLED
+		sched_yield();
+		espress_stream_mutex->lock(local_mutex);
+		interface_yield();
+		session_yield();
+		espress_stream_mutex->unlock(local_mutex);
+#	endif
+
 #	if 0 < ESPRESS_STREAM_MAX_NUM_POLL_SESSION
 		struct espress_stream_event *event[ESPRESS_STREAM_MAX_NUM_POLL_SESSION];
 

@@ -22,11 +22,11 @@
 #error
 #endif
 
-struct
+static struct
 {
 	i_t l;
 	i_t h;
-} _uint[] =
+} const _uint[] =
 {
 	{0, 0},
 #if 2 <= ESPRESS_STREAM_UINT_MAX_WIDTH

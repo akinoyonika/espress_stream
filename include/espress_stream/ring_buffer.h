@@ -4,7 +4,11 @@
 struct espress_stream_ring_buffer
 {
 #	if MAX_U_T_WIDTH < 4
-		struct espress_stream_mutex mutex[1];
+		struct
+		{
+			i_t is_valid;
+			struct espress_stream_mutex mutex[1];
+		} mutex[1];
 #	endif
 	b_t *buffer;
 	u_t mask;

@@ -27,8 +27,8 @@
 #include "espress_stream/session.h"
 
 struct espress_stream_uint32 const espress_stream_protocol_version[1] = {ESPRESS_STREAM_UINT32(0x00, 0x00, ((ESPRESS_STREAM_PROTOCOL_VERSION >> 8) & 0xff), ESPRESS_STREAM_PROTOCOL_VERSION & 0xff)};
-struct espress_stream_uint32 const espress_stream_session_timeout_time[1] = {ESPRESS_STREAM_SESSION_TIMEOUT_TIME};
-struct espress_stream_uint32 const espress_stream_beacon_interval_time[1] = {ESPRESS_STREAM_BEACON_INTERVAL_TIME};
+struct espress_stream_uint32 /*const*/ espress_stream_session_timeout_time[1] = {ESPRESS_STREAM_SESSION_TIMEOUT_TIME};
+struct espress_stream_uint32 /*const*/ espress_stream_beacon_interval_time[1] = {ESPRESS_STREAM_BEACON_INTERVAL_TIME};
 
 static i_t _initialize(struct espress_stream_session *this,
 	struct espress_stream_trans_packet_interface *interface,
@@ -303,7 +303,11 @@ static i_t _initialize(struct espress_stream_session *this,
 	this->send_state = _INIT;
 	this->recv_state = _INIT;
 
-	espress_stream_event->initialize(this->event);
+	if (0 != espress_stream_event->initialize(this->event))
+	{
+		ret = 1;
+		goto EVENT_INIT_FAIL_EXIT;
+	}
 
 	if (0 != espress_stream_trans_packet->open(this->trans_packet, this->interface, this->event, this->is_server))
 	{
@@ -311,10 +315,26 @@ static i_t _initialize(struct espress_stream_session *this,
 		goto TRANS_PACKET_OPEN_FAIL_EXIT;
 	}
 
-	espress_stream_mutex->initialize(this->mutex);
-	espress_stream_timer->initialize(this->send_timer);
-	espress_stream_timer->initialize(this->session_timer);
-	espress_stream_timer->initialize(this->beacon_timer);
+	if (0 != espress_stream_mutex->initialize(this->mutex))
+	{
+		ret = 1;
+		goto MUTEX_INIT_FAIL_EXIT;
+	}
+	if (0 != espress_stream_timer->initialize(this->send_timer))
+	{
+		ret = 1;
+		goto SEND_TIMER_INIT_FAIL_EXIT;
+	}
+	if (0 != espress_stream_timer->initialize(this->session_timer))
+	{
+		ret = 1;
+		goto SESSION_TIMER_INIT_FAIL_EXIT;
+	}
+	if (0 != espress_stream_timer->initialize(this->beacon_timer))
+	{
+		ret = 1;
+		goto BEACON_TIMER_INIT_FAIL_EXIT;
+	}
 
 	this->is_ack_ready = 0;
 
@@ -339,9 +359,17 @@ static i_t _initialize(struct espress_stream_session *this,
 		this->recv_state = _OPENED;
 	}
 
+BEACON_TIMER_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_timer->finalize(this->beacon_timer);
+SESSION_TIMER_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_timer->finalize(this->send_timer);
+SEND_TIMER_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_mutex->finalize(this->mutex);
+MUTEX_INIT_FAIL_EXIT:
+	if (0 != ret) espress_stream_trans_packet->close(this->trans_packet);
 TRANS_PACKET_OPEN_FAIL_EXIT:
-
 	if (0 != ret) espress_stream_event->finalize(this->event);
+EVENT_INIT_FAIL_EXIT:
 
 	return ret;
 }

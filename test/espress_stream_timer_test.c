@@ -29,9 +29,11 @@ void espress_stream_timer_test()
 	struct espress_stream_event_flags flags[1];
 	struct espress_stream_timer timer[1];
 
-	espress_stream_event->initialize(event);
+	i = espress_stream_event->initialize(event);
+	assert(0 == i);
 
-	espress_stream_timer->initialize(timer);
+	i = espress_stream_timer->initialize(timer);
+	assert(0 == i);
 
 	espress_stream_uint32_assign(t, espress_stream_uint32_0);
 	for (i = 0 ; i < 4 ; i++)
