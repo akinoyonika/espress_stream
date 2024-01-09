@@ -44,9 +44,14 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20231228.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20231228.tar.gz)
+- [espress_stream.20240110.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240110.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20240110.tar.gz (1.0-0)
+: - APIの<tt>espress_stream_wait_for_any</tt>と<tt>espress_stream_poll</tt>のプロトタイプを変更。機能を拡充した。
+ - APIの仕様変更のため、メジャーバージョン番号を変え、マイナーバージョン番号をリセットした。
+ - サンプルアプリケーション<tt>es_ftx</tt>をAPI変更に対応させた。
 
 espress_stream.20231228.tar.gz (0.9-0)
 : - 一部設定値を固定値から初期値付き変数に変更。
@@ -271,6 +276,12 @@ $ gcc main.c -lpthread -lespress_stream
 
 #define ESPRESS_STREAM_SESSION_HASH_SIZE (32)
 #define ESPRESS_STREAM_MAX_NUM_POLL_SESSION (ESPRESS_STREAM_MAX_NUM_SESSION)
+
+#define ESPRESS_STREAM_EVENT_CONNECT_RESULT (1 << 0)
+#define ESPRESS_STREAM_EVENT_CONNECT_DETECT (1 << 1)
+#define ESPRESS_STREAM_EVENT_DISCONNECT_RESULT (1 << 2)
+#define ESPRESS_STREAM_EVENT_SEND (1 << 3)
+#define ESPRESS_STREAM_EVENT_RECV (1 << 4)
 
 struct espress_stream_session_ex_param {
     int (*send_connect_payload)(void *sid, int (*callback)(void *sid, void const *payload, unsigned payload_size, int is_rejected), void *param);
@@ -521,9 +532,22 @@ int espress_stream_recv(void *sid, void *data, unsigned *data_size, unsigned tim
  * To confirm which function is able to get result, see return value of each function called with zero timeout.
  * When this function finish in success, but none function may be able to get result.
  * In this case, repeat call this function.
+ * You are able to choose event types which relate the function to wait for result.
+ * 
+ * | Event types                              | Functions                                 |
+ * |------------------------------------------|-------------------------------------------|
+ * | ESPRESS_STREAM_EVENT_CONNECT_RESULT      | espress_stream_connect_result             |
+ * | ESPRESS_STREAM_EVENT_CONNECT_DETECT      | espress_stream_connect_detect             |
+ * | ESPRESS_STREAM_EVENT_DISCONNECT_RESULT   | espress_stream_disconnect_result          |
+ * | ESPRESS_STREAM_EVENT_SEND                | espress_stream_send, espress_stream_flush |
+ * | ESPRESS_STREAM_EVENT_RECV                | espress_stream_recv                       |
+ * 
+ * One or more event types are selectable. Set concated event types with "|" to the event parameter.
  * 
  * @param[in] sid
  *     Session ID.
+ * @param[in] event
+ *     Event types.
  * @param[in] timeout
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
@@ -532,7 +556,7 @@ int espress_stream_recv(void *sid, void *data, unsigned *data_size, unsigned tim
  *     == -1: Waiting for event yet.
  *     > 0  : Failure.
  */
-int espress_stream_wait_any(void *sid, unsigned timeout);
+int espress_stream_wait_any(void *sid, unsigned event, unsigned timeout);
 
 /** @brief Break to waiting function
  * 
@@ -546,12 +570,14 @@ void espress_stream_wait_break(void *sid);
 
 /** @brief Polling multiple session.
  * 
- * Detect that any espress_stream_wait_any function result will be success or failure at least one.
+ * Detect that any espress_stream_wait_any function result for one or more sids will be success or failure at least one.
  * 
  * @param[in] sids
  *     Session IDs array.
+ * @param[in] events
+ *     Event types array.
  * @param[in] num
- *     Number of sids items.
+ *     Number of sids and events items.
  * @param[in] timeout
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
@@ -559,7 +585,7 @@ void espress_stream_wait_break(void *sid);
  *     >= 0 : Number of detected sids. (Zero indicates timeout.)
  *     == -1: Failure.
  */
-int espress_stream_poll(void * const *sids, unsigned num, unsigned timeout);
+int espress_stream_poll(void * const *sids, unsigned const *events, unsigned num, unsigned timeout);
 
 /** @brief Get source address.
  * 
@@ -1160,7 +1186,7 @@ static int send_recv(struct file_tx_attr *attr,
 
     for (i = -1, j = -1, t = timeout ; *is_running && (i == -1) && (j == -1) ; ) {
         t = timeout - t;
-        espress_stream_wait_any(sid, t);
+        espress_stream_wait_any(sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, t);
         i = espress_stream_send(sid, send_data, send_data_size, 0);
         j = espress_stream_recv(sid, recv_data, recv_data_size, 0);
 
@@ -1186,7 +1212,7 @@ static int flush_recv(struct file_tx_attr *attr,
 
     for (i = -1, j = -1, t = timeout ; *is_running && (i == -1) && (j == -1) ; ) {
         t = timeout - t;
-        espress_stream_wait_any(sid, t);
+        espress_stream_wait_any(sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, t);
         i = espress_stream_flush(sid, 0);
         j = espress_stream_recv(sid, recv_data, recv_data_size, 0);
 
@@ -1377,7 +1403,7 @@ static void *file_tx(void *param)
 
         if ((t = (espress_stream_time() - start_time) & 0xffffffff) < TIMEOUT) {
             t = TIMEOUT - t;
-            espress_stream_wait_any(*sid, *is_running ? t : 0);
+            espress_stream_wait_any(*sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, *is_running ? t : 0);
         } else {
             break;
         }
