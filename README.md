@@ -44,9 +44,12 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20240110.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240110.tar.gz)
+- [espress_stream.20240112.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240112.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20240112.tar.gz (1.1-0)
+: - APIの<tt>espress_stream_send</tt>と<tt>espress_stream_recv</tt>を改良。
 
 espress_stream.20240110.tar.gz (1.0-0)
 : - APIの<tt>espress_stream_wait_for_any</tt>と<tt>espress_stream_poll</tt>のプロトタイプを変更。機能を拡充した。
