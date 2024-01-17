@@ -132,7 +132,7 @@ static int scan_arg(int argc, char const **argv)
 struct file_rx_attr {
 	int is_attached;
 	pthread_t thread;
-	int is_running;
+	volatile int is_running;
 	void *sid;
 };
 
@@ -143,7 +143,7 @@ static void *file_rx(void *param)
 	unsigned u;
 	unsigned v;
 	size_t s;
-	int *is_running = &(((struct file_rx_attr *)param)->is_running);
+	volatile int *is_running = &(((struct file_rx_attr *)param)->is_running);
 	void **sid = &(((struct file_rx_attr *)param)->sid);
 	unsigned char buf[BUFFER_SIZE];
 	char file_name[BUFFER_SIZE];
@@ -284,7 +284,7 @@ DIR_NAME_TOO_LONG_EXIT:
 struct standby_attr {
 	int is_attached;
 	pthread_t thread;
-	int is_running;
+	volatile int is_running;
 	unsigned char message[CONNECT_MESSAGE_SIZE];
 	unsigned message_size;
 };
@@ -322,7 +322,7 @@ static void *standby(void *param)
 	void *q;
 	unsigned t;
 	unsigned u;
-	int *is_running = &(((struct standby_attr *)param)->is_running);
+	volatile int *is_running = &(((struct standby_attr *)param)->is_running);
 	unsigned num_thread = 0;
 	struct file_rx_attr **attr = NULL;
 	struct espress_stream_session_ex_param ex_param[1] = {{

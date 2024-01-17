@@ -44,9 +44,14 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20240115.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240115.tar.gz)
+- [espress_stream.20240117.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240117.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20240117.tar.gz (1.2-0)
+: - <tt>espress_stream_poll</tt>、<tt>espress_stream_wait_any</tt>の改良。
+- 前述の改良に合わせてサンプルアプリケーション<tt>es_ftx</tt>を修正。
+- サンプルアプリケーション<tt>es_ftx</tt>に対して<tt>espress_stream_wait_any</tt>の異常動作対応。この関数をコールする場所だけを最適化しないようにした。原因不明。現象確認時のGCCバージョンは11.4.0。
 
 espress_stream.20240115.tar.gz (1.1-0)
 : - API仕様となる<tt>espress_stream/api.h</tt>のコードドキュメントを加筆修正。
@@ -288,6 +293,7 @@ $ gcc main.c -lpthread -lespress_stream
 #define ESPRESS_STREAM_EVENT_DISCONNECT_RESULT (1 << 2)
 #define ESPRESS_STREAM_EVENT_SEND (1 << 3)
 #define ESPRESS_STREAM_EVENT_RECV (1 << 4)
+#define ESPRESS_STREAM_EVENT_FLUSH (1 << 5)
 
 struct espress_stream_session_ex_param {
     int (*send_connect_payload)(void *sid, int (*callback)(void *sid, void const *payload, unsigned payload_size, int is_rejected), void *param);
@@ -540,20 +546,16 @@ int espress_stream_recv(void *sid, void *data, unsigned *data_size, unsigned tim
  * In this case, repeat call this function.
  * You are able to choose event types which relate the function to wait for result.
  * 
- * | Event types                              | Functions                                 |
- * |------------------------------------------|-------------------------------------------|
- * | ESPRESS_STREAM_EVENT_CONNECT_RESULT      | espress_stream_connect_result             |
- * | ESPRESS_STREAM_EVENT_CONNECT_DETECT      | espress_stream_connect_detect             |
- * | ESPRESS_STREAM_EVENT_DISCONNECT_RESULT   | espress_stream_disconnect_result          |
- * | ESPRESS_STREAM_EVENT_SEND                | espress_stream_send, espress_stream_flush |
- * | ESPRESS_STREAM_EVENT_RECV                | espress_stream_recv                       |
+ * | Event types                            | Functions                        |
+ * |----------------------------------------|----------------------------------|
+ * | ESPRESS_STREAM_EVENT_CONNECT_RESULT    | espress_stream_connect_result    |
+ * | ESPRESS_STREAM_EVENT_CONNECT_DETECT    | espress_stream_connect_detect    |
+ * | ESPRESS_STREAM_EVENT_DISCONNECT_RESULT | espress_stream_disconnect_result |
+ * | ESPRESS_STREAM_EVENT_SEND              | espress_stream_send              |
+ * | ESPRESS_STREAM_EVENT_RECV              | espress_stream_recv              |
+ * | ESPRESS_STREAM_EVENT_FLUSH             | espress_stream_flush             |
  * 
  * One or more event types are selectable. Set event types concatenated with "|" to the event parameter.
- * Note that each events are set by change in state and reset by calling to the related function.
- * For example, the ESPRESS_STREAM_EVENT_SEND event is set by incleased free space in the send buffer and reset by calling to espress_stream_send function.
- * For this reason, even if it is possible to send the ESPRESS_STREAM_EVENT_SEND event may not be setting.
- * When sending data, instead of waiting for the event before sending the data, attempt to send the data and wait for the event if sending the data is pending.
- * Similar processing must be done for the ESPRESS_STREAM_EVENT_RECV event.
  * 
  * @param[in] sid
  *     Session ID.
@@ -786,6 +788,15 @@ static unsigned char _arg_public_key[CIPHER_ED25519_PUBLIC_KEY_SIZE];
 static char const *arg_user_id;
 static char const *arg_user_password;
 
+#pragma GCC push_options
+#   pragma GCC optimize ("O0")  /* why ? */
+    static int _espress_stream_wait_any(void *sid, unsigned event, unsigned timeout)
+    {
+        return espress_stream_wait_any(sid, event, timeout);
+    }
+#   define espress_stream_wait_any(s, e, t) _espress_stream_wait_any(s, e, t)
+#pragma GCC pop_options
+
 static int inet_naton(char const *name, char const *port, struct sockaddr *address)
 {
     int ret;
@@ -925,7 +936,7 @@ struct file_tx_attr {
     int is_attached;
     pthread_t thread;
     void *sid;
-    int is_running;
+    volatile int is_running;
     struct sockaddr_storage const *address;
     char const *file_name;
     int ret;
@@ -1135,7 +1146,7 @@ static int recv_connect_payload(void *sid, int (*callback)(void *sid, void *payl
 
 static int conn(struct file_tx_attr *attr,
     struct sockaddr_storage const *address,
-    unsigned timeout, int *is_running)
+    unsigned timeout, volatile int *is_running)
 {
     int i;
     unsigned t;
@@ -1187,7 +1198,7 @@ static int conn(struct file_tx_attr *attr,
 static int send_recv(struct file_tx_attr *attr,
     void const *send_data, unsigned *send_data_size,
     void *recv_data, unsigned *recv_data_size,
-    unsigned timeout, int *is_running)
+    unsigned timeout, volatile int *is_running)
 {
     int i;
     int j;
@@ -1195,7 +1206,7 @@ static int send_recv(struct file_tx_attr *attr,
     void *sid = attr->sid;
     unsigned const start_time = espress_stream_time();
 
-    for (i = -1, j = -1, t = timeout ; *is_running && (i == -1) && (j == -1) ; ) {
+    for (i = -1, j = -1, t = 0 ; *is_running && (i == -1) && (j == -1) ; ) {
         t = timeout - t;
         espress_stream_wait_any(sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, t);
         i = espress_stream_send(sid, send_data, send_data_size, 0);
@@ -1213,7 +1224,7 @@ static int send_recv(struct file_tx_attr *attr,
 
 static int flush_recv(struct file_tx_attr *attr,
     void *recv_data, unsigned *recv_data_size,
-    unsigned timeout, int *is_running)
+    unsigned timeout, volatile int *is_running)
 {
     int i;
     int j;
@@ -1221,7 +1232,7 @@ static int flush_recv(struct file_tx_attr *attr,
     void *sid = attr->sid;
     unsigned const start_time = espress_stream_time();
 
-    for (i = -1, j = -1, t = timeout ; *is_running && (i == -1) && (j == -1) ; ) {
+    for (i = -1, j = -1, t = 0 ; *is_running && (i == -1) && (j == -1) ; ) {
         t = timeout - t;
         espress_stream_wait_any(sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, t);
         i = espress_stream_flush(sid, 0);
@@ -1250,7 +1261,7 @@ static void *file_tx(void *param)
     void *ret = param;
     struct sockaddr_storage const *address = ((struct file_tx_attr *)param)->address;
     unsigned index = ((struct file_tx_attr *)param)->index;
-    int *is_running = &(((struct file_tx_attr *)param)->is_running);
+    volatile int *is_running = &(((struct file_tx_attr *)param)->is_running);
     char const *file_name = ((struct file_tx_attr *)param)->file_name;
     char const *main_file_name;
     FILE *file;
@@ -1404,7 +1415,11 @@ static void *file_tx(void *param)
         i = flush_recv((struct file_tx_attr *)param, &b, &w, 0, is_running);
         j = (i >> 2) & 0x03; if (1 < j) j = -1;
         i = i & 0x03; if (1 < i) i = -1;
-        if ((0 <= i) || ((j == 0) && (w == 0))) {
+        if (0 <= i) {
+            break;
+        }
+        if ((j == 0) && (w == 0)) {
+            i = 1;
             break;
         }
         v = espress_stream_buffered_send_size(*sid, NULL);
@@ -1414,12 +1429,15 @@ static void *file_tx(void *param)
 
         if ((t = (espress_stream_time() - start_time) & 0xffffffff) < TIMEOUT) {
             t = TIMEOUT - t;
-            espress_stream_wait_any(*sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, *is_running ? t : 0);
+            if (1000000 < t) {
+                t = 1000000;
+            }
+            espress_stream_wait_any(*sid, ESPRESS_STREAM_EVENT_FLUSH | ESPRESS_STREAM_EVENT_RECV, t);
         } else {
             break;
         }
     }
-    if (!*is_running || (i != 0) || ((j == 0) && (w == 0))) {
+    if (!*is_running || (i != 0)) {
         ret = NULL;
         goto DATA_SEND_TERMINATE_FAILURE_EXIT;
     }
@@ -1794,7 +1812,7 @@ static int scan_arg(int argc, char const **argv)
 struct file_rx_attr {
     int is_attached;
     pthread_t thread;
-    int is_running;
+    volatile int is_running;
     void *sid;
 };
 
@@ -1805,7 +1823,7 @@ static void *file_rx(void *param)
     unsigned u;
     unsigned v;
     size_t s;
-    int *is_running = &(((struct file_rx_attr *)param)->is_running);
+    volatile int *is_running = &(((struct file_rx_attr *)param)->is_running);
     void **sid = &(((struct file_rx_attr *)param)->sid);
     unsigned char buf[BUFFER_SIZE];
     char file_name[BUFFER_SIZE];
@@ -1946,7 +1964,7 @@ DIR_NAME_TOO_LONG_EXIT:
 struct standby_attr {
     int is_attached;
     pthread_t thread;
-    int is_running;
+    volatile int is_running;
     unsigned char message[CONNECT_MESSAGE_SIZE];
     unsigned message_size;
 };
@@ -1984,7 +2002,7 @@ static void *standby(void *param)
     void *q;
     unsigned t;
     unsigned u;
-    int *is_running = &(((struct standby_attr *)param)->is_running);
+    volatile int *is_running = &(((struct standby_attr *)param)->is_running);
     unsigned num_thread = 0;
     struct file_rx_attr **attr = NULL;
     struct espress_stream_session_ex_param ex_param[1] = {{
