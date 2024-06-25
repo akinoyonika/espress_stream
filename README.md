@@ -44,12 +44,20 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20240117.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240117.tar.gz)
+- [espress_stream.20240704.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240704.tar.gz)
 
 <details><summary>変更履歴</summary>
 
+espress_stream.20240704.tar.gz (1.3-0)
+: - APIの<tt>espress_stream_wait_break</tt>を改良。
+- APIに<tt>espress_stream_wait_cancel_break</tt>を新設。
+- サンプルアプリケーション<tt>es_ftx</tt>、<tt>es_frx</tt>を改良。
+- サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>を新設。
+- サンプルアプリケーションのディレクトリ構成を変更。
+- コードドキュメント、<tt>README.md</tt>の修正。
+
 espress_stream.20240117.tar.gz (1.2-0)
-: - <tt>espress_stream_poll</tt>、<tt>espress_stream_wait_any</tt>の改良。
+: - APIの<tt>espress_stream_poll</tt>と<tt>espress_stream_wait_any</tt>を改良。
 - 前述の改良に合わせてサンプルアプリケーション<tt>es_ftx</tt>を修正。
 - サンプルアプリケーション<tt>es_ftx</tt>に対して<tt>espress_stream_wait_any</tt>の異常動作対応。この関数をコールする場所だけを最適化しないようにした。原因不明。現象確認時のGCCバージョンは11.4.0。
 
@@ -138,9 +146,7 @@ ubuntuを使用する場合、build-essentialパッケージの導入を行え�
 $ tar zxvf espress_stream.########.tar.gz
 ```
 
-以下に導入のための手順を示します。
-
-### ライブラリー
+### 手順
 
 ```
 $ cd espress_stream/arch/linux
@@ -151,39 +157,7 @@ $ sudo make install
 $ make clean
 ```
 
-### サンプルアプリケーション
-
-```
-$ cd espress_stream/arch/linux/app/es_ftx
-$ make clean
-$ make
-$ sudo make uninstall
-$ sudo make install
-$ make clean
-$ cd ../es_frx
-$ ./mk_cert_h.sh
-1) user id: foo
-1) user password: 
-2) user id: bar
-2) user password: 
-3) user id: 
-$ make clean
-$ make
-$ sudo make uninstall
-$ sudo make install
-$ make clean
-```
-
-サンプルアプリケーションの<tt>ex_frx</tt>はサーバーアプリケーションです。
-これに必要なサーバー認証情報およびクライアント認証情報は実行コードに埋め込まれます。
-<tt>mk_cert_h.sh</tt>はこれらの情報を定義した<tt>ex_frx</tt>用のソースコードの一部(<tt>cert.h</tt>)を生成します。
-<tt>mk_cert_h.sh</tt>を実行するとユーザーIDとパスワードの入力を求められるので、入力してください。
-ユーザー情報は複数設定できるので、繰り返し入力してください。
-空行の入力で終了します。
-
 ## 使用方法
-
-### ライブラリー (<tt>libespress_stream.so</tt>)
 
 本ソフトウェアのlinuxポーティングでは、ライブラリーは共有ライブラリーとして<tt>/usr/local/lib</tt>に<tt>libespress_stream.so</tt>の名前で導入されます。ヘッダーファイルは<tt>/usr/local/include</tt>に<tt>espress_stream/api.h</tt>で導入されます。
 アプリケーション作成時にこれらをインクルード、リンクするようにしてください。
@@ -207,9 +181,13 @@ $ gcc main.c -lpthread -lespress_stream
 #ifndef __ESPRESS_STREAM_API_H__
 #define __ESPRESS_STREAM_API_H__
 
-/* espress_stream APIs
+/** @file espress_stream/api.h
+ *  
+ * espress_stream APIs
  * 
  * - Function calling procedure.
+ * 
+ * @verbatim
  * 
  *     espress_stream_begin
  *        |
@@ -261,6 +239,8 @@ $ gcc main.c -lpthread -lespress_stream
  *        V
  *     espress_stream_end
  * 
+ * @endverbatim
+ * 
  * - Async running.
  * 
  *     Different sessions are async runnable.
@@ -269,16 +249,16 @@ $ gcc main.c -lpthread -lespress_stream
  * 
  * - Return code.
  * 
- *     - == 0
+ *     - == 0:
  *         Complete in success.
  * 
- *     - > 0
+ *     - > 0:
  *         Finished in failure.
  *         In a session when a function return positive value in spite of right procedure,
  *         this session should be destroyed by "espress_stream_end_session" function.
  *         Reprocess from beginning session.
  * 
- *     - == -1
+ *     - == -1:
  *         Unfinished. Functions with timeout may return negative one.
  *         Retry run this function.
  */
@@ -311,8 +291,8 @@ struct espress_stream_session_ex_param {
  * Begin espress_stream protocol stack.
  * 
  * @return
- *     == 0: Success.
- *     > 0 : Failure.
+ *     - == 0: Success.
+ *     - > 0 : Failure.
  */
 int espress_stream_begin(void);
 
@@ -348,8 +328,8 @@ unsigned espress_stream_time(void);
  *     Stored address of an interface bind network address (include port number when it is IP address).
  * 
  * @return
- *     == 0: Success.
- *     > 0 : Failure.
+ *     - == 0: Success.
+ *     - > 0 : Failure.
  */
 int espress_stream_begin_interface(void **ifd, struct sockaddr_storage const *address);
 
@@ -378,8 +358,8 @@ void espress_stream_end_interface(void *ifd);
  *     For future use. set NULL yet.
  * 
  * @return
- *     == 0: Success.
- *     > 0 : Failure.
+ *     - == 0: Success.
+ *     - > 0 : Failure.
  */
 int espress_stream_begin_session(void **sid, void *ifd, int is_server, struct espress_stream_session_ex_param const *ex_param);
 
@@ -402,8 +382,8 @@ void espress_stream_end_session(void *sid);
  *     Stored address of a destination network address (include port number when it is IP address).
  * 
  * @return
- *     == 0: Success.
- *     > 0 : Failure.
+ *     - == 0: Success.
+ *     - > 0 : Failure.
  */
 int espress_stream_connect(void *sid, struct sockaddr_storage const *address);
 
@@ -419,9 +399,9 @@ int espress_stream_connect(void *sid, struct sockaddr_storage const *address);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for result yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for result yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_connect_result(void *sid, unsigned timeout);
 
@@ -437,9 +417,9 @@ int espress_stream_connect_result(void *sid, unsigned timeout);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for detection yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for detection yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_connect_detect(void *sid, unsigned timeout);
 
@@ -452,8 +432,8 @@ int espress_stream_connect_detect(void *sid, unsigned timeout);
  *     Session ID.
  * 
  * @return
- *     == 0: Success.
- *     > 0 : Failure.
+ *     - == 0: Success.
+ *     - > 0 : Failure.
  */
 int espress_stream_disconnect(void *sid);
 
@@ -468,9 +448,9 @@ int espress_stream_disconnect(void *sid);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for result yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for result yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_disconnect_result(void *sid, unsigned timeout);
 
@@ -489,9 +469,9 @@ int espress_stream_disconnect_result(void *sid, unsigned timeout);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for acceptable state yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for acceptable state yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_send(void *sid, void const *data, unsigned *data_size, unsigned timeout);
 
@@ -509,9 +489,9 @@ int espress_stream_send(void *sid, void const *data, unsigned *data_size, unsign
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for send complete yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for send complete yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_flush(void *sid, unsigned timeout);
 
@@ -532,9 +512,9 @@ int espress_stream_flush(void *sid, unsigned timeout);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for incoming data yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for incoming data yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_recv(void *sid, void *data, unsigned *data_size, unsigned timeout);
 
@@ -565,21 +545,31 @@ int espress_stream_recv(void *sid, void *data, unsigned *data_size, unsigned tim
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for event yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for event yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_wait_any(void *sid, unsigned event, unsigned timeout);
 
 /** @brief Break to waiting function
  * 
  * Break to waiting function. Apply this function to the function with timeout parameter.
- * The waiting function return soon because of timeout, when this function is called.
+ * If this function is called while a wait function is running, it return because of timeout that time.
+ * If this function is called when no wait function is running, the subsequently executed wait functions return immediately because of  timeout.
  * 
  * @param[in] sid
  *     Session ID.
  */
 void espress_stream_wait_break(void *sid);
+
+/** @brief Cancel break to waiting function
+ * 
+ * This function prevent to immediately return of a subsequently executed waiting function by espress_stream_wait_break function.
+ * 
+ * @param[in] sid
+ *     Session ID.
+ */
+void espress_stream_wait_cancel_break(void *sid);
 
 /** @brief Polling multiple session.
  * 
@@ -595,8 +585,8 @@ void espress_stream_wait_break(void *sid);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     >= 0 : Number of detected sids. (Zero indicates timeout.)
- *     == -1: Failure.
+ *     - >= 0 : Number of detected sids. (Zero indicates timeout.)
+ *     - == -1: Failure.
  */
 int espress_stream_poll(void * const *sids, unsigned const *events, unsigned num, unsigned timeout);
 
@@ -749,9 +739,9 @@ unsigned espress_stream_fast_retransmit_count(void *sid);
 </details>
 
 使用方法の具体例はサンプルアプリケーションのソースコードを参照してください。
-クライアントは<tt>arch/linux/app/es_ftx/src/main.c</tt>でサーバーは<tt>arch/linux/app/es_frx/src/main.c</tt>となります。
+単純な例として<tt>arch/linux/app/es_ccat-es_scat/es_ccat/src/main.c</tt> (クライアント)、<tt>arch/linux/app/es_ccat-es_scat/es_scat/src/main.c</tt> (サーバー)を示します。
 
-<details><summary><code>arch/linux/app/es_ftx/src/main.c</code></summary>
+<details><summary><code>arch/linux/app/es_ccat-es_scat/es_ccat/src/main.c</code></summary>
 
 ```
 #define _GNU_SOURCE
@@ -763,39 +753,27 @@ unsigned espress_stream_fast_retransmit_count(void *sid);
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pthread.h>
-#include <endian.h>
 #include <signal.h>
-#include <unistd.h>
+#include <poll.h>
+#include <sys/eventfd.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <sys/random.h>
 
 #include "espress_stream/api.h"
 #include "cipher_api.h"
 
-#define IS_DEBUGGING (0)
 #define TIMEOUT (30 * 1000 * 1000)
-#define BUFFER_SIZE (4 *1024)
+#define BUFFER_SIZE (2 * 1024)
 #define CONNECT_MESSAGE_SIZE (64)
-#define USER_ID_SIZE (256)
-#define USER_PASSWORD_SIZE (256)
 
 static void *ifd;
 static const char *arg_address;
 static const char *arg_port;
-static const char **arg_file_name;
-static unsigned arg_num_file;
 static unsigned char *arg_public_key;
 static unsigned char _arg_public_key[CIPHER_ED25519_PUBLIC_KEY_SIZE];
-static char const *arg_user_id;
-static char const *arg_user_password;
-
-#pragma GCC push_options
-#   pragma GCC optimize ("O0")  /* why ? */
-    static int _espress_stream_wait_any(void *sid, unsigned event, unsigned timeout)
-    {
-        return espress_stream_wait_any(sid, event, timeout);
-    }
-#   define espress_stream_wait_any(s, e, t) _espress_stream_wait_any(s, e, t)
-#pragma GCC pop_options
+static int arg_is_close_half;
+static int arg_is_silent_enable;
 
 static int inet_naton(char const *name, char const *port, struct sockaddr *address)
 {
@@ -821,16 +799,14 @@ static int scan_arg(int argc, char const **argv)
     int j;
     int k;
     char const *p;
-    int ret;
+    int ret = 0;
     char c = '\0';
 
     arg_address = "localhost";
     arg_port = "12345";
-    arg_file_name = NULL;
-    arg_num_file = 0;
     arg_public_key = NULL;
-    arg_user_id = NULL;
-    arg_user_password = NULL;
+    arg_is_close_half = 0;
+    arg_is_silent_enable = 0;
 
     for (i = 1 ; i < argc ; i++) {
         if (argv[i][0] == '-') {
@@ -839,8 +815,14 @@ static int scan_arg(int argc, char const **argv)
             case 'a':
             case 'p':
             case 'k':
-            case 'i':
-            case 'w':
+                break;
+            case 'h':
+                arg_is_close_half = 1;
+                c = '\0';
+                break;
+            case 's':
+                arg_is_silent_enable = 1;
+                c = '\0';
                 break;
             default:
                 c = '\0';
@@ -849,65 +831,46 @@ static int scan_arg(int argc, char const **argv)
             continue;
         }
         switch (c) {
-        case 'a':
-            arg_address = argv[i];
-            c = '\0';
-            break;
-        case 'p':
-            arg_port = argv[i];
-            c = '\0';
-            break;
-        case 'k':
-            for (j = 0 ; (j < (CIPHER_ED25519_PUBLIC_KEY_SIZE * 2)) && (argv[i][j] != '\0') ; j++) {
-                if (('0' <= argv[i][j]) && (argv[i][j] <= '9')) {
-                    k = argv[i][j] - '0';
-                } else if (('a' <= argv[i][j]) && (argv[i][j] <= 'f')) {
-                    k = argv[i][j] - 'a' + 10;
-                } else if (('A' <= argv[i][j]) && (argv[i][j] <= 'F')) {
-                    k = argv[i][j] - 'A' + 10;
-                } else {
-                    break;
+            case 'a':
+                arg_address = argv[i];
+                c = '\0';
+                break;
+            case 'p':
+                arg_port = argv[i];
+                c = '\0';
+                break;
+            case 'k':
+                for (j = 0 ; (j < CIPHER_ED25519_PUBLIC_KEY_SIZE * 2) &&  (argv[i][j] != '\0') ; j++) {
+                    if (('0' <= argv[i][j]) && (argv[i][j] <= '9')) {
+                        k = argv[i][j] - '0';
+                    } else if (('a' <= argv[i][j]) && (argv[i][j] <= 'f')) {
+                        k = argv[i][j] - 'a' + 10;
+                    } else if (('A' <= argv[i][j]) && (argv[i][j] <= 'F')) {
+                        k = argv[i][j] - 'A' + 10;
+                    } else {
+                        break;
+                    }
+                    if ((j & 1) == 0) {
+                        _arg_public_key[j >> 1] = (k << 4) & 0xf0;
+                    } else {
+                        _arg_public_key[j >> 1] |= k & 0x0f;
+                    }
                 }
-                if ((j & 1) == 0) {
-                    _arg_public_key[j >> 1] = (k << 4) & 0xf0;
+                if (j == (CIPHER_ED25519_PUBLIC_KEY_SIZE * 2)) {
+                    arg_public_key = _arg_public_key;
                 } else {
-                    _arg_public_key[j >> 1] |= k & 0x0f;
+                    arg_public_key = NULL;
                 }
-            }
-            if (j == (CIPHER_ED25519_PUBLIC_KEY_SIZE * 2)) {
-                arg_public_key = _arg_public_key;
-            } else {
-                arg_public_key = NULL;
-            }
-            c = '\0';
-            break;
-        case 'i':
-            arg_user_id = argv[i];
-            c = '\0';
-            break;
-        case 'w':
-            arg_user_password = argv[i];
-            c = '\0';
-            break;
-        default:
-            if (arg_num_file == 0) {
-                arg_file_name = argv + i;
-                arg_num_file = 1;
-                ret = 0;
-            } else if ((arg_file_name + arg_num_file) == (argv + i)) {
-                arg_num_file++;
-                ret = 0;
-            } else {
+                c = '\0';
+                break;
+            default:
                 ret = 1;
-            }
-            break;
+                break;
         }
         if (ret) {
             break;
         }
     }
-
-    ret = ret || (arg_num_file == 0);
 
     if (ret) {
         p = strrchr(argv[0], '/');
@@ -915,193 +878,35 @@ static int scan_arg(int argc, char const **argv)
             p = argv[0];
         } else {
             p++;
+            printf("%s "
+                    "[-a <destination address>] "
+                    "[-p <destination port>] "
+                    "[-k <destination public key>] "
+                    "[-h (half close)] "
+                    "[-s (silent)]\n",
+                p);
+            printf("%s (C) 2024 akinoyonika\n", p);
+            printf("%s\n", espress_stream_copyright());
         }
-        printf("%s "
-                "[-a <destination address>] "
-                "[-p <destination port>] "
-                "[-k <destination public key>] "
-                "[-i <user id>] "
-                "[-w <user password>] "
-                "<file name> [<file name> [...]]\n",
-            p);
-        printf("%s (C) 2023 akinoyonika\n", p);
-        printf("%s\n", espress_stream_copyright());
     }
 
     return ret;
 }
 
-struct file_tx_attr {
-    unsigned index;
-    int is_attached;
-    pthread_t thread;
+struct session_attr {
     void *sid;
     volatile int is_running;
-    struct sockaddr_storage const *address;
-    char const *file_name;
-    int ret;
     unsigned char message[CONNECT_MESSAGE_SIZE];
     unsigned message_size;
+    int event;
 };
-
-static struct file_tx_attr *file_tx_attr = NULL;
-
-#if IS_DEBUGGING
-    static void disp(unsigned index, char const *main_file_name, uint64_t file_size, uint64_t progress, int fin_state,
-        unsigned bufdsz, unsigned rtt, unsigned rto, unsigned dac, unsigned cwnd, unsigned send_timeout_count, unsigned fast_retransmit_count)
-    {
-        unsigned u;
-        static pthread_mutex_t disp_mutex[1] = {PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP};
-#       define FILE_NAME_DISP_WIDTH (24)
-
-        pthread_mutex_lock(disp_mutex);
-
-        for (u = 0 ; u < index ; u++) {
-            putchar('\n');
-            putchar('\n');
-        }
-
-        if (main_file_name == NULL) {
-            printf("------------------------\r");
-        }
-        else if (FILE_NAME_DISP_WIDTH < strlen(main_file_name)) {
-            printf("%.*s...\r", FILE_NAME_DISP_WIDTH - 3, main_file_name);
-        } else {
-            printf("%-*s\r", FILE_NAME_DISP_WIDTH, main_file_name);
-        }
-
-        printf("\x1b[24C");
-        if (fin_state == -1) {
-            printf("[XXXXXXXXXXXXXXXX(XXXXXXXX)/%016llu]\n", file_size);
-        } else if (fin_state == 1) {
-            printf("[OOOOOOOOOOOOOOOO(OOOOOOOO)/%016llu]\n", file_size);
-        } else {
-            printf("[%016llu(%08u)/%016llu]\n", progress, bufdsz, file_size);
-        }
-        if (fin_state == 0) {
-            printf("rtt=%08u, ", rtt);
-            printf("rto=%08u, ", rto);
-            printf("dac=%04u, ", dac);
-            printf("cwnd=%04u, ", cwnd);
-            printf("stoc=%08u, ", send_timeout_count);
-            printf("frxc=%08u\r\x1b[A", fast_retransmit_count);
-        } else {
-            printf("\x1b[A");
-        }
-
-        if (0 < index) {
-            printf("\x1b[%uA", index * 2);
-        }
-
-        fflush(stdout);
-
-        pthread_mutex_unlock(disp_mutex);
-    }
-
-#   define disp_fin(count) do{unsigned u; unsigned v = (count); for (u = 0 ; u < v ; u++) {putchar('\n'); putchar('\n');}}while (0)
-
-#   define disp(index, main_file_name, file_size, progress, fin_state, bufdsz, rtt, rto, dac, cwnd, send_timeout_count, fast_retransmit_count) \
-        disp(index, main_file_name, file_size, progress, fin_state, bufdsz, rtt, rto, dac, cwnd, send_timeout_count, fast_retransmit_count)
-#else
-    static void disp(unsigned index, char const *main_file_name, uint64_t file_size, uint64_t progress, int fin_state)
-    {
-        unsigned u;
-        unsigned ratio;
-        static pthread_mutex_t disp_mutex[1] = {PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP};
-#       define FILE_NAME_DISP_WIDTH (24)
-#       define disp_num(n) do               \
-        {                                   \
-            unsigned num;                   \
-            char *au;                       \
-            if (10000000000000 < (n)) {     \
-                num = (n) / 1000000000000;  \
-                au = "T";                   \
-            } else if (10000000000 < (n)) { \
-                num = (n) / 1000000000;     \
-                au = "G";                   \
-            } else if (10000000 < (n)) {    \
-                num = (n) / 1000000;        \
-                au = "M";                   \
-            } else if (10000 < (n)) {       \
-                num = (n) / 1000;           \
-                au = "K";                   \
-            } else {                        \
-                num = (n);                  \
-                au = "";                    \
-            }                               \
-            printf("%u%sB", num, au);       \
-        } while(0)
-
-        if (file_size == 0) {
-            ratio = 0;
-        } else {
-            ratio = progress * 32 / file_size;
-        }
-
-        pthread_mutex_lock(disp_mutex);
-
-        for (u = 0 ; u < index ; u++) {
-            putchar('\n');
-        }
-
-        if (main_file_name == NULL) {
-            printf("------------------------\r");
-        }
-        else if (FILE_NAME_DISP_WIDTH < strlen(main_file_name)) {
-            printf("%.*s...\r", FILE_NAME_DISP_WIDTH - 3, main_file_name);
-        } else {
-            printf("%-*s\r", FILE_NAME_DISP_WIDTH, main_file_name);
-        }
-
-        printf("\x1b[24C");
-        if (file_size == 0) {
-            if (fin_state == -1) {
-                printf("[XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX] -/-");
-            } else if (fin_state == 1) {
-                printf("[OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO] -/-");
-            } else {
-                printf("[--------------------------------] -/-");
-            }
-        } else {
-            if (fin_state == -1) {
-                printf("[XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX] -/");
-                disp_num(file_size);
-            } else if (fin_state == 1) {
-                printf("[OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO] ");
-                disp_num(progress);
-                putchar('/');
-                disp_num(file_size);
-            } else {
-                printf("[%.*s%.*s] ",
-                    ratio, "================================",
-                    32 - ratio, "--------------------------------");
-                disp_num(progress);
-                putchar('/');
-                disp_num(file_size);
-            }
-        }
-        printf("\x1b[K\r");
-
-        if (0 < index) {
-            printf("\x1b[%uA", index);
-        }
-
-        fflush(stdout);
-
-        pthread_mutex_unlock(disp_mutex);
-    }
-
-#   define disp_fin(count) do{unsigned u; unsigned v = (count); for (u = 0 ; u < v ; u++) {putchar('\n');}}while (0)
-
-#   define disp(index, main_file_name, file_size, progress, fin_state, bufdsz, rtt, rto, dac, cwnd, send_timeout_count, fast_retransmit_count) \
-        disp(index, main_file_name, file_size, progress, fin_state)
-#endif
+struct session_attr session_attr[1];
 
 static int send_connect_payload(void *sid, int (*callback)(void *sid, void const *payload, unsigned payload_size, int is_rejected), void *param)
 {
     int ret;
-    unsigned char *message = ((struct file_tx_attr *)param)->message;
-    unsigned *message_size = &(((struct file_tx_attr *)param)->message_size);
+    unsigned char *message = ((struct session_attr *)param)->message;
+    unsigned *message_size = &(((struct session_attr *)param)->message_size);
 #   define get_random(buf, buf_sz) do \
     {                                 \
         unsigned char *b = (buf);     \
@@ -1129,8 +934,8 @@ static int send_connect_payload(void *sid, int (*callback)(void *sid, void const
 static int recv_connect_payload(void *sid, int (*callback)(void *sid, void *payload, unsigned *payload_size), void *param)
 {
     int ret;
-    unsigned char *message = ((struct file_tx_attr *)param)->message;
-    unsigned *message_size = &(((struct file_tx_attr *)param)->message_size);
+    unsigned char *message = ((struct session_attr *)param)->message;
+    unsigned *message_size = &(((struct session_attr *)param)->message_size);
     unsigned char sign_message[CIPHER_ED25519_SIGNATURE_SIZE + CONNECT_MESSAGE_SIZE];
     unsigned sign_message_size = CIPHER_ED25519_SIGNATURE_SIZE + CONNECT_MESSAGE_SIZE;
     ret = callback(sid, sign_message, &sign_message_size);
@@ -1144,12 +949,13 @@ static int recv_connect_payload(void *sid, int (*callback)(void *sid, void *payl
     return ret;
 }
 
-static int conn(struct file_tx_attr *attr,
+static int conn(struct session_attr *attr,
     struct sockaddr_storage const *address,
-    unsigned timeout, volatile int *is_running)
+    unsigned timeout)
 {
     int i;
     unsigned t;
+    volatile int *is_running = &(attr->is_running);
     void **sid = &(attr->sid);
     void *new_sid;
     void *old_sid;
@@ -1166,6 +972,9 @@ static int conn(struct file_tx_attr *attr,
     if (i == 0) {
         for (i = -1, t = 0 ; *is_running && (i == -1) ; ) {
             t = timeout - t;
+            if (1000000 < t) {
+                t = 1000000;
+            }
             i = espress_stream_connect_result(*sid, t);
             if (0 < i) {
                 ex_param->send_connect_payload_param = attr;
@@ -1186,7 +995,7 @@ static int conn(struct file_tx_attr *attr,
                 i = 1;
             }
 
-            if (timeout <= (t = (espress_stream_time() - start_time) & 0xffffffff)) {
+            if (timeout <= (t = ((espress_stream_time() - start_time) & 0xffffffff))) {
                 break;
             }
         }
@@ -1195,401 +1004,275 @@ static int conn(struct file_tx_attr *attr,
     return i;
 }
 
-static int send_recv(struct file_tx_attr *attr,
-    void const *send_data, unsigned *send_data_size,
-    void *recv_data, unsigned *recv_data_size,
-    unsigned timeout, volatile int *is_running)
+static int flush(struct session_attr *attr, unsigned timeout)
 {
     int i;
-    int j;
-    unsigned t;
-    void *sid = attr->sid;
-    unsigned const start_time = espress_stream_time();
-
-    for (i = -1, j = -1, t = 0 ; *is_running && (i == -1) && (j == -1) ; ) {
-        t = timeout - t;
-        espress_stream_wait_any(sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, t);
-        i = espress_stream_send(sid, send_data, send_data_size, 0);
-        j = espress_stream_recv(sid, recv_data, recv_data_size, 0);
-
-        if (timeout <= (t = (espress_stream_time() - start_time) & 0xffffffff)) {
-            break;
-        }
-    }
-
-    i = (i < 0) ? -1 : ((0 < i) ? 1 : 0);
-    j = (j < 0) ? -1 : ((0 < j) ? 1 : 0);
-    return (i & 0x03) | ((j & 0x03) << 2);
-}
-
-static int flush_recv(struct file_tx_attr *attr,
-    void *recv_data, unsigned *recv_data_size,
-    unsigned timeout, volatile int *is_running)
-{
-    int i;
-    int j;
-    unsigned t;
-    void *sid = attr->sid;
-    unsigned const start_time = espress_stream_time();
-
-    for (i = -1, j = -1, t = 0 ; *is_running && (i == -1) && (j == -1) ; ) {
-        t = timeout - t;
-        espress_stream_wait_any(sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, t);
-        i = espress_stream_flush(sid, 0);
-        j = espress_stream_recv(sid, recv_data, recv_data_size, 0);
-
-        if (timeout <= (t = (espress_stream_time() - start_time) & 0xffffffff)) {
-            break;
-        }
-    }
-
-    i = (i < 0) ? -1 : ((0 < i) ? 1 : 0);
-    j = (j < 0) ? -1 : ((0 < j) ? 1 : 0);
-    return (i & 0x03) | ((j & 0x03) << 2);
-}
-
-static void *file_tx(void *param)
-{
-    int i;
-    int j;
-    size_t s;
-    unsigned t;
     unsigned u;
     unsigned v;
-    unsigned w;
-    unsigned char b;
-    void *ret = param;
-    struct sockaddr_storage const *address = ((struct file_tx_attr *)param)->address;
-    unsigned index = ((struct file_tx_attr *)param)->index;
-    volatile int *is_running = &(((struct file_tx_attr *)param)->is_running);
-    char const *file_name = ((struct file_tx_attr *)param)->file_name;
-    char const *main_file_name;
-    FILE *file;
-    uint64_t file_size = 0;
-    void **sid = &(((struct file_tx_attr *)param)->sid);
-    unsigned char buf[BUFFER_SIZE];
-    uint64_t progress;
+    unsigned t;
+    volatile int *is_running = &(attr->is_running);
+    void **sid = &(attr->sid);
     unsigned start_time;
 
-    main_file_name = strrchr(file_name, '/');
-    if (main_file_name == NULL) {
-        main_file_name = file_name;
-    } else {
-        if (*(++main_file_name) == '\0') {
-            main_file_name = NULL;
-            ret = NULL;
-            goto FILE_NAME_INVALID_EXIT;
-        }
-    }
-
-    file = fopen(file_name, "rb");
-    if (file == NULL) {
-        ret = NULL;
-        goto FILE_OPEN_FAILURE_EXIT;
-    }
-
-    disp(index, main_file_name, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-
-    fseek(file, 0, SEEK_END);
-    file_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    i = conn((struct file_tx_attr *)param, address, *is_running ? TIMEOUT : 0, is_running);
-    if (i != 0) {
-        ret = NULL;
-        goto CONNECT_FAILURE_EXIT;
-    }
-
-    strcpy((char *)buf, arg_user_id);
-    strcat((char *)buf, ":");
-    strcat((char *)buf, arg_user_password);
-    for (u = 0, s = strlen((char *)buf) + 1 ; u < s ; u += v) {
-        v = s - u;
-        w = 1;
-        i = send_recv((struct file_tx_attr *)param, buf + u, &v, &b, &w, *is_running ? TIMEOUT : 0, is_running);
-        j = (i >> 2) & 0x03; if (1 < j) j = -1;
-        i = i & 0x03; if (1 < i) i = -1;
-        if (i != 0) {
-            i = 1;
-            break;
-        }
-        if ((j == 0) && (w == 0)) {
-            i = 1;
-            break;
-        }
-        i = 0;
-    }
-    if (i != 0) {
-        ret = NULL;
-        goto USER_ID_PASS_SEND_FAILURE_EXIT;
-    }
-    i = espress_stream_flush(*sid, *is_running ? TIMEOUT : 0);
-    if (i != 0) {
-        ret = NULL;
-        goto USER_ID_PASS_SEND_FAILURE_EXIT;
-    }
-
-    for (u = 0, s = strlen(main_file_name) + 1 ; u < s ; u += v) {
-        v = s - u;
-        w = 1;
-        i = send_recv((struct file_tx_attr *)param, main_file_name + u, &v, &b, &w, *is_running ? TIMEOUT : 0, is_running);
-        j = (i >> 2) & 0x03; if (1 < j) j = -1;
-        i = i & 0x03; if (1 < i) i = -1;
-        if (i != 0) {
-            i = 1;
-            break;
-        }
-        if ((j == 0) && (w == 0)) {
-            i = 1;
-            break;
-        }
-        i = 0;
-    }
-    if (i != 0) {
-        ret = NULL;
-        goto NAME_SEND_FAILURE_EXIT;
-    }
-    i = espress_stream_flush(*sid, *is_running ? TIMEOUT : 0);
-    if (i != 0) {
-        ret = NULL;
-        goto NAME_SEND_FAILURE_EXIT;
-    }
-
-    for (progress = 0 ; *is_running ; ) {
-        s = fread(buf, 1, sizeof(buf), file);
-        for (u = 0 ; u < s ; u += v) {
-            disp(index, main_file_name, file_size, (progress + u) - espress_stream_buffered_send_size(*sid, NULL), i ? -1 : 0,
-                espress_stream_buffered_send_size(*sid, NULL),
-                espress_stream_rtt(*sid),
-                espress_stream_rto(*sid),
-                espress_stream_dac(*sid),
-                espress_stream_cwnd(*sid),
-                espress_stream_send_timeout_count(*sid),
-                espress_stream_fast_retransmit_count(*sid));
-            v = s - u;
-            w = 1;
-            i = send_recv((struct file_tx_attr *)param, buf + u, &v, &b, &w, *is_running ? TIMEOUT : 0, is_running);
-            j = (i >> 2) & 0x03; if (1 < j) j = -1;
-            i = i & 0x03; if (1 < i) i = -1;
-            if (i != 0) {
-                i = 1;
-                break;
-            }
-            if ((j == 0) && (w == 0)) {
-                i = 1;
-                break;
-            }
-        }
-        disp(index, main_file_name, file_size, (progress += u) - espress_stream_buffered_send_size(*sid, NULL), i ? -1 : 0,
-            espress_stream_buffered_send_size(*sid, NULL),
-            espress_stream_rtt(*sid),
-            espress_stream_rto(*sid),
-            espress_stream_dac(*sid),
-            espress_stream_cwnd(*sid),
-            espress_stream_send_timeout_count(*sid),
-            espress_stream_fast_retransmit_count(*sid));
-        if (i != 0) {
-            break;
-        }
-        if (s < sizeof(buf)) {
-            break;
-        }
-    }
-    if (!*is_running || (i != 0)) {
-        ret = NULL;
-        goto DATA_SEND_BREAK_EXIT;
-    }
-
-    for (u = espress_stream_buffered_send_size(*sid, NULL), start_time = espress_stream_time(), t = 0 ;
-        *is_running ;
+    espress_stream_flush(*sid, 0);
+    for (i = -1, u = espress_stream_buffered_send_size(*sid, NULL), start_time = espress_stream_time(), t = 0 ;
+        *is_running & (i == -1) ;
         u = v) {
-        disp(index, main_file_name, file_size, progress - espress_stream_buffered_send_size(*sid, NULL), 0,
-            espress_stream_buffered_send_size(*sid, NULL),
-            espress_stream_rtt(*sid),
-            espress_stream_rto(*sid),
-            espress_stream_dac(*sid),
-            espress_stream_cwnd(*sid),
-            espress_stream_send_timeout_count(*sid),
-            espress_stream_fast_retransmit_count(*sid));
-        w = 1;
-        i = flush_recv((struct file_tx_attr *)param, &b, &w, 0, is_running);
-        j = (i >> 2) & 0x03; if (1 < j) j = -1;
-        i = i & 0x03; if (1 < i) i = -1;
-        if (0 <= i) {
-            break;
+        t = timeout - t;
+        if (1000000 < t) {
+            t = 1000000;
         }
-        if ((j == 0) && (w == 0)) {
-            i = 1;
-            break;
-        }
+        i = espress_stream_flush(*sid, t);
+
         v = espress_stream_buffered_send_size(*sid, NULL);
         if (u != v) {
             start_time = espress_stream_time();
         }
 
-        if ((t = (espress_stream_time() - start_time) & 0xffffffff) < TIMEOUT) {
-            t = TIMEOUT - t;
-            if (1000000 < t) {
-                t = 1000000;
-            }
-            espress_stream_wait_any(*sid, ESPRESS_STREAM_EVENT_FLUSH | ESPRESS_STREAM_EVENT_RECV, t);
-        } else {
+        if (timeout <= (t = ((espress_stream_time() - start_time) & 0xffffffff))) {
             break;
         }
     }
-    if (!*is_running || (i != 0)) {
-        ret = NULL;
-        goto DATA_SEND_TERMINATE_FAILURE_EXIT;
+
+    return i;
+}
+
+static void *r_wait(void *param)
+{
+    void **sid = &(((struct session_attr *)param)->sid);
+    int *event = &(((struct session_attr *)param)->event);
+    uint64_t const u64 = 1;
+    espress_stream_wait_any(*sid, ESPRESS_STREAM_EVENT_RECV, 0xffffffff);
+    while (sizeof(u64) != write(*event, &u64, sizeof(u64)));
+    return NULL;
+}
+
+static void *sr_wait(void *param)
+{
+    void **sid = &(((struct session_attr *)param)->sid);
+    int *event = &(((struct session_attr *)param)->event);
+    uint64_t const u64 = 1;
+    espress_stream_wait_any(*sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, 0xffffffff);
+    while (sizeof(u64) != write(*event, &u64, sizeof(u64)));
+    return NULL;
+}
+
+static void wait(struct session_attr *attr, int is_stdin_open, int is_sidin_open, int is_write, int is_send, unsigned timeout)
+{
+    int i = -1;
+    uint64_t u64;
+    void **sid = &(attr->sid);
+    int *event = &(attr->event);
+    pthread_t sub_wait_thread;
+    struct pollfd fds[2];
+    nfds_t nfds = 0;
+
+    if (is_stdin_open) {
+        fds[nfds].fd = STDIN_FILENO;
+        fds[nfds].events = POLLIN;
+        if (is_write) {
+            fds[nfds].events |= POLLOUT;
+        }
+        fds[nfds].revents = 0;
+        nfds++;
     }
 
-DATA_SEND_TERMINATE_FAILURE_EXIT:
-DATA_SEND_BREAK_EXIT:
-NAME_SEND_FAILURE_EXIT:
-USER_ID_PASS_SEND_FAILURE_EXIT:
-    espress_stream_disconnect(*sid);
-    espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
-    if (ret != NULL) {
-        for (u = 0 ; u < sizeof(uint64_t) ; u += v) {
-            v = sizeof(uint64_t) - u;
-            i = espress_stream_recv(*sid, buf + u, &v, *is_running ? TIMEOUT : 0);
-            if (i != 0) {
-                break;
+    if (is_sidin_open) {
+        *event = eventfd(0, EFD_NONBLOCK);
+        if (0 <= *event) {
+            if (is_send) {
+                i = pthread_create(&sub_wait_thread, NULL, sr_wait, attr);
+            } else {
+                i = pthread_create(&sub_wait_thread, NULL, r_wait, attr);
             }
-            if (v == 0) {
-                i = 1;
+            if (i == 0) {
+                fds[nfds].fd = *event;
+                fds[nfds].events = POLLIN;
+                fds[nfds].revents = 0;
+                nfds++;
+            }
+        }
+    }
+
+    poll(fds, nfds, timeout / 1000);
+
+    if (is_sidin_open) {
+        if (0 <= *event) {
+            if (i == 0) {
+                espress_stream_wait_break(*sid);
+                while (sizeof(u64) != read(*event, &u64, sizeof(u64)));
+                pthread_join(sub_wait_thread, NULL);
+                espress_stream_wait_cancel_break(*sid);
+            }
+            close(*event);
+        }
+    }
+}
+
+static void cat(struct session_attr *attr)
+{
+    int i;
+    ssize_t st;
+    unsigned u;
+    volatile int *is_running = &(attr->is_running);
+    void **sid = &(attr->sid);
+    unsigned char read_buf[BUFFER_SIZE];
+    unsigned read_buf_size = 0;
+    unsigned char recv_buf[BUFFER_SIZE];
+    unsigned recv_buf_size = 0;
+    unsigned char *write_buf = recv_buf;
+#   define write_buf_size recv_buf_size
+    unsigned char *send_buf = read_buf;
+#   define send_buf_size read_buf_size
+    struct pollfd fds[1];
+    int is_stdin_open;
+    int is_sidin_open;
+
+    for (is_stdin_open = 1, is_sidin_open = 1 ; *is_running && (is_stdin_open || is_sidin_open) ; ) {
+        wait(attr, is_stdin_open, is_sidin_open, 0 < write_buf_size, 0 < send_buf_size, 1000000);
+
+        fds->fd = STDIN_FILENO;
+        fds->events = POLLIN;
+        fds->revents = 0;
+        if (is_stdin_open && (read_buf_size == 0)) {
+            st = read(STDIN_FILENO, read_buf, BUFFER_SIZE);
+            if (0 < st) {
+                read_buf_size = st;
+            } else if (st == 0) {
+                is_stdin_open = 0;
+                if (send_buf_size == 0) {
+                    flush(attr, TIMEOUT);
+                    espress_stream_disconnect(*sid);
+                    espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                }
+            } else if (errno != EAGAIN) {
                 break;
             }
         }
-        if (!*is_running || (i != 0) || (file_size != be64toh(*((uint64_t *)buf)))) {
-            ret = NULL;
-        } else {
-            w = 1;
-            espress_stream_recv(*sid, &b, &w, *is_running ? TIMEOUT : 0);
+
+        if (is_sidin_open && (recv_buf_size == 0)) {
+            u = BUFFER_SIZE;
+            i = espress_stream_recv(*sid, recv_buf, &u, 0);
+            if (i == 0) {
+                if (0 < u) {
+                    recv_buf_size = u;
+                } else {
+                    is_sidin_open = 0;
+                    if (write_buf_size == 0) {
+                        close(STDOUT_FILENO);
+                    }
+                    if (!arg_is_close_half && is_stdin_open)
+                    {
+                        is_stdin_open = 0;
+                        if (send_buf_size == 0) {
+                            flush(attr, TIMEOUT);
+                            espress_stream_disconnect(*sid);
+                            espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                        }
+                    }
+                }
+            } else if (0 < i) {
+                break;
+            }
+        }
+
+        fds->fd = STDOUT_FILENO;
+        fds->events = POLLOUT;
+        fds->revents = 0;
+        if (0 < write_buf_size) {
+            st = write(STDOUT_FILENO, write_buf, write_buf_size);
+            if (0 < st) {
+                write_buf += st;
+                write_buf_size -= st;
+                if (write_buf_size == 0) {
+                    write_buf = recv_buf;
+                    if (is_sidin_open) {
+                        fsync(STDOUT_FILENO);
+                    } else {
+                        close(STDOUT_FILENO);
+                    }
+                }
+            } else if (errno != EAGAIN) {
+                break;
+            }
+        }
+
+        if (0 < send_buf_size) {
+            u = send_buf_size;
+            i = espress_stream_send(*sid, send_buf, &u, 0);
+            if (i == 0) {
+                send_buf += u;
+                send_buf_size -= u;
+                if (send_buf_size == 0) {
+                    send_buf = read_buf;
+                    if (is_stdin_open) {
+                        espress_stream_flush(*sid, 0);
+                    } else {
+                        flush(attr, TIMEOUT);
+                        espress_stream_disconnect(*sid);
+                        espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                    }
+                }
+            } else if (0 < i) {
+                break;
+            }
         }
     }
-CONNECT_FAILURE_EXIT:
-    fclose(file);
-FILE_OPEN_FAILURE_EXIT:
-FILE_NAME_INVALID_EXIT:
-    if (ret == NULL) {
-        disp(index, main_file_name, file_size, 0, -1, 0, 0, 0, 0, 0, 0, 0);
-    } else {
-        disp(index, main_file_name, file_size, file_size, 1, 0, 0, 0, 0, 0, 0, 0);
-    }
-
-    *is_running = 0;
-    return ret;
 }
 
 static void sigh(int signum)
 {
-    unsigned u;
-    for (u = 0 ; u < arg_num_file ; u++) {
-        if (file_tx_attr[u].is_attached) {
-            file_tx_attr[u].is_running = 0;
-        }
-    }
+    session_attr->is_running = 0;
 }
 
 int main(int argc, char const **argv)
 {
     int ret = 0;
     int i;
-    unsigned u;
-    void *p;
-    int is_stream_ng = 1;
     struct sockaddr_storage address[1] = {0};
     struct sockaddr_storage src_address[1] = {0};
-    sighandler_t org_sigh;
+    struct session_attr *attr = session_attr;
     struct espress_stream_session_ex_param ex_param[1] = {{
         send_connect_payload, NULL,
         recv_connect_payload, NULL,
         NULL, NULL,
         NULL, NULL
     }};
-    char user_id[USER_ID_SIZE];
-    char user_password[USER_PASSWORD_SIZE];
-
-    ifd = NULL;
+    sighandler_t org_sigh;
 
     i = scan_arg(argc, argv);
     if (i) {
         ret = 1;
-        //fprintf(stderr, "error: scan argument failure.\n");
-        goto EXIT;
+        goto SCAN_ARG_FAIL_EXIT;
     }
 
-    printf("destination address: %s\n", arg_address);
-    printf("destination port: %s\n", arg_port);
-    printf("destination public key: ");
-    if (arg_public_key == NULL) {
-        printf("(none)");
-    } else {
-        for (i = 0 ; i < CIPHER_ED25519_PUBLIC_KEY_SIZE ; i++) {
-            printf("%02x", arg_public_key[i]);
+    if (!arg_is_silent_enable) {
+        printf("destination address: %s\n", arg_address);
+        printf("destination port: %s\n", arg_port);
+        printf("destination public key: ");
+        if (arg_public_key == NULL) {
+            printf("(none)");
+        } else {
+            for (i = 0 ; i < CIPHER_ED25519_PUBLIC_KEY_SIZE ; i++) {
+                printf("%02x", arg_public_key[i]);
+            }
         }
-    }
-    printf("\n");
-    printf("number of sending files: %u\n", arg_num_file);
-    printf("user id: ");
-    if (arg_user_id == NULL) {
-        if ((fgets(user_id, USER_ID_SIZE, stdin) == NULL) ||
-            (user_id[0] == '\n') ||
-            (user_id[0] == '\0')) {
-            user_id[0] = '\0';
-        } else if (user_id[strlen(user_id) - 1] == '\n') {
-            user_id[strlen(user_id) - 1] = '\0';
-        }
-    } else {
-        strncpy(user_id, arg_user_id, USER_ID_SIZE);
-        user_id[USER_ID_SIZE - 1] = '\0';
-        printf("%s\n", user_id);
-    }
-    arg_user_id = user_id;
-    printf("user password: ");
-    if (arg_user_password == NULL) {
-#       pragma GCC diagnostic push
-#       pragma GCC diagnostic ignored "-Wunused-result"
-        system("stty -echo");
-#       pragma GCC diagnostic pop
-        if ((fgets(user_password, USER_PASSWORD_SIZE, stdin) == NULL) ||
-            (user_password[0] == '\n') ||
-            (user_password[0] == '\0')) {
-            user_password[0] = '\0';
-        } else if (user_password[strlen(user_password) - 1] == '\n') {
-            user_password[strlen(user_password) - 1] = '\0';
-        }
-#       pragma GCC diagnostic push
-#       pragma GCC diagnostic ignored "-Wunused-result"
-        system("stty echo");
-#       pragma GCC diagnostic pop
         printf("\n");
-    } else {
-        strncpy(user_password, arg_user_password, USER_PASSWORD_SIZE);
-        user_password[USER_PASSWORD_SIZE - 1] = '\0';
-        printf("\n");
+        printf("close: %s\n", arg_is_close_half ? "half" : "full");
     }
-    arg_user_password = user_password;
 
     i = inet_naton(arg_address, arg_port, (struct sockaddr *)address);
     if (i) {
         ret = 1;
         fprintf(stderr, "error: invalid address/port\n");
-        goto EXIT;
+        goto SCAN_ARG_FAIL_EXIT;
     }
 
-    file_tx_attr = (struct file_tx_attr *)calloc(arg_num_file, sizeof(struct file_tx_attr));
-    if (file_tx_attr == NULL) {
-        ret = 1;
-        fprintf(stderr, "error: heap allocate failure.\n");
-        goto EXIT;
-    }
-
-    is_stream_ng = (espress_stream_begin() != 0);
-    if (is_stream_ng) {
+    i = espress_stream_begin();
+    if (i != 0) {
         ret = 1;
         fprintf(stderr, "error: can't begin stream.\n");
-        goto EXIT;
+        goto BEGIN_STREAM_FAIL_EXIT;
     }
 
     ((struct sockaddr_in *)src_address)->sin_family = AF_INET;
@@ -1597,77 +1280,49 @@ int main(int argc, char const **argv)
     ((struct sockaddr_in *)src_address)->sin_addr.s_addr = htonl(INADDR_ANY);
     i = espress_stream_begin_interface(&ifd, src_address);
     if (i != 0) {
-        ifd = NULL;
         ret = 1;
         fprintf(stderr, "error: can't begin interface.\n");
-        goto EXIT;
+        goto BEGIN_INTERFACE_FAIL_EXIT;
     }
 
-    for (u = 0 ; u < arg_num_file ; u++) {
-        file_tx_attr[u].index = u;
-        file_tx_attr[u].is_attached = 1;
-        file_tx_attr[u].is_running = 1;
-        file_tx_attr[u].address = address;
-        file_tx_attr[u].file_name = arg_file_name[u];
-        file_tx_attr[u].ret = 0;
-        ex_param->send_connect_payload_param = file_tx_attr + u;
-        ex_param->recv_connect_payload_param = file_tx_attr + u;
-        i = espress_stream_begin_session(&(file_tx_attr[u].sid), ifd, 0, ex_param);
-        if ((i != 0) || pthread_create(&(file_tx_attr[u].thread), NULL, file_tx, file_tx_attr + u)) {
-            file_tx_attr[u].is_attached = 0;
-            file_tx_attr[u].is_running = 0;
-        }
+    attr->is_running = 1;
+    ex_param->send_connect_payload_param = attr;
+    ex_param->recv_connect_payload_param = attr;
+    i = espress_stream_begin_session(&(attr->sid), ifd, 0, ex_param);
+    if (i != 0) {
+        ret = 1;
+        fprintf(stderr, "error: can't begin session.\n");
+        goto BEGIN_SESSION_FAIL_EXIT;
     }
+
+    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+    fcntl(STDOUT_FILENO, F_SETFL, O_NONBLOCK);
 
     org_sigh = signal(SIGINT, sigh);
 
-    for ( ; ; ) {
-        sleep(1);
-        for (u = 0 ; u < arg_num_file ; u++) {
-            if (file_tx_attr[u].is_attached && file_tx_attr[u].is_running) {
-                break;
-            }
-        }
-        if (u == arg_num_file) {
-            for (u = 0 ; u < arg_num_file ; u++) {
-                if (file_tx_attr[u].is_attached) {
-                    espress_stream_wait_break(file_tx_attr[u].sid);
-                }
-            }
-            break;
-        }
+    i = conn(attr, address, attr->is_running ? TIMEOUT : 0);
+    if (i != 0) {
+        fprintf(stderr, "error: fail to connect.\n");
+        ret = 1;
+        goto CONN_FAIL_EXIT;
     }
 
+    if (!arg_is_silent_enable) {
+        printf("CONNECT\n");
+        fflush(stdout);
+    }
+
+    cat(attr);
+
+CONN_FAIL_EXIT:
     signal(SIGINT, org_sigh);
-
-    for (u = 0 ; u < arg_num_file ; u++) {
-        if (file_tx_attr[u].is_attached) {
-            i = pthread_join(file_tx_attr[u].thread, &p);
-            if ((i != 0) || (p == NULL)) {
-                file_tx_attr[u].ret = 1;
-            }
-            file_tx_attr[u].is_attached = 0;
-            espress_stream_end_session(file_tx_attr[u].sid);
-        } else {
-            file_tx_attr[u].ret = 1;
-        }
-    }
-
-    disp_fin(arg_num_file);
-
-    for (u = 0 ; u < arg_num_file ; u++) {
-        if (file_tx_attr[u].ret) {
-            ret = 1;
-            fprintf(stderr, "error: file \"%s\" transmit failure.\n", file_tx_attr[u].file_name);
-        }
-    }
-
-
-EXIT:
-
-    if (ifd != NULL) espress_stream_end_interface(ifd);
-    if (!is_stream_ng) espress_stream_end();
-    if (file_tx_attr != NULL) free(file_tx_attr);
+    espress_stream_end_session(attr->sid);
+BEGIN_SESSION_FAIL_EXIT:
+    espress_stream_end_interface(ifd);
+BEGIN_INTERFACE_FAIL_EXIT:
+    espress_stream_end();
+BEGIN_STREAM_FAIL_EXIT:
+SCAN_ARG_FAIL_EXIT:
 
     return ret;
 }
@@ -1675,7 +1330,7 @@ EXIT:
 
 </details>
 
-<details><summary><code>arch/linux/app/es_frx/src/main.c</code></summary>
+<details><summary><code>arch/linux/app/es_ccat-es_scat/es_scat/src/main.c</code></summary>
 
 ```
 #define _GNU_SOURCE
@@ -1687,9 +1342,11 @@ EXIT:
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pthread.h>
-#include <endian.h>
 #include <signal.h>
-#include <unistd.h>
+#include <poll.h>
+#include <sys/eventfd.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include "espress_stream/api.h"
 #include "cipher_api.h"
@@ -1697,25 +1354,16 @@ EXIT:
 
 static unsigned char const secret_key[] = SECRET_KEY;
 static unsigned char const public_key[] = PUBLIC_KEY;
-static char const *user_id_pass[] = USER_ID_PASS;
 
-#define IS_DEBUGGING (0)
-#define NUM_STANDBY (16)
 #define TIMEOUT (30 * 1000 * 1000)
-#define BUFFER_SIZE (4 *1024)
+#define BUFFER_SIZE (2 * 1024)
 #define CONNECT_MESSAGE_SIZE (64)
-
-#if IS_DEBUGGING
-#   define DEBUG_PRINT(...) printf(__VA_ARGS__)
-#else
-#   define DEBUG_PRINT(...) ((void)0)
-#endif
 
 static void *ifd;
 static const char *arg_address;
 static const char *arg_port;
-static int arg_is_overwrite;
-static const char *arg_dir_name;
+static int arg_is_close_half;
+static int arg_is_silent_enable;
 
 static int inet_naton(char const *name, char const *port, struct sockaddr *address)
 {
@@ -1739,23 +1387,27 @@ static int scan_arg(int argc, char const **argv)
 {
     int i;
     char const *p;
-    int ret;
+    int ret = 0;
     char c = '\0';
 
     arg_address = NULL;
     arg_port = "12345";
-    arg_is_overwrite = 0;
-    arg_dir_name = NULL;
+    arg_is_close_half = 0;
+    arg_is_silent_enable = 0;
 
     for (i = 1 ; i < argc ; i++) {
-                if (argv[i][0] == '-') {
+        if (argv[i][0] == '-') {
             c = argv[i][1];
             switch (c) {
             case 'a':
             case 'p':
                 break;
-            case 'o':
-                arg_is_overwrite = 1;
+            case 'h':
+                arg_is_close_half = 1;
+                c = '\0';
+                break;
+            case 's':
+                arg_is_silent_enable = 1;
                 c = '\0';
                 break;
             default:
@@ -1765,29 +1417,22 @@ static int scan_arg(int argc, char const **argv)
             continue;
         }
         switch (c) {
-        case 'a':
-            arg_address = argv[i];
-            c = '\0';
-            break;
-        case 'p':
-            arg_port = argv[i];
-            c = '\0';
-            break;
-        default:
-            if (arg_dir_name == NULL) {
-                arg_dir_name = argv[i];
-                ret = 0;
-            } else {
+            case 'a':
+                arg_address = argv[i];
+                c = '\0';
+                break;
+            case 'p':
+                arg_port = argv[i];
+                c = '\0';
+                break;
+            default:
                 ret = 1;
-            }
-            break;
+                break;
         }
         if (ret) {
             break;
         }
     }
-
-    ret = ret || (arg_dir_name == NULL);
 
     if (ret) {
         p = strrchr(argv[0], '/');
@@ -1795,186 +1440,34 @@ static int scan_arg(int argc, char const **argv)
             p = argv[0];
         } else {
             p++;
-        }
-        printf("%s "
-                "[-a <bind address>] "
-                "[-p <bind port>] "
-                "[-o (overwrite)] "
-                "<dir name>\n",
-            p);
-        printf("%s (C) 2023 akinoyonika\n", p);
-        printf("%s\n", espress_stream_copyright());
-    }
-
-    return ret || (arg_dir_name == NULL);
-}
-
-struct file_rx_attr {
-    int is_attached;
-    pthread_t thread;
-    volatile int is_running;
-    void *sid;
-};
-
-static void *file_rx(void *param)
-{
-    void *ret = param;
-    int i;
-    unsigned u;
-    unsigned v;
-    size_t s;
-    volatile int *is_running = &(((struct file_rx_attr *)param)->is_running);
-    void **sid = &(((struct file_rx_attr *)param)->sid);
-    unsigned char buf[BUFFER_SIZE];
-    char file_name[BUFFER_SIZE];
-    FILE *file;
-    uint64_t file_size;
-
-    for (u = 0 ; u < sizeof(buf) ; u++) {
-        v = 1;
-        i = espress_stream_recv(*sid, buf + u, &v, *is_running ? TIMEOUT : 0);
-        if (i != 0) {
-            break;
-        }
-        if (v == 0) {
-            i = 1;
-            break;
-        }
-        if (buf[u] == '\0') {
-            break;
-        }
-    }
-    if ((i != 0) || (u == sizeof(buf))) {
-        ret = NULL;
-        goto USER_ID_PASS_SCAN_FAILURE_EXIT;
-    }
-    for (i = 0 ; i < (sizeof(user_id_pass) / sizeof(user_id_pass[0])) ; i++) {
-        if (strcmp((char *)buf, user_id_pass[i]) == 0) {
-            break;
-        }
-    }
-    if (i == (sizeof(user_id_pass) / sizeof(user_id_pass[0]))) {
-        ret = NULL;
-        goto USER_ID_PASS_SCAN_FAILURE_EXIT;
-    }
-
-    i = (arg_dir_name[strlen(arg_dir_name) - 1] == '/') ? 0 : 1;
-    if (sizeof(file_name) <= (strlen(arg_dir_name) + i)) {
-        ret = NULL;
-        goto DIR_NAME_TOO_LONG_EXIT;
-    }
-    sprintf(file_name, "%s%s", arg_dir_name, i ? "/" : "");
-    for (u = strlen(file_name) ; u < sizeof(file_name) ; u++) {
-        v = 1;
-        i = espress_stream_recv(*sid, file_name + u, &v, *is_running ? TIMEOUT : 0);
-        if (i != 0) {
-            break;
-        }
-        if (v == 0) {
-            i = 1;
-            break;
-        }
-        if (file_name[u] == '\0') {
-            break;
-        }
-    }
-    if ((i != 0) || (u == sizeof(file_name))) {
-        ret = NULL;
-        goto FILE_NAME_SCAN_FAILURE_EXIT;
-    }
-
-    if (!arg_is_overwrite) {
-        file = fopen(file_name, "rb");
-        if (file != NULL) {
-            fclose(file);
-            ret = NULL;
-            goto FILE_OPEN_FAILURE_EXIT;
+            printf("%s "
+                    "[-a <bind address>] "
+                    "[-p <bind port>] "
+                    "[-h (half close)] "
+                    "[-s (silent)]\n",
+                p);
+            printf("%s (C) 2024 akinoyonika\n", p);
+            printf("%s\n", espress_stream_copyright());
         }
     }
 
-    file = fopen(file_name, "wb");
-    if (file == NULL) {
-        ret = NULL;
-        goto FILE_OPEN_FAILURE_EXIT;
-    }
-
-    DEBUG_PRINT("download start: \"%s\"\n", file_name);
-
-    while (*is_running) {
-        u = sizeof(buf);
-        i = espress_stream_recv(*sid, buf, &u, *is_running ? TIMEOUT : 0);
-        if (i != 0) {
-            break;
-        }
-        if (u == 0) {
-            break;
-        }
-        s = fwrite(buf, 1, u, file);
-        if (s < u) {
-            i = 1;
-            break;
-        }
-    }
-    if (!*is_running || (i != 0)) {
-        ret = NULL;
-        DEBUG_PRINT("download break: \"%s\"\n", file_name);
-        goto DATA_RECV_BREAK_EXIT;
-    }
-
-    DEBUG_PRINT("download finish: \"%s\"\n", file_name);
-
-DATA_RECV_BREAK_EXIT:
-    file_size = ftell(file);
-    fclose(file);
-    if (ret == NULL) {
-        unlink(file_name);
-    } else {
-        *((uint64_t *)buf) = htobe64(file_size);
-        for (u = 0 ; u < sizeof(uint64_t) ; u += v) {
-            v = sizeof(uint64_t) - u;
-            i = espress_stream_send(*sid, buf + u, &v, *is_running ? TIMEOUT : 0);
-            if (i != 0) {
-                break;
-            }
-        }
-        if (i != 0) {
-            ret = NULL;
-            DEBUG_PRINT("send response failure: \"%s\"\n", file_name);
-        } else {
-            i = espress_stream_flush(*sid, *is_running ? TIMEOUT : 0);
-            if (i != 0) {
-                ret = NULL;
-                DEBUG_PRINT("send response failure: \"%s\"\n", file_name);
-            } else {
-                DEBUG_PRINT("send response: \"%s\"\n", file_name);
-            }
-        }
-    }
-FILE_OPEN_FAILURE_EXIT:
-FILE_NAME_SCAN_FAILURE_EXIT:
-USER_ID_PASS_SCAN_FAILURE_EXIT:
-DIR_NAME_TOO_LONG_EXIT:
-    espress_stream_disconnect(*sid);
-    espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
-
-    *is_running = 0;
     return ret;
 }
 
-struct standby_attr {
-    int is_attached;
-    pthread_t thread;
+struct session_attr {
+    void *sid;
     volatile int is_running;
     unsigned char message[CONNECT_MESSAGE_SIZE];
     unsigned message_size;
+    int event;
 };
-static struct standby_attr standby_attr[NUM_STANDBY];
+struct session_attr session_attr[1];
 
 static int send_connect_payload(void *sid, int (*callback)(void *sid, void const *payload, unsigned payload_size, int is_rejected), void *param)
 {
     int ret;
-    unsigned char *message = ((struct standby_attr *)param)->message;
-    unsigned message_size = ((struct standby_attr *)param)->message_size;
+    unsigned char *message = ((struct session_attr *)param)->message;
+    unsigned message_size = ((struct session_attr *)param)->message_size;
     unsigned char sign_message[CIPHER_ED25519_SIGNATURE_SIZE + CONNECT_MESSAGE_SIZE];
     if (message_size == CONNECT_MESSAGE_SIZE) {
         cipher_ed25519_sign(sign_message, secret_key, message, message_size);
@@ -1988,23 +1481,21 @@ static int send_connect_payload(void *sid, int (*callback)(void *sid, void const
 
 static int recv_connect_payload(void *sid, int (*callback)(void *sid, void *payload, unsigned *payload_size), void *param)
 {
-    unsigned char *message = ((struct standby_attr *)param)->message;
-    unsigned *message_size = &(((struct standby_attr *)param)->message_size);
+    unsigned char *message = ((struct session_attr *)param)->message;
+    unsigned *message_size = &(((struct session_attr *)param)->message_size);
     *message_size = CONNECT_MESSAGE_SIZE;
     return callback(sid, message, message_size);
 }
 
-static void *standby(void *param)
+static int accpt(struct session_attr *attr, unsigned timeout)
 {
-    void *ret = param;
     int i;
-    void *p;
-    void *q;
     unsigned t;
-    unsigned u;
-    volatile int *is_running = &(((struct standby_attr *)param)->is_running);
-    unsigned num_thread = 0;
-    struct file_rx_attr **attr = NULL;
+    volatile int *is_running = &(attr->is_running);
+    void **sid = &(attr->sid);
+    void *new_sid;
+    void *old_sid;
+    unsigned const start_time = espress_stream_time();
     struct espress_stream_session_ex_param ex_param[1] = {{
         send_connect_payload, NULL,
         recv_connect_payload, NULL,
@@ -2012,179 +1503,345 @@ static void *standby(void *param)
         NULL, NULL
     }};
 
-    while (*is_running) {
-        for (t = 0, u = num_thread ; t < num_thread ; t++) {
-            if (!attr[t]->is_attached) {
-                u = t;
-                if (attr[t]->sid != NULL) {
-                    break;
-                }
+    for (i = -1, t = 0 ; *is_running && (i == -1) ;) {
+        t = timeout - t;
+        if (1000000 < t) {
+            t = 1000000;
+        }
+        i = espress_stream_connect_detect(*sid, t);
+        if (0 < i) {
+            ex_param->send_connect_payload_param = attr;
+            ex_param->recv_connect_payload_param = attr;
+            i = espress_stream_begin_session(&new_sid, ifd, 1, ex_param);
+            if (i == 0) {
+                old_sid = *sid;
+                *sid = new_sid;
+                espress_stream_end_session(old_sid);
             }
         }
-        if (t == num_thread) {
-            t = u;
+
+        if (timeout <= (t = ((espress_stream_time() - start_time) & 0xffffffff))) {
+            break;
         }
-        if (t == num_thread) {
-            num_thread++;
-            p = realloc(attr, sizeof(struct file_rx_attr *) * num_thread);
-            q = malloc(sizeof(struct file_rx_attr));
-            if ((p == NULL) || (q == NULL)) {
-                if (p != NULL) free(p);
-                if (q != NULL) free(q);
-                num_thread--;
+    }
+
+    return i;
+}
+
+static int flush(struct session_attr *attr, unsigned timeout)
+{
+    int i;
+    unsigned u;
+    unsigned v;
+    unsigned t;
+    volatile int *is_running = &(attr->is_running);
+    void **sid = &(attr->sid);
+    unsigned start_time;
+
+    espress_stream_flush(*sid, 0);
+    for (i = -1, u = espress_stream_buffered_send_size(*sid, NULL), start_time = espress_stream_time(), t = 0 ;
+        *is_running & (i == -1) ;
+        u = v) {
+        t = timeout - t;
+        if (1000000 < t) {
+            t = 1000000;
+        }
+        i = espress_stream_flush(*sid, t);
+
+        v = espress_stream_buffered_send_size(*sid, NULL);
+        if (u != v) {
+            start_time = espress_stream_time();
+        }
+
+        if (timeout <= (t = ((espress_stream_time() - start_time) & 0xffffffff))) {
+            break;
+        }
+    }
+
+    return i;
+}
+
+static void *r_wait(void *param)
+{
+    void **sid = &(((struct session_attr *)param)->sid);
+    int *event = &(((struct session_attr *)param)->event);
+    uint64_t const u64 = 1;
+    espress_stream_wait_any(*sid, ESPRESS_STREAM_EVENT_RECV, 0xffffffff);
+    while (sizeof(u64) != write(*event, &u64, sizeof(u64)));
+    return NULL;
+}
+
+static void *sr_wait(void *param)
+{
+    void **sid = &(((struct session_attr *)param)->sid);
+    int *event = &(((struct session_attr *)param)->event);
+    uint64_t const u64 = 1;
+    espress_stream_wait_any(*sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, 0xffffffff);
+    while (sizeof(u64) != write(*event, &u64, sizeof(u64)));
+    return NULL;
+}
+
+static void wait(struct session_attr *attr, int is_stdin_open, int is_sidin_open, int is_write, int is_send, unsigned timeout)
+{
+    int i = -1;
+    uint64_t u64;
+    void **sid = &(attr->sid);
+    int *event = &(attr->event);
+    pthread_t sub_wait_thread;
+    struct pollfd fds[2];
+    nfds_t nfds = 0;
+
+    if (is_stdin_open) {
+        fds[nfds].fd = STDIN_FILENO;
+        fds[nfds].events = POLLIN;
+        if (is_write) {
+            fds[nfds].events |= POLLOUT;
+        }
+        fds[nfds].revents = 0;
+        nfds++;
+    }
+
+    if (is_sidin_open) {
+        *event = eventfd(0, EFD_NONBLOCK);
+        if (0 <= *event) {
+            if (is_send) {
+                i = pthread_create(&sub_wait_thread, NULL, sr_wait, attr);
             } else {
-                attr = (struct file_rx_attr **)p;
-                attr[t] = (struct file_rx_attr *)q;
-                attr[t]->is_attached = 0;
-                attr[t]->is_running = 0;
-                attr[t]->sid = NULL;
+                i = pthread_create(&sub_wait_thread, NULL, r_wait, attr);
+            }
+            if (i == 0) {
+                fds[nfds].fd = *event;
+                fds[nfds].events = POLLIN;
+                fds[nfds].revents = 0;
+                nfds++;
+            }
+        }
+    }
+
+    poll(fds, nfds, timeout / 1000);
+
+    if (is_sidin_open) {
+        if (0 <= *event) {
+            if (i == 0) {
+                espress_stream_wait_break(*sid);
+                while (sizeof(u64) != read(*event, &u64, sizeof(u64)));
+                pthread_join(sub_wait_thread, NULL);
+                espress_stream_wait_cancel_break(*sid);
+            }
+            close(*event);
+        }
+    }
+}
+
+static void cat(struct session_attr *attr)
+{
+    int i;
+    ssize_t st;
+    unsigned u;
+    volatile int *is_running = &(attr->is_running);
+    void **sid = &(attr->sid);
+    unsigned char read_buf[BUFFER_SIZE];
+    unsigned read_buf_size = 0;
+    unsigned char recv_buf[BUFFER_SIZE];
+    unsigned recv_buf_size = 0;
+    unsigned char *write_buf = recv_buf;
+#   define write_buf_size recv_buf_size
+    unsigned char *send_buf = read_buf;
+#   define send_buf_size read_buf_size
+    struct pollfd fds[1];
+    int is_stdin_open;
+    int is_sidin_open;
+
+    for (is_stdin_open = 1, is_sidin_open = 1 ; *is_running && (is_stdin_open || is_sidin_open) ; ) {
+        wait(attr, is_stdin_open, is_sidin_open, 0 < write_buf_size, 0 < send_buf_size, 1000000);
+
+        fds->fd = STDIN_FILENO;
+        fds->events = POLLIN;
+        fds->revents = 0;
+        if (is_stdin_open && (read_buf_size == 0)) {
+            st = read(STDIN_FILENO, read_buf, BUFFER_SIZE);
+            if (0 < st) {
+                read_buf_size = st;
+            } else if (st == 0) {
+                is_stdin_open = 0;
+                if (send_buf_size == 0) {
+                    flush(attr, TIMEOUT);
+                    espress_stream_disconnect(*sid);
+                    espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                }
+            } else if (errno != EAGAIN) {
+                break;
             }
         }
 
-        if (t < num_thread) {
-            if (attr[t]->sid == NULL) {
-                ex_param->send_connect_payload_param = param;
-                ex_param->recv_connect_payload_param = param;
-                if (espress_stream_begin_session(&(attr[t]->sid), ifd, 1, ex_param) != 0) {
-                    attr[t]->sid = NULL;
-                }
-            }
-            if (attr[t]->sid != NULL) {
-                i = espress_stream_connect_detect(attr[t]->sid, 1 * 1000 * 1000);
-                if (i == 0) {
-                    attr[t]->is_attached = 1;
-                    attr[t]->is_running = 1;
-                    if (pthread_create(&(attr[t]->thread), NULL, file_rx, attr[t])) {
-                        espress_stream_disconnect(attr[t]->sid);
-                        espress_stream_disconnect_result(attr[t]->sid, *is_running ? TIMEOUT : 0);
-                        espress_stream_end_session(attr[t]->sid);
-                        attr[t]->sid = NULL;
-                        attr[t]->is_attached = 0;
-                        attr[t]->is_running = 0;
+        if (is_sidin_open && (recv_buf_size == 0)) {
+            u = BUFFER_SIZE;
+            i = espress_stream_recv(*sid, recv_buf, &u, 0);
+            if (i == 0) {
+                if (0 < u) {
+                    recv_buf_size = u;
+                } else {
+                    is_sidin_open = 0;
+                    if (write_buf_size == 0) {
+                        close(STDOUT_FILENO);
                     }
-                } else if (0 < i) {
-                    espress_stream_end_session(attr[t]->sid);
-                    attr[t]->sid = NULL;
+                    if (!arg_is_close_half && is_stdin_open)
+                    {
+                        is_stdin_open = 0;
+                        if (send_buf_size == 0) {
+                            flush(attr, TIMEOUT);
+                            espress_stream_disconnect(*sid);
+                            espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                        }
+                    }
                 }
+            } else if (0 < i) {
+                break;
             }
         }
 
-        for (t = 0 ; t < num_thread ; t++) {
-            if (attr[t]->is_attached && !attr[t]->is_running) {
-                pthread_join(attr[t]->thread, NULL);
-                attr[t]->is_attached = 0;
-                espress_stream_end_session(attr[t]->sid);
-                attr[t]->sid = NULL;
+        fds->fd = STDOUT_FILENO;
+        fds->events = POLLOUT;
+        fds->revents = 0;
+        if (0 < write_buf_size) {
+            st = write(STDOUT_FILENO, write_buf, write_buf_size);
+            if (0 < st) {
+                write_buf += st;
+                write_buf_size -= st;
+                if (write_buf_size == 0) {
+                    write_buf = recv_buf;
+                    if (is_sidin_open) {
+                        fsync(STDOUT_FILENO);
+                    } else {
+                        close(STDOUT_FILENO);
+                    }
+                }
+            } else if (errno != EAGAIN) {
+                break;
+            }
+        }
+
+        if (0 < send_buf_size) {
+            u = send_buf_size;
+            i = espress_stream_send(*sid, send_buf, &u, 0);
+            if (i == 0) {
+                send_buf += u;
+                send_buf_size -= u;
+                if (send_buf_size == 0) {
+                    send_buf = read_buf;
+                    if (is_stdin_open) {
+                        espress_stream_flush(*sid, 0);
+                    } else {
+                        flush(attr, TIMEOUT);
+                        espress_stream_disconnect(*sid);
+                        espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                    }
+                }
+            } else if (0 < i) {
+                break;
             }
         }
     }
-
-    for (t = 0 ; t < num_thread ; t++) {
-        if (attr[t]->is_attached) {
-            attr[t]->is_running = 0;
-        }
-    }
-    for (t = 0 ; t < num_thread ; t++) {
-        if (attr[t]->is_attached) {
-            espress_stream_wait_break(attr[t]->sid);
-            pthread_join(attr[t]->thread, NULL);
-            attr[t]->is_attached = 0;
-            espress_stream_end_session(attr[t]->sid);
-            attr[t]->sid = NULL;
-        }
-    }
-
-    for (t = 0 ; t < num_thread ; t++) {
-        free(attr[t]);
-    }
-    free(attr);
-
-    *is_running = 0;
-    return ret;
 }
 
 static void sigh(int signum)
 {
-    unsigned u;
-    for (u = 0 ; u < NUM_STANDBY ; u++) {
-        standby_attr[u].is_running = 0;
-    }
+    session_attr->is_running = 0;
 }
 
 int main(int argc, char const **argv)
 {
     int ret = 0;
     int i;
-    unsigned u;
-    int is_stream_ng = 1;
-    struct sockaddr_storage address[1];
+    struct sockaddr_storage address[1] = {0};
+    struct session_attr *attr = session_attr;
+    struct espress_stream_session_ex_param ex_param[1] = {{
+        send_connect_payload, NULL,
+        recv_connect_payload, NULL,
+        NULL, NULL,
+        NULL, NULL
+    }};
     sighandler_t org_sigh;
 
     i = scan_arg(argc, argv);
     if (i) {
         ret = 1;
-        //fprintf(stderr, "error: scan argument failure.\n");
-        goto EXIT;
+        goto SCAN_ARG_FAIL_EXIT;
     }
 
-    printf("public key: ");
-    for (i = 0 ; i < CIPHER_ED25519_PUBLIC_KEY_SIZE ; i++) {
-        printf("%02x", public_key[i]);
+    if (!arg_is_silent_enable) {
+        printf("public key: ");
+        for (i = 0 ; i < CIPHER_ED25519_PUBLIC_KEY_SIZE ; i++) {
+            printf("%02x", public_key[i]);
+        }
+        printf("\n");
+        printf("bind address: %s%s%s\n",
+            (arg_address == NULL) ? "(" : "",
+            (arg_address == NULL) ? "any" : arg_address,
+            (arg_address == NULL) ? ")" : "");
+        printf("bind port: %s\n", arg_port);
+        printf("close: %s\n", arg_is_close_half ? "half" : "full");
     }
-    printf("\n");
-    printf("bind address: %s%s%s\n",
-        (arg_address == NULL) ? "(" : "",
-        (arg_address == NULL) ? "any" : arg_address,
-        (arg_address == NULL) ? ")" : "");
-    printf("bind port: %s\n", arg_port);
-    printf("receiving file overwrite: %s\n", arg_is_overwrite ? "available" : "unavailable");
-    printf("receiving file store dir: \"%s\"\n", arg_dir_name);
 
-    is_stream_ng = (espress_stream_begin() != 0);
-    if (is_stream_ng) {
-        ret = 1;
-        fprintf(stderr, "error: can't begin stream.\n");
-        goto EXIT;
-    }
     i = inet_naton(arg_address, arg_port, (struct sockaddr *)address);
     if (i) {
         ret = 1;
         fprintf(stderr, "error: invalid address/port\n");
-        goto EXIT;
+        goto SCAN_ARG_FAIL_EXIT;
+    }
+
+    i = espress_stream_begin();
+    if (i != 0) {
+        ret = 1;
+        fprintf(stderr, "error: can't begin stream.\n");
+        goto BEGIN_STREAM_FAIL_EXIT;
     }
 
     i = espress_stream_begin_interface(&ifd, address);
     if (i != 0) {
-        ifd = NULL;
         ret = 1;
         fprintf(stderr, "error: can't begin interface.\n");
-        goto EXIT;
+        goto BEGIN_INTERFACE_FAIL_EXIT;
     }
 
-    for (u = 0 ; u < NUM_STANDBY ; u++) {
-        standby_attr[u].is_attached = 1;
-        standby_attr[u].is_running = 1;
-        if (pthread_create(&(standby_attr[u].thread), NULL, standby, standby_attr + u)) {
-            standby_attr[u].is_attached = 0;
-            standby_attr[u].is_running = 0;
-        }
+    attr->is_running = 1;
+    ex_param->send_connect_payload_param = attr;
+    ex_param->recv_connect_payload_param = attr;
+    i = espress_stream_begin_session(&(attr->sid), ifd, 1, ex_param);
+    if (i != 0) {
+        fprintf(stderr, "error: can't begin session.\n");
+        ret = 1;
+        goto BEGIN_SESSION_FAIL_EXIT;
     }
+
+    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+    fcntl(STDOUT_FILENO, F_SETFL, O_NONBLOCK);
 
     org_sigh = signal(SIGINT, sigh);
 
-    for (u = 0 ; u < NUM_STANDBY ; u++) {
-        if (standby_attr[u].is_attached) {
-            pthread_join(standby_attr[u].thread, NULL);
-            standby_attr[u].is_attached = 0;
-        }
+    i = accpt(attr, attr->is_running ? TIMEOUT : 0);
+    if (i != 0) {
+        fprintf(stderr, "error: no acceptable connection.\n");
+        ret = 1;
+        goto ACCEPT_FAIL_EXIT;
     }
 
+    if (!arg_is_silent_enable) {
+        printf("CONNECT\n");
+        fflush(stdout);
+    }
+
+    cat(attr);
+
+ACCEPT_FAIL_EXIT:
     signal(SIGINT, org_sigh);
-
-EXIT:
-
-    if (ifd != NULL) espress_stream_end_interface(ifd);
-    if (!is_stream_ng) espress_stream_end();
+    espress_stream_end_session(attr->sid);
+BEGIN_SESSION_FAIL_EXIT:
+    espress_stream_end_interface(ifd);
+BEGIN_INTERFACE_FAIL_EXIT:
+    espress_stream_end();
+BEGIN_STREAM_FAIL_EXIT:
+SCAN_ARG_FAIL_EXIT:
 
     return ret;
 }
@@ -2192,78 +1849,16 @@ EXIT:
 
 </details>
 
-### サンプルアプリケーション (<tt>es_ftx</tt>, <tt>es_frx</tt>)
+## サンプルアプリケーション
 
-クライアントアプリケーション(<tt>es_ftx</tt>)からサーバーアプリケーション(<tt>es_frx</tt>)にファイルを送信します。
+パッケージの<tt>arch/linux/app</tt>ディレクトリ以下にlinux用の各種サンプルアプリケーションが存在しています。
+詳細は各<tt>README.md</tt>を参照ください。
 
-まず、<tt>es_frx</tt>をファイルを受信するマシンで立ち上げます。
+<tt>es_ccat</tt>, <tt>es_scat</tt>
+: 接続している2つのアプリケーションにおいて、一方の標準入力からの入力がもう一方の標準出力から出力されます。
 
-```
-$ es_frx ~/Downloads
-public key: 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae8069c9
-bind address: (any)
-bind port: 12345
-receiving file overwrite: unavailable
-receiving file store dir: "/home/foo/Downloads"
-```
-
-<tt>~/Downloads</tt>は受信したファイルを格納するディレクトリです。
-<tt>public key</tt>はクライアントが行うサーバー認証のための公開鍵です。
-受信ファイルと同名のファイルが存在する場合、エラーとなりますが、上書きしても構わない場合は<tt>-o</tt>オプションを指定してください。
-また、ポート番号はデフォルトで<tt>12345</tt>になっていますので、変更したい場合は<tt>-p</tt>オプションを使用してください。
-
-```
-$ es_frx -p 12345 -o ~/Downloads
-public key: 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae8069c9
-bind address: (any)
-bind port: 12345
-receiving file overwrite: available
-receiving file store dir: "~/Downloads"
-```
-
-次に、ファイルを送信するマシンで<tt>es_ftx</tt>を立ち上げ、ファイル送信を行います。
-
-```
-$ es_ftx -a foo -k 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae8069c9 ~/Documents/boo.doc ~/Music/boo.mp3 ~/Pictures/boo.jpg ~/Videos/boo.mp4
-destination address: localhost
-destination port: 12345
-destination public key: 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae8069c9
-number of sending files: 4
-user id: foo
-user password: 
-    :
-    :
-```
-<tt>-a foo</tt>は受信マシンのドメイン名指定です (<tt>###.###.###.###</tt>形式でIPアドレス指定可)。
-<tt>-k 7335...</tt>はサーバーの公開鍵です。サーバー実行時に表示されるものをそのまま指定してください。
-<tt>~/Documents/boo.doc ... ~/Videos/boo.mp4</tt>は送信するファイルの指定です (任意の数のファイルを指定可)。
-サーバーアプリケーションは指定格納ディレクトリに主ファイル名でファイルを格納しますので、異なるファイルでも同じ主ファイル名を持つファイルは送信できません。
-実行するとユーザーIDとパスワードの入力が求められますので、入力してください。
-
-<tt>es_frx</tt>と同様、ポート番号はデフォルトで<tt>12345</tt>になっていますので、変更したい場合は<tt>-p</tt>オプションを使用してください。
-
-```
-$ es_ftx -a 192.168.1.1 -p 12345 -k 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae8069c9 ~/Documents/boo.doc ~/Music/boo.mp3 ~/Pictures/boo.jpg ~/Videos/boo.mp4
-destination address: 192.168.1.1
-destination port: 12345
-destination public key: 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae8069c9
-number of sending files: 4
-user id: foo
-user password: 
-    :
-    :
-```
-
-ファイル送信失敗の検出はクライアント側に表示されますが、サーバー側に受信ファイルが残ってしまうことがあります。
-この場合、上書き指定がされていないと同名のファイルを送信できなくなりますのでご注意ください。
-
-<tt>es_ftx</tt>はファイル送信が終了するとソフトウェアも終了します。<tt>es_frx</tt>は<tt>[CTRL] + [C]</tt>で終了します。
-どちらも<tt>[CTRL] + [C]</tt>で中断できます。
-
-### サンプルアプリケーションのサーバー認証について
-
-サーバー認証にはEd25519アルゴリズム[RFC 8032]を使用しています。
-[OpenSSH](https://www.openssh.com/)の同アルゴリズム使用の認証方法に類似のものとなっています。
+<tt>es_ftx</tt>, <tt>es_frx</tt>
+: クライアントアプリケーション(<tt>es_ftx</tt>)からサーバーアプリケーション(<tt>es_frx</tt>)にファイルを送信します。
 
 ## ライセンス
 

@@ -22,7 +22,7 @@ static char const *user_id_pass[] = USER_ID_PASS;
 #define IS_DEBUGGING (0)
 #define NUM_STANDBY (16)
 #define TIMEOUT (30 * 1000 * 1000)
-#define BUFFER_SIZE (4 *1024)
+#define BUFFER_SIZE (4 * 1024)
 #define CONNECT_MESSAGE_SIZE (64)
 
 #if IS_DEBUGGING
@@ -59,7 +59,7 @@ static int scan_arg(int argc, char const **argv)
 {
 	int i;
 	char const *p;
-	int ret;
+	int ret = 0;
 	char c = '\0';
 
 	arg_address = NULL;
@@ -68,7 +68,7 @@ static int scan_arg(int argc, char const **argv)
 	arg_dir_name = NULL;
 
 	for (i = 1 ; i < argc ; i++) {
-				if (argv[i][0] == '-') {
+		if (argv[i][0] == '-') {
 			c = argv[i][1];
 			switch (c) {
 			case 'a':
@@ -96,7 +96,6 @@ static int scan_arg(int argc, char const **argv)
 		default:
 			if (arg_dir_name == NULL) {
 				arg_dir_name = argv[i];
-				ret = 0;
 			} else {
 				ret = 1;
 			}
@@ -408,6 +407,7 @@ static void *standby(void *param)
 		if (attr[t]->is_attached) {
 			espress_stream_wait_break(attr[t]->sid);
 			pthread_join(attr[t]->thread, NULL);
+			espress_stream_wait_cancel_break(attr[t]->sid);
 			attr[t]->is_attached = 0;
 			espress_stream_end_session(attr[t]->sid);
 			attr[t]->sid = NULL;
@@ -460,16 +460,17 @@ int main(int argc, char const **argv)
 	printf("receiving file overwrite: %s\n", arg_is_overwrite ? "available" : "unavailable");
 	printf("receiving file store dir: \"%s\"\n", arg_dir_name);
 
-	is_stream_ng = (espress_stream_begin() != 0);
-	if (is_stream_ng) {
-		ret = 1;
-		fprintf(stderr, "error: can't begin stream.\n");
-		goto EXIT;
-	}
 	i = inet_naton(arg_address, arg_port, (struct sockaddr *)address);
 	if (i) {
 		ret = 1;
 		fprintf(stderr, "error: invalid address/port\n");
+		goto EXIT;
+	}
+
+	is_stream_ng = (espress_stream_begin() != 0);
+	if (is_stream_ng) {
+		ret = 1;
+		fprintf(stderr, "error: can't begin stream.\n");
 		goto EXIT;
 	}
 

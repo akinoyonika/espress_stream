@@ -1,9 +1,13 @@
 #ifndef __ESPRESS_STREAM_API_H__
 #define __ESPRESS_STREAM_API_H__
 
-/* espress_stream APIs
+/** @file espress_stream/api.h
+ *  
+ * espress_stream APIs
  * 
  * - Function calling procedure.
+ * 
+ * @verbatim
  * 
  *     espress_stream_begin
  *        |
@@ -55,6 +59,8 @@
  *        V
  *     espress_stream_end
  * 
+ * @endverbatim
+ * 
  * - Async running.
  * 
  *     Different sessions are async runnable.
@@ -63,16 +69,16 @@
  * 
  * - Return code.
  * 
- *     - == 0
+ *     - == 0:
  *         Complete in success.
  * 
- *     - > 0
+ *     - > 0:
  *         Finished in failure.
  *         In a session when a function return positive value in spite of right procedure,
  *         this session should be destroyed by "espress_stream_end_session" function.
  *         Reprocess from beginning session.
  * 
- *     - == -1
+ *     - == -1:
  *         Unfinished. Functions with timeout may return negative one.
  *         Retry run this function.
  */
@@ -105,8 +111,8 @@ struct espress_stream_session_ex_param {
  * Begin espress_stream protocol stack.
  * 
  * @return
- *     == 0: Success.
- *     > 0 : Failure.
+ *     - == 0: Success.
+ *     - > 0 : Failure.
  */
 int espress_stream_begin(void);
 
@@ -142,8 +148,8 @@ unsigned espress_stream_time(void);
  *     Stored address of an interface bind network address (include port number when it is IP address).
  * 
  * @return
- *     == 0: Success.
- *     > 0 : Failure.
+ *     - == 0: Success.
+ *     - > 0 : Failure.
  */
 int espress_stream_begin_interface(void **ifd, struct sockaddr_storage const *address);
 
@@ -172,8 +178,8 @@ void espress_stream_end_interface(void *ifd);
  *     For future use. set NULL yet.
  * 
  * @return
- *     == 0: Success.
- *     > 0 : Failure.
+ *     - == 0: Success.
+ *     - > 0 : Failure.
  */
 int espress_stream_begin_session(void **sid, void *ifd, int is_server, struct espress_stream_session_ex_param const *ex_param);
 
@@ -196,8 +202,8 @@ void espress_stream_end_session(void *sid);
  *     Stored address of a destination network address (include port number when it is IP address).
  * 
  * @return
- *     == 0: Success.
- *     > 0 : Failure.
+ *     - == 0: Success.
+ *     - > 0 : Failure.
  */
 int espress_stream_connect(void *sid, struct sockaddr_storage const *address);
 
@@ -213,9 +219,9 @@ int espress_stream_connect(void *sid, struct sockaddr_storage const *address);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for result yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for result yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_connect_result(void *sid, unsigned timeout);
 
@@ -231,9 +237,9 @@ int espress_stream_connect_result(void *sid, unsigned timeout);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for detection yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for detection yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_connect_detect(void *sid, unsigned timeout);
 
@@ -246,8 +252,8 @@ int espress_stream_connect_detect(void *sid, unsigned timeout);
  *     Session ID.
  * 
  * @return
- *     == 0: Success.
- *     > 0 : Failure.
+ *     - == 0: Success.
+ *     - > 0 : Failure.
  */
 int espress_stream_disconnect(void *sid);
 
@@ -262,9 +268,9 @@ int espress_stream_disconnect(void *sid);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for result yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for result yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_disconnect_result(void *sid, unsigned timeout);
 
@@ -283,9 +289,9 @@ int espress_stream_disconnect_result(void *sid, unsigned timeout);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for acceptable state yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for acceptable state yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_send(void *sid, void const *data, unsigned *data_size, unsigned timeout);
 
@@ -303,9 +309,9 @@ int espress_stream_send(void *sid, void const *data, unsigned *data_size, unsign
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for send complete yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for send complete yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_flush(void *sid, unsigned timeout);
 
@@ -326,9 +332,9 @@ int espress_stream_flush(void *sid, unsigned timeout);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for incoming data yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for incoming data yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_recv(void *sid, void *data, unsigned *data_size, unsigned timeout);
 
@@ -359,21 +365,31 @@ int espress_stream_recv(void *sid, void *data, unsigned *data_size, unsigned tim
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     == 0 : Success.
- *     == -1: Waiting for event yet.
- *     > 0  : Failure.
+ *     - == 0 : Success.
+ *     - == -1: Waiting for event yet.
+ *     - > 0  : Failure.
  */
 int espress_stream_wait_any(void *sid, unsigned event, unsigned timeout);
 
 /** @brief Break to waiting function
  * 
  * Break to waiting function. Apply this function to the function with timeout parameter.
- * The waiting function return soon because of timeout, when this function is called.
+ * If this function is called while a wait function is running, it return because of timeout that time.
+ * If this function is called when no wait function is running, the subsequently executed wait functions return immediately because of  timeout.
  * 
  * @param[in] sid
  *     Session ID.
  */
 void espress_stream_wait_break(void *sid);
+
+/** @brief Cancel break to waiting function
+ * 
+ * This function prevent to immediately return of a subsequently executed waiting function by espress_stream_wait_break function.
+ * 
+ * @param[in] sid
+ *     Session ID.
+ */
+void espress_stream_wait_cancel_break(void *sid);
 
 /** @brief Polling multiple session.
  * 
@@ -389,8 +405,8 @@ void espress_stream_wait_break(void *sid);
  *     Timeout value. It's only lower 32 bits are available. The unit is microsecond.
  * 
  * @return
- *     >= 0 : Number of detected sids. (Zero indicates timeout.)
- *     == -1: Failure.
+ *     - >= 0 : Number of detected sids. (Zero indicates timeout.)
+ *     - == -1: Failure.
  */
 int espress_stream_poll(void * const *sids, unsigned const *events, unsigned num, unsigned timeout);
 
