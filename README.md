@@ -44,9 +44,12 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20240704.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240704.tar.gz)
+- [espress_stream.20240705.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240705.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20240705.tar.gz (1.3-0)
+: - ドキュメントの修正。
 
 espress_stream.20240704.tar.gz (1.3-0)
 : - APIの<tt>espress_stream_wait_break</tt>を改良。
@@ -747,6 +750,7 @@ unsigned espress_stream_fast_retransmit_count(void *sid);
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -1124,16 +1128,12 @@ static void cat(struct session_attr *attr)
 #   define write_buf_size recv_buf_size
     unsigned char *send_buf = read_buf;
 #   define send_buf_size read_buf_size
-    struct pollfd fds[1];
     int is_stdin_open;
     int is_sidin_open;
 
     for (is_stdin_open = 1, is_sidin_open = 1 ; *is_running && (is_stdin_open || is_sidin_open) ; ) {
         wait(attr, is_stdin_open, is_sidin_open, 0 < write_buf_size, 0 < send_buf_size, 1000000);
 
-        fds->fd = STDIN_FILENO;
-        fds->events = POLLIN;
-        fds->revents = 0;
         if (is_stdin_open && (read_buf_size == 0)) {
             st = read(STDIN_FILENO, read_buf, BUFFER_SIZE);
             if (0 < st) {
@@ -1176,9 +1176,6 @@ static void cat(struct session_attr *attr)
             }
         }
 
-        fds->fd = STDOUT_FILENO;
-        fds->events = POLLOUT;
-        fds->revents = 0;
         if (0 < write_buf_size) {
             st = write(STDOUT_FILENO, write_buf, write_buf_size);
             if (0 < st) {
@@ -1336,6 +1333,7 @@ SCAN_ARG_FAIL_EXIT:
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -1648,16 +1646,12 @@ static void cat(struct session_attr *attr)
 #   define write_buf_size recv_buf_size
     unsigned char *send_buf = read_buf;
 #   define send_buf_size read_buf_size
-    struct pollfd fds[1];
     int is_stdin_open;
     int is_sidin_open;
 
     for (is_stdin_open = 1, is_sidin_open = 1 ; *is_running && (is_stdin_open || is_sidin_open) ; ) {
         wait(attr, is_stdin_open, is_sidin_open, 0 < write_buf_size, 0 < send_buf_size, 1000000);
 
-        fds->fd = STDIN_FILENO;
-        fds->events = POLLIN;
-        fds->revents = 0;
         if (is_stdin_open && (read_buf_size == 0)) {
             st = read(STDIN_FILENO, read_buf, BUFFER_SIZE);
             if (0 < st) {
@@ -1700,9 +1694,6 @@ static void cat(struct session_attr *attr)
             }
         }
 
-        fds->fd = STDOUT_FILENO;
-        fds->events = POLLOUT;
-        fds->revents = 0;
         if (0 < write_buf_size) {
             st = write(STDOUT_FILENO, write_buf, write_buf_size);
             if (0 < st) {
