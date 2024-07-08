@@ -66,6 +66,12 @@
 /arch/linux/include/espress_stream/*
 !/arch/linux/src/
 /arch/linux/src/*
+!/doc/
+/doc/*
+!/doc/html/
+/doc/html/*
+!/doc/html/search/
+/doc/html/search/*
 !/include/
 /include/*
 !/include/espress_stream/
@@ -79,4 +85,5 @@
 !*.c
 !Makefile
 !README.md
-!arch/linux/app/es_frx/mk_cert_h.sh
+!/arch/linux/app/es_ftx-es_frx/es_frx/mk_cert_h.sh
+!/arch/linux/app/es_ccat-es_scat/es_scat/mk_cert_h.sh

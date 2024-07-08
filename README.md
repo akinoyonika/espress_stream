@@ -44,9 +44,12 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20240705.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240705.tar.gz)
+- [espress_stream.20240708.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240708.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20240708.tar.gz (1.3-0)
+: - サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>を改良。
 
 espress_stream.20240705.tar.gz (1.3-0)
 : - ドキュメントの修正。
@@ -768,7 +771,7 @@ unsigned espress_stream_fast_retransmit_count(void *sid);
 #include "cipher_api.h"
 
 #define TIMEOUT (30 * 1000 * 1000)
-#define BUFFER_SIZE (2 * 1024)
+#define BUFFER_SIZE (8 * 1024)
 #define CONNECT_MESSAGE_SIZE (64)
 
 static void *ifd;
@@ -1184,7 +1187,7 @@ static void cat(struct session_attr *attr)
                 if (write_buf_size == 0) {
                     write_buf = recv_buf;
                     if (is_sidin_open) {
-                        fsync(STDOUT_FILENO);
+                        //fsync(STDOUT_FILENO);
                     } else {
                         close(STDOUT_FILENO);
                     }
@@ -1292,9 +1295,6 @@ int main(int argc, char const **argv)
         goto BEGIN_SESSION_FAIL_EXIT;
     }
 
-    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
-    fcntl(STDOUT_FILENO, F_SETFL, O_NONBLOCK);
-
     org_sigh = signal(SIGINT, sigh);
 
     i = conn(attr, address, attr->is_running ? TIMEOUT : 0);
@@ -1308,6 +1308,9 @@ int main(int argc, char const **argv)
         printf("CONNECT\n");
         fflush(stdout);
     }
+
+    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+    fcntl(STDOUT_FILENO, F_SETFL, O_NONBLOCK);
 
     cat(attr);
 
@@ -1354,7 +1357,7 @@ static unsigned char const secret_key[] = SECRET_KEY;
 static unsigned char const public_key[] = PUBLIC_KEY;
 
 #define TIMEOUT (30 * 1000 * 1000)
-#define BUFFER_SIZE (2 * 1024)
+#define BUFFER_SIZE (8 * 1024)
 #define CONNECT_MESSAGE_SIZE (64)
 
 static void *ifd;
@@ -1702,7 +1705,7 @@ static void cat(struct session_attr *attr)
                 if (write_buf_size == 0) {
                     write_buf = recv_buf;
                     if (is_sidin_open) {
-                        fsync(STDOUT_FILENO);
+                        //fsync(STDOUT_FILENO);
                     } else {
                         close(STDOUT_FILENO);
                     }
@@ -1805,9 +1808,6 @@ int main(int argc, char const **argv)
         goto BEGIN_SESSION_FAIL_EXIT;
     }
 
-    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
-    fcntl(STDOUT_FILENO, F_SETFL, O_NONBLOCK);
-
     org_sigh = signal(SIGINT, sigh);
 
     i = accpt(attr, attr->is_running ? TIMEOUT : 0);
@@ -1821,6 +1821,9 @@ int main(int argc, char const **argv)
         printf("CONNECT\n");
         fflush(stdout);
     }
+
+    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+    fcntl(STDOUT_FILENO, F_SETFL, O_NONBLOCK);
 
     cat(attr);
 

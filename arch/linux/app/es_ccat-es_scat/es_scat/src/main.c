@@ -22,7 +22,7 @@ static unsigned char const secret_key[] = SECRET_KEY;
 static unsigned char const public_key[] = PUBLIC_KEY;
 
 #define TIMEOUT (30 * 1000 * 1000)
-#define BUFFER_SIZE (2 * 1024)
+#define BUFFER_SIZE (8 * 1024)
 #define CONNECT_MESSAGE_SIZE (64)
 
 static void *ifd;
@@ -370,7 +370,7 @@ static void cat(struct session_attr *attr)
 				if (write_buf_size == 0) {
 					write_buf = recv_buf;
 					if (is_sidin_open) {
-						fsync(STDOUT_FILENO);
+						//fsync(STDOUT_FILENO);
 					} else {
 						close(STDOUT_FILENO);
 					}
@@ -473,9 +473,6 @@ int main(int argc, char const **argv)
 		goto BEGIN_SESSION_FAIL_EXIT;
 	}
 
-	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
-	fcntl(STDOUT_FILENO, F_SETFL, O_NONBLOCK);
-
 	org_sigh = signal(SIGINT, sigh);
 
 	i = accpt(attr, attr->is_running ? TIMEOUT : 0);
@@ -489,6 +486,9 @@ int main(int argc, char const **argv)
 		printf("CONNECT\n");
 		fflush(stdout);
 	}
+
+	fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+	fcntl(STDOUT_FILENO, F_SETFL, O_NONBLOCK);
 
 	cat(attr);
 
