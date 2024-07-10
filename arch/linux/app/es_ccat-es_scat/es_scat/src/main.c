@@ -227,27 +227,38 @@ static int flush(struct session_attr *attr, unsigned timeout)
 	return i;
 }
 
-static void *r_wait(void *param)
+static void sub_wait(void *param, unsigned events)
 {
 	void **sid = &(((struct session_attr *)param)->sid);
 	int *event = &(((struct session_attr *)param)->event);
 	uint64_t const u64 = 1;
-	espress_stream_wait_any(*sid, ESPRESS_STREAM_EVENT_RECV, 0xffffffff);
+	espress_stream_wait_any(*sid, events, 0xffffffff);
 	while (sizeof(u64) != write(*event, &u64, sizeof(u64)));
+}
+
+static void *s_wait(void *param)
+{
+	sub_wait(param, ESPRESS_STREAM_EVENT_SEND);
+	return NULL;
+}
+
+static void *r_wait(void *param)
+{
+	sub_wait(param, ESPRESS_STREAM_EVENT_RECV);
 	return NULL;
 }
 
 static void *sr_wait(void *param)
 {
-	void **sid = &(((struct session_attr *)param)->sid);
-	int *event = &(((struct session_attr *)param)->event);
-	uint64_t const u64 = 1;
-	espress_stream_wait_any(*sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, 0xffffffff);
-	while (sizeof(u64) != write(*event, &u64, sizeof(u64)));
+	sub_wait(param, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV);
 	return NULL;
 }
 
-static void wait(struct session_attr *attr, int is_stdin_open, int is_sidin_open, int is_write, int is_send, unsigned timeout)
+static void wait(struct session_attr *attr,
+	int is_stdin_open, int is_sidin_open,
+	int is_read, int is_recv,
+	int is_write, int is_send,
+	unsigned timeout)
 {
 	int i = -1;
 	uint64_t u64;
@@ -259,20 +270,27 @@ static void wait(struct session_attr *attr, int is_stdin_open, int is_sidin_open
 
 	if (is_stdin_open) {
 		fds[nfds].fd = STDIN_FILENO;
-		fds[nfds].events = POLLIN;
+		fds[nfds].events = 0;
+		if (is_read) {
+			fds[nfds].events |= POLLIN;
+		}
 		if (is_write) {
 			fds[nfds].events |= POLLOUT;
 		}
 		fds[nfds].revents = 0;
-		nfds++;
+		if (fds[nfds].events != 0) {
+			nfds++;
+		}
 	}
 
 	if (is_sidin_open) {
 		*event = eventfd(0, EFD_NONBLOCK);
 		if (0 <= *event) {
-			if (is_send) {
+			if (is_send && is_recv) {
 				i = pthread_create(&sub_wait_thread, NULL, sr_wait, attr);
-			} else {
+			} else if (is_send) {
+				i = pthread_create(&sub_wait_thread, NULL, s_wait, attr);
+			} else if (is_recv) {
 				i = pthread_create(&sub_wait_thread, NULL, r_wait, attr);
 			}
 			if (i == 0) {
@@ -318,7 +336,11 @@ static void cat(struct session_attr *attr)
 	int is_sidin_open;
 
 	for (is_stdin_open = 1, is_sidin_open = 1 ; *is_running && (is_stdin_open || is_sidin_open) ; ) {
-		wait(attr, is_stdin_open, is_sidin_open, 0 < write_buf_size, 0 < send_buf_size, 1000000);
+		wait(attr,
+			is_stdin_open, is_sidin_open,
+			read_buf_size == 0, recv_buf_size == 0,
+			0 < write_buf_size, 0 < send_buf_size,
+			1000000);
 
 		if (is_stdin_open && (read_buf_size == 0)) {
 			st = read(STDIN_FILENO, read_buf, BUFFER_SIZE);
