@@ -20,6 +20,7 @@ void espress_stream_timer_test()
 {
 	i_t i;
 	struct espress_stream_uint32 u[1];
+	struct espress_stream_uint32 v[1];
 	b_t b0;
 	b_t b1;
 	b_t b2;
@@ -54,6 +55,42 @@ void espress_stream_timer_test()
 		assert(espress_stream_event_flags->is_set(flags, 0));
 		espress_stream_uint32_add(t, espress_stream_tick_us_1_sec);
 	}
+
+	espress_stream_uint32_assign(v, espress_stream_tick_us_1_sec);
+	espress_stream_uint32_shift(v, 1);
+	espress_stream_timer->start(timer, _callback, (void *)event, v);
+	printf("timer: start\n");
+	espress_stream_tick->get_us(t);
+	for ( ; ; )
+	{
+		espress_stream_timer->yield(timer, espress_stream_uint32_0);
+		espress_stream_event->wait(event, flags, espress_stream_uint32_0);
+		assert(!espress_stream_event_flags->is_set(flags, 0));
+		espress_stream_tick->get_us(u);
+		espress_stream_uint32_sub(u, t);
+		if (espress_stream_uint32_le(espress_stream_tick_us_1_sec, u))
+		{
+			break;
+		}
+	}
+	espress_stream_timer->cancel(timer);
+	printf("\tcancel\n");
+	espress_stream_tick->get_us(t);
+	for ( ; ; )
+	{
+		espress_stream_timer->yield(timer, espress_stream_uint32_0);
+		espress_stream_event->wait(event, flags, espress_stream_uint32_0);
+		assert(!espress_stream_event_flags->is_set(flags, 0));
+		espress_stream_tick->get_us(u);
+		espress_stream_uint32_sub(u, t);
+		if (espress_stream_uint32_le(v, u))
+		{
+			break;
+		}
+	}
+	espress_stream_tick->get_us(u);
+	espress_stream_uint32_get(u, &b0, &b1, &b2, &b3);
+	printf("\tOK -> %02x%02x%02x%02x\n", b0, b1, b2, b3);
 
 	espress_stream_timer->finalize(timer);
 

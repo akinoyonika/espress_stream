@@ -44,9 +44,16 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20240710.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240710.tar.gz)
+- [espress_stream.20240803.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240803.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20240803.tar.gz (1.4-1)
+: - 通信途絶検出を強化。プロトコル仕様を若干変更。このため、プロトコルバージョンが更新され、以前のバージョンと相互接続できなくなった。
+- APIの<tt>espress_stream_send</tt>と<tt>espress_stream_recv</tt>に機能追加。
+- サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>のバグ修正、改良。
+- サンプルアプリケーション<tt>es_ftx</tt>の通信途絶検出を改良。
+
 
 espress_stream.20240710.tar.gz (1.3-0)
 : - サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>を改良。
@@ -472,6 +479,7 @@ int espress_stream_disconnect_result(void *sid, unsigned timeout);
  *     Session ID.
  * @param[in] data
  *     Stored address of data.
+ *     If NULL is settled, no data is actually sent and the result is simulated.
  * @param[in,out] data_size
  *     Stored address of data size and store address of accepted send request data size.
  * @param[in] timeout
@@ -515,6 +523,7 @@ int espress_stream_flush(void *sid, unsigned timeout);
  *     Session ID.
  * @param[out] data
  *     Store address of received data.
+ *     If NULL is settled, no data is actually received and the result is simulated.
  * @param[in,out] data_size
  *     Stored address of data region size and store address of received data size.
  * @param[in] timeout
@@ -1075,9 +1084,7 @@ static void *sr_wait(void *param)
 }
 
 static void wait(struct session_attr *attr,
-    int is_stdin_open, int is_sidin_open,
-    int is_read, int is_recv,
-    int is_write, int is_send,
+    int is_stdin, int is_stdout, int is_sidin, int is_sidout,
     unsigned timeout)
 {
     int i = -1;
@@ -1085,33 +1092,32 @@ static void wait(struct session_attr *attr,
     void **sid = &(attr->sid);
     int *event = &(attr->event);
     pthread_t sub_wait_thread;
-    struct pollfd fds[2];
+    struct pollfd fds[3];
     nfds_t nfds = 0;
 
-    if (is_stdin_open) {
+    if (is_stdin) {
         fds[nfds].fd = STDIN_FILENO;
-        fds[nfds].events = 0;
-        if (is_read) {
-            fds[nfds].events |= POLLIN;
-        }
-        if (is_write) {
-            fds[nfds].events |= POLLOUT;
-        }
+        fds[nfds].events = POLLIN;
         fds[nfds].revents = 0;
-        if (fds[nfds].events != 0) {
-            nfds++;
-        }
+        nfds++;
     }
 
-    if (is_sidin_open) {
+    if (is_stdout) {
+        fds[nfds].fd = STDOUT_FILENO;
+        fds[nfds].events = POLLOUT;
+        fds[nfds].revents = 0;
+        nfds++;
+    }
+
+    if (is_sidin || is_sidout) {
         *event = eventfd(0, EFD_NONBLOCK);
         if (0 <= *event) {
-            if (is_send && is_recv) {
+            if (is_sidin && is_sidout) {
                 i = pthread_create(&sub_wait_thread, NULL, sr_wait, attr);
-            } else if (is_send) {
-                i = pthread_create(&sub_wait_thread, NULL, s_wait, attr);
-            } else if (is_recv) {
+            } else if (is_sidin) {
                 i = pthread_create(&sub_wait_thread, NULL, r_wait, attr);
+            } else if (is_sidout) {
+                i = pthread_create(&sub_wait_thread, NULL, s_wait, attr);
             }
             if (i == 0) {
                 fds[nfds].fd = *event;
@@ -1124,7 +1130,7 @@ static void wait(struct session_attr *attr,
 
     poll(fds, nfds, timeout / 1000);
 
-    if (is_sidin_open) {
+    if (is_sidin || is_sidout) {
         if (0 <= *event) {
             if (i == 0) {
                 espress_stream_wait_break(*sid);
@@ -1153,93 +1159,133 @@ static void cat(struct session_attr *attr)
     unsigned char *send_buf = read_buf;
 #   define send_buf_size read_buf_size
     int is_stdin_open;
+    int is_stdout_open;
     int is_sidin_open;
+    int is_sidout_open;
 
-    for (is_stdin_open = 1, is_sidin_open = 1 ; *is_running && (is_stdin_open || is_sidin_open) ; ) {
+    for (is_stdin_open = 1, is_stdout_open = 1, is_sidin_open = 1, is_sidout_open = 1 ;
+        *is_running && (is_stdin_open || is_stdout_open || is_sidin_open || is_sidout_open) ;
+        ) {
         wait(attr,
-            is_stdin_open, is_sidin_open,
-            read_buf_size == 0, recv_buf_size == 0,
-            0 < write_buf_size, 0 < send_buf_size,
+            is_stdin_open && (read_buf_size == 0),
+            is_stdout_open && (0 < write_buf_size),
+            is_sidin_open && (recv_buf_size == 0),
+            is_sidout_open && (0 < send_buf_size),
             1000000);
 
-        if (is_stdin_open && (read_buf_size == 0)) {
-            st = read(STDIN_FILENO, read_buf, BUFFER_SIZE);
-            if (0 < st) {
-                read_buf_size = st;
-            } else if (st == 0) {
-                is_stdin_open = 0;
-                if (send_buf_size == 0) {
-                    flush(attr, TIMEOUT);
-                    espress_stream_disconnect(*sid);
-                    espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
-                }
-            } else if (errno != EAGAIN) {
-                break;
-            }
-        }
-
-        if (is_sidin_open && (recv_buf_size == 0)) {
-            u = BUFFER_SIZE;
-            i = espress_stream_recv(*sid, recv_buf, &u, 0);
-            if (i == 0) {
-                if (0 < u) {
-                    recv_buf_size = u;
-                } else {
-                    is_sidin_open = 0;
-                    if (write_buf_size == 0) {
-                        close(STDOUT_FILENO);
-                    }
-                    if (!arg_is_close_half && is_stdin_open)
-                    {
-                        is_stdin_open = 0;
-                        if (send_buf_size == 0) {
-                            flush(attr, TIMEOUT);
-                            espress_stream_disconnect(*sid);
-                            espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
-                        }
-                    }
-                }
-            } else if (0 < i) {
-                break;
-            }
-        }
-
-        if (0 < write_buf_size) {
-            st = write(STDOUT_FILENO, write_buf, write_buf_size);
-            if (0 < st) {
-                write_buf += st;
-                write_buf_size -= st;
-                if (write_buf_size == 0) {
-                    write_buf = recv_buf;
-                    if (is_sidin_open) {
-                        //fsync(STDOUT_FILENO);
-                    } else {
-                        close(STDOUT_FILENO);
-                    }
-                }
-            } else if (errno != EAGAIN) {
-                break;
-            }
-        }
-
-        if (0 < send_buf_size) {
-            u = send_buf_size;
-            i = espress_stream_send(*sid, send_buf, &u, 0);
-            if (i == 0) {
-                send_buf += u;
-                send_buf_size -= u;
-                if (send_buf_size == 0) {
-                    send_buf = read_buf;
-                    if (is_stdin_open) {
-                        espress_stream_flush(*sid, 0);
-                    } else {
+        if (is_stdin_open) {
+            if (read_buf_size == 0) {
+                st = read(STDIN_FILENO, read_buf, BUFFER_SIZE);
+                if (0 < st) {
+                    read_buf_size = st;
+                } else if (st == 0) {
+                    is_stdin_open = 0;
+                    if (send_buf_size == 0) {
                         flush(attr, TIMEOUT);
                         espress_stream_disconnect(*sid);
                         espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                        is_sidout_open = 0;
                     }
+                } else if (errno != EAGAIN) {
+                    break;
                 }
-            } else if (0 < i) {
-                break;
+            } else {
+                st = read(STDIN_FILENO, NULL, 0);
+                if ((st == -1) && (errno != EAGAIN)) {
+                    break;
+                }
+            }
+        }
+
+        if (is_sidin_open) {
+            if (recv_buf_size == 0) {
+                u = BUFFER_SIZE;
+                i = espress_stream_recv(*sid, recv_buf, &u, 0);
+                if (i == 0) {
+                    if (0 < u) {
+                        recv_buf_size = u;
+                    } else {
+                        is_sidin_open = 0;
+                        if (write_buf_size == 0) {
+                            close(STDOUT_FILENO);
+                            is_stdout_open = 0;
+                        }
+                        if (!arg_is_close_half && is_stdin_open)
+                        {
+                            is_stdin_open = 0;
+                            if (send_buf_size == 0) {
+                                flush(attr, TIMEOUT);
+                                espress_stream_disconnect(*sid);
+                                espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                                is_sidout_open = 0;
+                            }
+                        }
+                    }
+                } else if (0 < i) {
+                    break;
+                }
+            } else {
+                u = 1;
+                i = espress_stream_recv(*sid, NULL, &u, 0);
+                if (0 < i) {
+                    break;
+                }
+            }
+        }
+
+        if (is_stdout_open) {
+            if (0 < write_buf_size) {
+                st = write(STDOUT_FILENO, write_buf, write_buf_size);
+                if (0 < st) {
+                    write_buf += st;
+                    write_buf_size -= st;
+                    if (write_buf_size == 0) {
+                        write_buf = recv_buf;
+                        if (is_sidin_open) {
+                            //fsync(STDOUT_FILENO);
+                        } else {
+                            close(STDOUT_FILENO);
+                            is_stdout_open = 0;
+                        }
+                    }
+                } else if (errno != EAGAIN) {
+                    break;
+                }
+            } else {
+                st = write(STDOUT_FILENO, NULL, 0);
+                if ((st == -1) && (errno != EAGAIN)) {
+                    break;
+                }
+            }
+        }
+
+        if (is_sidout_open) {
+            if (0 < send_buf_size) {
+                u = send_buf_size;
+                i = espress_stream_send(*sid, send_buf, &u, 0);
+                if (i == 0) {
+                    send_buf += u;
+                    send_buf_size -= u;
+                    if (send_buf_size == 0) {
+                        send_buf = read_buf;
+                        if (is_stdin_open) {
+                            espress_stream_flush(*sid, 0);
+                        } else {
+                            flush(attr, TIMEOUT);
+                            espress_stream_disconnect(*sid);
+                            espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                            is_sidout_open = 0;
+                        }
+                    }
+                } else if (0 < i) {
+                    break;
+                }
+            } else {
+                u = 1;
+                i = espress_stream_send(*sid, NULL, &u, 0);
+                if (0 < i) {
+                    break;
+                }
             }
         }
     }
@@ -1615,9 +1661,7 @@ static void *sr_wait(void *param)
 }
 
 static void wait(struct session_attr *attr,
-    int is_stdin_open, int is_sidin_open,
-    int is_read, int is_recv,
-    int is_write, int is_send,
+    int is_stdin, int is_stdout, int is_sidin, int is_sidout,
     unsigned timeout)
 {
     int i = -1;
@@ -1625,33 +1669,32 @@ static void wait(struct session_attr *attr,
     void **sid = &(attr->sid);
     int *event = &(attr->event);
     pthread_t sub_wait_thread;
-    struct pollfd fds[2];
+    struct pollfd fds[3];
     nfds_t nfds = 0;
 
-    if (is_stdin_open) {
+    if (is_stdin) {
         fds[nfds].fd = STDIN_FILENO;
-        fds[nfds].events = 0;
-        if (is_read) {
-            fds[nfds].events |= POLLIN;
-        }
-        if (is_write) {
-            fds[nfds].events |= POLLOUT;
-        }
+        fds[nfds].events = POLLIN;
         fds[nfds].revents = 0;
-        if (fds[nfds].events != 0) {
-            nfds++;
-        }
+        nfds++;
     }
 
-    if (is_sidin_open) {
+    if (is_stdout) {
+        fds[nfds].fd = STDOUT_FILENO;
+        fds[nfds].events = POLLOUT;
+        fds[nfds].revents = 0;
+        nfds++;
+    }
+
+    if (is_sidin || is_sidout) {
         *event = eventfd(0, EFD_NONBLOCK);
         if (0 <= *event) {
-            if (is_send && is_recv) {
+            if (is_sidin && is_sidout) {
                 i = pthread_create(&sub_wait_thread, NULL, sr_wait, attr);
-            } else if (is_send) {
-                i = pthread_create(&sub_wait_thread, NULL, s_wait, attr);
-            } else if (is_recv) {
+            } else if (is_sidin) {
                 i = pthread_create(&sub_wait_thread, NULL, r_wait, attr);
+            } else if (is_sidout) {
+                i = pthread_create(&sub_wait_thread, NULL, s_wait, attr);
             }
             if (i == 0) {
                 fds[nfds].fd = *event;
@@ -1664,7 +1707,7 @@ static void wait(struct session_attr *attr,
 
     poll(fds, nfds, timeout / 1000);
 
-    if (is_sidin_open) {
+    if (is_sidin || is_sidout) {
         if (0 <= *event) {
             if (i == 0) {
                 espress_stream_wait_break(*sid);
@@ -1693,93 +1736,133 @@ static void cat(struct session_attr *attr)
     unsigned char *send_buf = read_buf;
 #   define send_buf_size read_buf_size
     int is_stdin_open;
+    int is_stdout_open;
     int is_sidin_open;
+    int is_sidout_open;
 
-    for (is_stdin_open = 1, is_sidin_open = 1 ; *is_running && (is_stdin_open || is_sidin_open) ; ) {
+    for (is_stdin_open = 1, is_stdout_open = 1, is_sidin_open = 1, is_sidout_open = 1 ;
+        *is_running && (is_stdin_open || is_stdout_open || is_sidin_open || is_sidout_open) ;
+        ) {
         wait(attr,
-            is_stdin_open, is_sidin_open,
-            read_buf_size == 0, recv_buf_size == 0,
-            0 < write_buf_size, 0 < send_buf_size,
+            is_stdin_open && (read_buf_size == 0),
+            is_stdout_open && (0 < write_buf_size),
+            is_sidin_open && (recv_buf_size == 0),
+            is_sidout_open && (0 < send_buf_size),
             1000000);
 
-        if (is_stdin_open && (read_buf_size == 0)) {
-            st = read(STDIN_FILENO, read_buf, BUFFER_SIZE);
-            if (0 < st) {
-                read_buf_size = st;
-            } else if (st == 0) {
-                is_stdin_open = 0;
-                if (send_buf_size == 0) {
-                    flush(attr, TIMEOUT);
-                    espress_stream_disconnect(*sid);
-                    espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
-                }
-            } else if (errno != EAGAIN) {
-                break;
-            }
-        }
-
-        if (is_sidin_open && (recv_buf_size == 0)) {
-            u = BUFFER_SIZE;
-            i = espress_stream_recv(*sid, recv_buf, &u, 0);
-            if (i == 0) {
-                if (0 < u) {
-                    recv_buf_size = u;
-                } else {
-                    is_sidin_open = 0;
-                    if (write_buf_size == 0) {
-                        close(STDOUT_FILENO);
-                    }
-                    if (!arg_is_close_half && is_stdin_open)
-                    {
-                        is_stdin_open = 0;
-                        if (send_buf_size == 0) {
-                            flush(attr, TIMEOUT);
-                            espress_stream_disconnect(*sid);
-                            espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
-                        }
-                    }
-                }
-            } else if (0 < i) {
-                break;
-            }
-        }
-
-        if (0 < write_buf_size) {
-            st = write(STDOUT_FILENO, write_buf, write_buf_size);
-            if (0 < st) {
-                write_buf += st;
-                write_buf_size -= st;
-                if (write_buf_size == 0) {
-                    write_buf = recv_buf;
-                    if (is_sidin_open) {
-                        //fsync(STDOUT_FILENO);
-                    } else {
-                        close(STDOUT_FILENO);
-                    }
-                }
-            } else if (errno != EAGAIN) {
-                break;
-            }
-        }
-
-        if (0 < send_buf_size) {
-            u = send_buf_size;
-            i = espress_stream_send(*sid, send_buf, &u, 0);
-            if (i == 0) {
-                send_buf += u;
-                send_buf_size -= u;
-                if (send_buf_size == 0) {
-                    send_buf = read_buf;
-                    if (is_stdin_open) {
-                        espress_stream_flush(*sid, 0);
-                    } else {
+        if (is_stdin_open) {
+            if (read_buf_size == 0) {
+                st = read(STDIN_FILENO, read_buf, BUFFER_SIZE);
+                if (0 < st) {
+                    read_buf_size = st;
+                } else if (st == 0) {
+                    is_stdin_open = 0;
+                    if (send_buf_size == 0) {
                         flush(attr, TIMEOUT);
                         espress_stream_disconnect(*sid);
                         espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                        is_sidout_open = 0;
                     }
+                } else if (errno != EAGAIN) {
+                    break;
                 }
-            } else if (0 < i) {
-                break;
+            } else {
+                st = read(STDIN_FILENO, NULL, 0);
+                if ((st == -1) && (errno != EAGAIN)) {
+                    break;
+                }
+            }
+        }
+
+        if (is_sidin_open) {
+            if (recv_buf_size == 0) {
+                u = BUFFER_SIZE;
+                i = espress_stream_recv(*sid, recv_buf, &u, 0);
+                if (i == 0) {
+                    if (0 < u) {
+                        recv_buf_size = u;
+                    } else {
+                        is_sidin_open = 0;
+                        if (write_buf_size == 0) {
+                            close(STDOUT_FILENO);
+                            is_stdout_open = 0;
+                        }
+                        if (!arg_is_close_half && is_stdin_open)
+                        {
+                            is_stdin_open = 0;
+                            if (send_buf_size == 0) {
+                                flush(attr, TIMEOUT);
+                                espress_stream_disconnect(*sid);
+                                espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                                is_sidout_open = 0;
+                            }
+                        }
+                    }
+                } else if (0 < i) {
+                    break;
+                }
+            } else {
+                u = 1;
+                i = espress_stream_recv(*sid, NULL, &u, 0);
+                if (0 < i) {
+                    break;
+                }
+            }
+        }
+
+        if (is_stdout_open) {
+            if (0 < write_buf_size) {
+                st = write(STDOUT_FILENO, write_buf, write_buf_size);
+                if (0 < st) {
+                    write_buf += st;
+                    write_buf_size -= st;
+                    if (write_buf_size == 0) {
+                        write_buf = recv_buf;
+                        if (is_sidin_open) {
+                            //fsync(STDOUT_FILENO);
+                        } else {
+                            close(STDOUT_FILENO);
+                            is_stdout_open = 0;
+                        }
+                    }
+                } else if (errno != EAGAIN) {
+                    break;
+                }
+            } else {
+                st = write(STDOUT_FILENO, NULL, 0);
+                if ((st == -1) && (errno != EAGAIN)) {
+                    break;
+                }
+            }
+        }
+
+        if (is_sidout_open) {
+            if (0 < send_buf_size) {
+                u = send_buf_size;
+                i = espress_stream_send(*sid, send_buf, &u, 0);
+                if (i == 0) {
+                    send_buf += u;
+                    send_buf_size -= u;
+                    if (send_buf_size == 0) {
+                        send_buf = read_buf;
+                        if (is_stdin_open) {
+                            espress_stream_flush(*sid, 0);
+                        } else {
+                            flush(attr, TIMEOUT);
+                            espress_stream_disconnect(*sid);
+                            espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+                            is_sidout_open = 0;
+                        }
+                    }
+                } else if (0 < i) {
+                    break;
+                }
+            } else {
+                u = 1;
+                i = espress_stream_send(*sid, NULL, &u, 0);
+                if (0 < i) {
+                    break;
+                }
             }
         }
     }

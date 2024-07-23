@@ -283,6 +283,7 @@ int espress_stream_disconnect_result(void *sid, unsigned timeout);
  *     Session ID.
  * @param[in] data
  *     Stored address of data.
+ *     If NULL is settled, no data is actually sent and the result is simulated.
  * @param[in,out] data_size
  *     Stored address of data size and store address of accepted send request data size.
  * @param[in] timeout
@@ -326,6 +327,7 @@ int espress_stream_flush(void *sid, unsigned timeout);
  *     Session ID.
  * @param[out] data
  *     Store address of received data.
+ *     If NULL is settled, no data is actually received and the result is simulated.
  * @param[in,out] data_size
  *     Stored address of data region size and store address of received data size.
  * @param[in] timeout
