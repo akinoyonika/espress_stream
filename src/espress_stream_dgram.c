@@ -229,6 +229,10 @@ static void _send_yield(struct espress_stream_dgram *this, struct espress_stream
 
 	espress_stream_tick->get_us(u);
 	espress_stream_event->wait(this->send_event, f, timeout);
+	if (!espress_stream_event_flags->is_set_any(f))
+	{
+		goto EXIT;
+	}
 
 	espress_stream_tick->get_us(v);
 	espress_stream_uint32_sub(v, u);
@@ -280,6 +284,8 @@ static void _send_yield(struct espress_stream_dgram *this, struct espress_stream
 
 	espress_stream_mutex->unlock(this->send_mutex);
 
+EXIT:
+
 	return;
 }
 
@@ -297,6 +303,10 @@ static void _recv_yield(struct espress_stream_dgram *this, struct espress_stream
 
 	espress_stream_tick->get_us(u);
 	espress_stream_event->wait(this->recv_event, f, timeout);
+	if (!espress_stream_event_flags->is_set_any(f))
+	{
+		goto EXIT;
+	}
 
 	espress_stream_tick->get_us(v);
 	espress_stream_uint32_sub(v, u);
@@ -349,6 +359,8 @@ static void _recv_yield(struct espress_stream_dgram *this, struct espress_stream
 	}
 
 	espress_stream_mutex->unlock(this->recv_mutex);
+
+EXIT:
 
 	return;
 }

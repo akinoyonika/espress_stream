@@ -20,7 +20,7 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 : 1/2RTTハーフクローズ
 
 死活監視
-: 無受信期間タイムアウトによる切断検出および無送信データ期間のビーコン送信による活線維持
+: 無受信期間タイムアウトによる切断検出および無送信データ期間のビーコン送信による活線維持と無応答期間タイムアウトによる通信途絶検出
 
 フロー制御
 : スライディングウィンドウ方式
@@ -44,9 +44,13 @@ linuxに対するポーティングではデータグラム通信にUDPを用い
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20240803.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240803.tar.gz)
+- [espress_stream.20240825.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20240825.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20240825.tar.gz (1.5-1)
+: - ドキュメントの修正。
+- 基本実装及びlinux用実装の<tt>espress_stream_dgram.c</tt>を修正。
 
 espress_stream.20240803.tar.gz (1.4-1)
 : - 通信途絶検出を強化。プロトコル仕様を若干変更。このため、プロトコルバージョンが更新され、以前のバージョンと相互接続できなくなった。
