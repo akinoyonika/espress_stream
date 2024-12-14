@@ -1,7 +1,7 @@
 #ifndef __ESPRESS_STREAM_DGRAM_H__
 #define __ESPRESS_STREAM_DGRAM_H__
 
-#define ESPRESS_STREAM_DGRAM_MTU (1280)
+#define ESPRESS_STREAM_DGRAM_MTU (1500)
 
 struct espress_stream_dgram_address
 {
@@ -27,6 +27,7 @@ struct espress_stream_dgram
 	struct espress_stream_mutex send_mutex[1];
 	struct espress_stream_mutex recv_mutex[1];
 	int sock;
+	unsigned short protocol_family;
 	int send_eventfd;
 	struct espress_stream_dgram_buffer * const *send_buffer;
 	struct espress_stream_dgram_buffer * const *send_ex_buffer;

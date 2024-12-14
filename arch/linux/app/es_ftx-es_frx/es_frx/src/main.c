@@ -10,6 +10,10 @@
 #include <endian.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <netpacket/packet.h>
+#include <net/ethernet.h>
 
 #include "espress_stream/api.h"
 #include "cipher_api.h"
@@ -32,26 +36,156 @@ static char const *user_id_pass[] = USER_ID_PASS;
 #endif
 
 static void *ifd;
+static int arg_protocol;
 static const char *arg_address;
 static const char *arg_port;
+static char const *arg_ifname;
+static char const *arg_type;
 static int arg_is_overwrite;
 static const char *arg_dir_name;
 
-static int inet_naton(char const *name, char const *port, struct sockaddr *address)
+static int inet_naton(int protocol, char const *name, char const *port, struct sockaddr *address)
 {
-	int ret;
+	int ret = 0;
 	struct addrinfo hint[1] = {0};
-	struct addrinfo *addrinfo;
-	hint->ai_family = AF_INET;
+	struct addrinfo *addrinfo = NULL;
+
+	hint->ai_family = protocol;
 	hint->ai_socktype = SOCK_DGRAM;
 	if (name == NULL) {
 		hint->ai_flags = AI_PASSIVE;
 	}
-	ret = getaddrinfo(name, port, hint, &addrinfo);
-	if (ret == 0) {
-		memcpy(address, addrinfo->ai_addr, addrinfo->ai_addrlen);
-		freeaddrinfo(addrinfo);
+	if (port == NULL) {
+		port = "0";
 	}
+	ret = getaddrinfo(name, port, hint, &addrinfo);
+	if (ret != 0) {
+		addrinfo = NULL;
+		ret = 1;
+		goto EXIT;
+	}
+	memcpy(address, addrinfo->ai_addr, addrinfo->ai_addrlen);
+
+EXIT:
+	if (addrinfo != NULL) freeaddrinfo(addrinfo);
+
+	return ret;
+}
+
+static int packet_naton(char const *mac_address, char const *type, char const *ifname, struct sockaddr *address)
+{
+	int ret = 0;
+	int i;
+	int j;
+	char *p;
+	unsigned short type_num;
+	unsigned mac[6] = {0};
+	unsigned if_mac[6] = {0};
+	int sock = -1;
+	struct ifconf ifc[1];
+	char buf[1024];
+	struct ifreq ifr[1];
+
+	((struct sockaddr_ll *)address)->sll_family = AF_PACKET;
+	if (type != NULL) {
+		type_num = strtoul(type, &p, 0);
+		if ((*p != '\0') || (type_num < 0x0600)) {
+			ret = 1;
+			goto EXIT;
+		}
+	} else {
+		type_num = ETH_P_ALL;
+	}
+	((struct sockaddr_ll *)address)->sll_protocol = htons(type_num);
+	if ((mac_address != NULL) && (sscanf(mac_address, "%x:%x:%x:%x:%x:%x", mac, mac + 1, mac + 2, mac + 3, mac + 4, mac + 5) != 6)) {
+		ret = 1;
+		goto EXIT;
+	}
+	sock = socket(PF_PACKET, SOCK_DGRAM, 0);
+	if (sock == -1) {
+		ret = 1;
+		goto EXIT;
+	}
+	ifc->ifc_len = sizeof(buf);
+	ifc->ifc_buf = buf;
+	if (ioctl(sock, SIOCGIFCONF, ifc) == -1) {
+		ret = 1;
+		goto EXIT;
+	}
+	if ((ifname != NULL) && (sscanf(ifname, "%x:%x:%x:%x:%x:%x", if_mac, if_mac + 1, if_mac + 2, if_mac + 3, if_mac + 4, if_mac + 5) != 6)) {
+		for (i = 0 ; i < (sizeof(buf) / sizeof(*ifr)) ; i++) {
+			if (strcmp(ifname, (ifc->ifc_req + i)->ifr_name) == 0) {
+				strcpy(ifr->ifr_name, (ifc->ifc_req + i)->ifr_name);
+				if (ioctl(sock, SIOCGIFHWADDR, ifr) == -1) {
+					ret = 1;
+					goto EXIT;
+				}
+				for (j = 0 ; j < 6 ; j++) {
+					if_mac[j] = ((unsigned char *)(ifr->ifr_hwaddr.sa_data))[j];
+				}
+				break;
+			}
+		}
+		if (i == (sizeof(buf) / sizeof(*ifr))) {
+			ret = 1;
+			goto EXIT;
+		}
+		if(ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
+			ret = 1;
+			goto EXIT;
+		}
+		((struct sockaddr_ll *)address)->sll_ifindex = ifr->ifr_ifindex;
+	} else if ((if_mac[0] == 0) && (if_mac[1] == 0) && (if_mac[2] == 0) && (if_mac[3] == 0) && (if_mac[4] == 0) && (if_mac[5] == 0)) {
+		((struct sockaddr_ll *)address)->sll_ifindex = 0;
+	} else {
+		for (i = 0 ; i < (sizeof(buf) / sizeof(*ifr)) ; i++) {
+			strcpy(ifr->ifr_name, (ifc->ifc_req + i)->ifr_name);
+			if (ioctl(sock, SIOCGIFHWADDR, ifr) == -1) {
+				ret = 1;
+				goto EXIT;
+			}
+			for (j = 0 ; j < 6 ; j++) {
+				if (((unsigned char *)(ifr->ifr_hwaddr.sa_data))[j] != if_mac[j]) {
+					break;
+				}
+			}
+			if (j == 6) {
+				break;
+			}
+		}
+		if (i == (sizeof(buf) / sizeof(*ifr))) {
+			ret = 1;
+			goto EXIT;
+		}
+		if(ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
+			ret = 1;
+			goto EXIT;
+		}
+		((struct sockaddr_ll *)address)->sll_ifindex = ifr->ifr_ifindex;
+	}
+	((struct sockaddr_ll *)address)->sll_hatype = 0;
+	((struct sockaddr_ll *)address)->sll_pkttype = 0;
+	if ((mac[0] == 0) && (mac[1] == 0) && (mac[2] == 0) && (mac[3] == 0) && (mac[4] == 0) && (mac[5] == 0)) {
+		((struct sockaddr_ll *)address)->sll_halen = 0;
+		((struct sockaddr_ll *)address)->sll_addr[0] = 0;
+		((struct sockaddr_ll *)address)->sll_addr[1] = 0;
+		((struct sockaddr_ll *)address)->sll_addr[2] = 0;
+		((struct sockaddr_ll *)address)->sll_addr[3] = 0;
+		((struct sockaddr_ll *)address)->sll_addr[4] = 0;
+		((struct sockaddr_ll *)address)->sll_addr[5] = 0;
+	} else {
+		((struct sockaddr_ll *)address)->sll_halen = 6;
+		((struct sockaddr_ll *)address)->sll_addr[0] = mac[0];
+		((struct sockaddr_ll *)address)->sll_addr[1] = mac[1];
+		((struct sockaddr_ll *)address)->sll_addr[2] = mac[2];
+		((struct sockaddr_ll *)address)->sll_addr[3] = mac[3];
+		((struct sockaddr_ll *)address)->sll_addr[4] = mac[4];
+		((struct sockaddr_ll *)address)->sll_addr[5] = mac[5];
+	}
+
+EXIT:
+	if (sock != -1) close(sock);
+
 	return ret;
 }
 
@@ -62,8 +196,11 @@ static int scan_arg(int argc, char const **argv)
 	int ret = 0;
 	char c = '\0';
 
+	arg_protocol = PF_INET;
 	arg_address = NULL;
 	arg_port = "12345";
+	arg_ifname = NULL;
+	arg_type = NULL;
 	arg_is_overwrite = 0;
 	arg_dir_name = NULL;
 
@@ -71,6 +208,18 @@ static int scan_arg(int argc, char const **argv)
 		if (argv[i][0] == '-') {
 			c = argv[i][1];
 			switch (c) {
+			case '4':
+				arg_protocol = PF_INET;
+				c = '\0';
+				break;
+			case '6':
+				arg_protocol = PF_INET6;
+				c = '\0';
+				break;
+			case '0':
+				arg_protocol = PF_PACKET;
+				c = '\0';
+				break;
 			case 'a':
 			case 'p':
 				break;
@@ -79,7 +228,10 @@ static int scan_arg(int argc, char const **argv)
 				c = '\0';
 				break;
 			default:
-				c = '\0';
+				ret = 1;
+				break;
+			}
+			if (ret) {
 				break;
 			}
 			continue;
@@ -87,10 +239,12 @@ static int scan_arg(int argc, char const **argv)
 		switch (c) {
 		case 'a':
 			arg_address = argv[i];
+			arg_ifname = argv[i];
 			c = '\0';
 			break;
 		case 'p':
 			arg_port = argv[i];
+			arg_type = argv[i];
 			c = '\0';
 			break;
 		default:
@@ -116,11 +270,18 @@ static int scan_arg(int argc, char const **argv)
 			p++;
 		}
 		printf("%s "
-				"[-a <bind address>] "
-				"[-p <bind port>] "
-				"[-o (overwrite)] "
-				"<dir name>\n",
-			p);
+				"[-4 (ipv4) | -6 (ipv6)] "
+					"[-a <bind address>] "
+					"[-p <bind port>] "
+					"[-o (overwrite)] "
+					"<dir name>\n"
+			"%s "
+				"-0 (raw) "
+					"[-a <interface name>] "
+					"[-p <ether type>] "
+					"[-o (overwrite)] "
+					"<dir name>\n",
+			p, p);
 		printf("%s (C) 2023 akinoyonika\n", p);
 		printf("%s\n", espress_stream_copyright());
 	}
@@ -178,11 +339,11 @@ static void *file_rx(void *param)
 	}
 
 	i = (arg_dir_name[strlen(arg_dir_name) - 1] == '/') ? 0 : 1;
-	if (sizeof(file_name) <= (strlen(arg_dir_name) + i)) {
+	i = snprintf(file_name, sizeof(file_name), "%s%s", arg_dir_name, i ? "/" : "");
+	if (sizeof(file_name) <= i) {
 		ret = NULL;
 		goto DIR_NAME_TOO_LONG_EXIT;
 	}
-	sprintf(file_name, "%s%s", arg_dir_name, i ? "/" : "");
 	for (u = strlen(file_name) ; u < sizeof(file_name) ; u++) {
 		v = 1;
 		i = espress_stream_recv(*sid, file_name + u, &v, *is_running ? TIMEOUT : 0);
@@ -452,19 +613,37 @@ int main(int argc, char const **argv)
 		printf("%02x", public_key[i]);
 	}
 	printf("\n");
-	printf("bind address: %s%s%s\n",
-		(arg_address == NULL) ? "(" : "",
-		(arg_address == NULL) ? "any" : arg_address,
-		(arg_address == NULL) ? ")" : "");
-	printf("bind port: %s\n", arg_port);
+	switch (arg_protocol) {
+	case PF_PACKET:
+		printf("protocol: raw\n");
+		printf("interface name: %s\n", (arg_ifname == NULL) ? "(any)" : arg_ifname);
+		printf("ether type: %s\n", (arg_type == NULL) ? "(any)" : arg_type);
+		break;
+	case PF_INET6:
+	case PF_INET:
+	default:
+		printf("protocol: %s\n", (arg_protocol == PF_INET6) ? "ipv6" : "ipv4");
+		printf("bind address: %s\n", (arg_address == NULL) ? "(any)" : arg_address);
+		printf("bind port: %s\n", arg_port);
+		break;
+	}
 	printf("receiving file overwrite: %s\n", arg_is_overwrite ? "available" : "unavailable");
 	printf("receiving file store dir: \"%s\"\n", arg_dir_name);
 
-	i = inet_naton(arg_address, arg_port, (struct sockaddr *)address);
-	if (i) {
-		ret = 1;
-		fprintf(stderr, "error: invalid address/port\n");
-		goto EXIT;
+	if (arg_protocol == PF_PACKET) {
+		i = packet_naton(NULL, arg_type, arg_ifname, (struct sockaddr *)address);
+		if (i) {
+			ret = 1;
+			fprintf(stderr, "error: invalid bind_ether_type/bind_interface_name\n");
+			goto EXIT;
+		}
+	} else {
+		i = inet_naton(arg_protocol, arg_address, arg_port, (struct sockaddr *)address);
+		if (i) {
+			ret = 1;
+			fprintf(stderr, "error: invalid bind_address/bind_port\n");
+			goto EXIT;
+		}
 	}
 
 	is_stream_ng = (espress_stream_begin() != 0);

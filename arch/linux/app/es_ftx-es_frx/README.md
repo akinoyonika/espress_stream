@@ -106,6 +106,107 @@ user password:
 <tt>es_ftx</tt>はファイル送信が終了するとソフトウェアも終了します。<tt>es_frx</tt>は<tt>[CTRL] + [C]</tt>で終了します。
 どちらも<tt>[CTRL] + [C]</tt>で中断できます。
 
+## ユーセージ
+
+### 注意
+
+プロトコルにrawを指定する場合、実行にはroot権限もしくはCAP_NET_RAWケーパビリティが必要です。
+
+### <tt>es_ftx [-4 | -6] [-a \<destination address\>] [-p \<destination port\>] [-b \<bind address\>] [-q \<bind port\>] [-k \<destination public key\>] [-i \<user id\>] [-w \<user password\>] \<file name\> [\<file name\> [...]]</tt>
+
+<tt>-4</tt>
+: プロトコルにipv4を使用する。 (デフォルト)
+
+<tt>-6</tt>
+: プロトコルにipv6を使用する。 (非デフォルト)
+
+<tt>-a \<destination address\></tt>
+: 接続先のドメイン名、アドレス("<tt>nnn.nnn.nnn.nnn</tt>" or "<tt>xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx</tt>")を指定する。 (デフォルト値: "<tt>localhost</tt>")
+
+<tt>-p \<destination port\></tt>
+: 接続先のポート番号を指定する。 (デフォルト値: "<tt>12345</tt>")
+
+<tt>-b \<bind address\></tt>
+: 結合するアドレス("<tt>nnn.nnn.nnn.nnn</tt>" or "<tt>xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx</tt>")を指定する。 (デフォルト: 任意)
+
+<tt>-q \<bind port\></tt>
+: 結合するポート番号を指定する。 (デフォルト: 任意)
+
+<tt>-k \<destination public key\></tt>
+: 接続先の公開鍵番号を指定する。 (デフォルト: 認証無)
+
+<tt>-i \<user id\></tt>
+: ユーザーIDを指定する。 (デフォルト値: "")
+
+<tt>-w \<user password\></tt>
+: ユーザーパスワードを指定する。 (デフォルト値: "")
+
+<tt>\<file name\></tt>
+: 送信するファイルの名前を指定する。
+
+### <tt>es_ftx -0 [-a \<destination address\>] [-p \<ether type\>] [-b \<interface name\>] [-k \<destination public key\>] [-i \<user id\>] [-w \<user password\>] \<file name\> [\<file name\> [...]]</tt>
+
+<tt>-0</tt>
+: プロトコルにrawを指定する。 (非デフォルト)
+
+<tt>-a \<destination address\></tt>
+: 接続先のアドレス("<tt>xx:xx:xx:xx:xx:xx</tt>")を指定する。 (デフォルト値: "<tt>ff:ff:ff:ff:ff:ff</tt>")
+
+<tt>-p \<ether type\></tt>
+: 使用するイーサタイプ番号を指定する。 (デフォルト値: "<tt>0xffff</tt>")
+
+<tt>-b \<interface name\></tt>
+: 使用するインターフェイスを指定する。 (デフォルト値: "<tt>eth0</tt>")
+
+<tt>-k \<destination public key\></tt>
+: 接続先の公開鍵番号を指定する。 (デフォルト: 認証無)
+
+<tt>-i \<user id\></tt>
+: ユーザーIDを指定する。 (デフォルト値: "")
+
+<tt>-w \<user password\></tt>
+: ユーザーパスワードを指定する。 (デフォルト値: "")
+
+<tt>\<file name\></tt>
+: 送信するファイルの名前を指定する。
+
+### <tt>es_frx [-4 | -6] [-a \<bind address\>] [-p \<bind port\>] [-o] \<dir name\></tt>
+
+<tt>-4</tt>
+: プロトコルにipv4を使用する。 (デフォルト)
+
+<tt>-6</tt>
+: プロトコルにipv6を使用する。 (非デフォルト)
+
+<tt>-a \<bind address\></tt>
+: 結合するアドレス("<tt>nnn.nnn.nnn.nnn</tt>" or "<tt>xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx%ifname</tt>")を指定する。 (デフォルト: 任意)
+
+<tt>-p \<bind port\></tt>
+: 結合するポート番号を指定する。 (デフォルト値: "<tt>12345</tt>")
+
+<tt>-o</tt>
+: ファイルの上書きを許可する。 (デフォルト: 上書き禁止)
+
+<tt>\<dir name\></tt>
+: ファイルを保存するディレクトリを指定する。
+
+### <tt>es_frx -0 [-a \<interface name\>] [-p \<ether type\>] [-o] \<dir name\></tt>
+
+<tt>-0</tt>
+: プロトコルにrawを指定する。 (非デフォルト)
+
+<tt>-a \<interface name\></tt>
+: 使用するインターフェイスを指定する。 (デフォルト: 任意)
+
+<tt>-p \<ether type\></tt>
+: 使用するイーサタイプ番号を指定する。 (デフォルト: 任意)
+
+<tt>-o</tt>
+: ファイルの上書きを許可する。 (デフォルト: 上書き禁止)
+
+<tt>\<dir name\></tt>
+: ファイルを保存するディレクトリを指定する。
+
 ## サーバー認証について
 
 サーバー認証にはEd25519アルゴリズム[RFC 8032]を使用しています。

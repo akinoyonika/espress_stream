@@ -8,6 +8,348 @@
 #include "espress_stream/ring.h"
 #include "espress_stream/dgram.h"
 
+#define _PF_INET_MAX_TRANS_SIZE (1280)
+#define _PF_INET6_MAX_TRANS_SIZE (1280)
+#define _PF_PACKET_MAX_TRANS_SIZE (1500)
+#define _PF_PACKET_MIN_TRANS_SIZE (46)
+
+#if (ESPRESS_STREAM_DGRAM_MTU < _PF_INET_MAX_TRANS_SIZE) || \
+	(ESPRESS_STREAM_DGRAM_MTU < _PF_INET6_MAX_TRANS_SIZE) || \
+	(ESPRESS_STREAM_DGRAM_MTU < _PF_PACKET_MAX_TRANS_SIZE)
+#	error
+#endif
+
+static u8_t * const _pad0 = NULL;
+
+#define _N(count) 1,
+#define ESPRESS_STREAM_MACRO_REPEAT (1)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad1[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 2,
+#define ESPRESS_STREAM_MACRO_REPEAT (2)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad2[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 3,
+#define ESPRESS_STREAM_MACRO_REPEAT (3)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad3[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 4,
+#define ESPRESS_STREAM_MACRO_REPEAT (4)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad4[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 5,
+#define ESPRESS_STREAM_MACRO_REPEAT (5)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad5[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 6,
+#define ESPRESS_STREAM_MACRO_REPEAT (6)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad6[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 7,
+#define ESPRESS_STREAM_MACRO_REPEAT (7)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad7[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 8,
+#define ESPRESS_STREAM_MACRO_REPEAT (8)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad8[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 9,
+#define ESPRESS_STREAM_MACRO_REPEAT (9)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad9[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 10,
+#define ESPRESS_STREAM_MACRO_REPEAT (10)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad10[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 11,
+#define ESPRESS_STREAM_MACRO_REPEAT (11)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad11[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 12,
+#define ESPRESS_STREAM_MACRO_REPEAT (12)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad12[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 13,
+#define ESPRESS_STREAM_MACRO_REPEAT (13)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad13[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 14,
+#define ESPRESS_STREAM_MACRO_REPEAT (14)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad14[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 15,
+#define ESPRESS_STREAM_MACRO_REPEAT (15)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad15[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 16,
+#define ESPRESS_STREAM_MACRO_REPEAT (16)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad16[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 17,
+#define ESPRESS_STREAM_MACRO_REPEAT (17)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad17[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 18,
+#define ESPRESS_STREAM_MACRO_REPEAT (18)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad18[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 19,
+#define ESPRESS_STREAM_MACRO_REPEAT (19)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad19[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 20,
+#define ESPRESS_STREAM_MACRO_REPEAT (20)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad20[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 21,
+#define ESPRESS_STREAM_MACRO_REPEAT (21)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad21[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 22,
+#define ESPRESS_STREAM_MACRO_REPEAT (22)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad22[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 23,
+#define ESPRESS_STREAM_MACRO_REPEAT (23)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad23[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 24,
+#define ESPRESS_STREAM_MACRO_REPEAT (24)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad24[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 25,
+#define ESPRESS_STREAM_MACRO_REPEAT (25)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad25[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 26,
+#define ESPRESS_STREAM_MACRO_REPEAT (26)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad26[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 27,
+#define ESPRESS_STREAM_MACRO_REPEAT (27)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad27[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 28,
+#define ESPRESS_STREAM_MACRO_REPEAT (28)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad28[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 29,
+#define ESPRESS_STREAM_MACRO_REPEAT (29)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad29[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 30,
+#define ESPRESS_STREAM_MACRO_REPEAT (30)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad30[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 31,
+#define ESPRESS_STREAM_MACRO_REPEAT (31)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad31[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 32,
+#define ESPRESS_STREAM_MACRO_REPEAT (32)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad32[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 33,
+#define ESPRESS_STREAM_MACRO_REPEAT (33)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad33[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 34,
+#define ESPRESS_STREAM_MACRO_REPEAT (34)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad34[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 35,
+#define ESPRESS_STREAM_MACRO_REPEAT (35)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad35[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 36,
+#define ESPRESS_STREAM_MACRO_REPEAT (36)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad36[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 37,
+#define ESPRESS_STREAM_MACRO_REPEAT (37)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad37[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 38,
+#define ESPRESS_STREAM_MACRO_REPEAT (38)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad38[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 39,
+#define ESPRESS_STREAM_MACRO_REPEAT (39)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad39[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 40,
+#define ESPRESS_STREAM_MACRO_REPEAT (40)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad40[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 41,
+#define ESPRESS_STREAM_MACRO_REPEAT (41)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad41[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 42,
+#define ESPRESS_STREAM_MACRO_REPEAT (42)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad42[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 43,
+#define ESPRESS_STREAM_MACRO_REPEAT (43)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad43[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 44,
+#define ESPRESS_STREAM_MACRO_REPEAT (44)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad44[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 45,
+#define ESPRESS_STREAM_MACRO_REPEAT (45)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad45[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) 46,
+#define ESPRESS_STREAM_MACRO_REPEAT (46)
+#include "espress_stream/macro_repeat.h"
+static u8_t const _pad46[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
+#define _N(count) _pad ## count,
+#define ESPRESS_STREAM_MACRO_REPEAT (_PF_PACKET_MIN_TRANS_SIZE + 1)
+#include "espress_stream/macro_repeat.h"
+static u8_t const * const _pad[] = {ESPRESS_STREAM_MACRO_REPEAT(_N)};
+#undef ESPRESS_STREAM_MACRO_REPEAT
+#undef _N
+
 static i_t _initialize(struct espress_stream_dgram *this, struct espress_stream_dgram_address const *bind_address, struct espress_stream_event *send_event, struct espress_stream_event *recv_event);
 static void _finalize(struct espress_stream_dgram *this);
 static i_t _send_request(struct espress_stream_dgram *this, struct espress_stream_dgram_buffer * const *buffer, u_t num, struct espress_stream_dgram_buffer * const *ex_buffer, u_t ex_num);
@@ -78,12 +420,23 @@ static i_t _initialize(struct espress_stream_dgram *this, struct espress_stream_
 		ret = errno;
 		goto SOCKET_INIT_FAIL_EXIT;
 	}
-	i = bind(this->sock, (struct sockaddr const *)bind_address->storage, sizeof(*(bind_address->storage)));
+	if (PF_INET == bind_address->storage->ss_family)
+	{
+		i = 1;
+		i = setsockopt(this->sock, SOL_SOCKET, SO_BROADCAST, &i, sizeof(i));
+		if (-1 == i)
+		{
+			ret = errno;
+			goto SETSOCKOPT_FAIL_EXIT;
+		}
+	}
+	i = bind(this->sock, (struct sockaddr const *)(bind_address->storage), sizeof(*(bind_address->storage)));
 	if (-1 == i)
 	{
 		ret = errno;
 		goto BIND_FAIL_EXIT;
 	}
+	this->protocol_family = bind_address->storage->ss_family;
 
 	this->send_eventfd = eventfd(0, 0);
 	if (-1 == this->send_eventfd)
@@ -106,6 +459,7 @@ RECV_EVENTFD_INIT_FAIL_EXIT:
 	if (0 != ret) close(this->send_eventfd);
 SEND_EVENTFD_INIT_FAIL_EXIT:
 BIND_FAIL_EXIT:
+SETSOCKOPT_FAIL_EXIT:
 	if (0 != ret) close(this->sock);
 SOCKET_INIT_FAIL_EXIT:
 	if (0 != ret) espress_stream_mutex->finalize(this->recv_mutex);
@@ -228,7 +582,21 @@ static i_t _recv_result(struct espress_stream_dgram *this, u_t *num)
 
 static u_t _mtu(struct espress_stream_dgram *this)
 {
-	return ESPRESS_STREAM_DGRAM_MTU;
+	u_t ret;
+	switch (this->protocol_family)
+	{
+	case PF_PACKET:
+		ret = _PF_PACKET_MAX_TRANS_SIZE;
+		break;
+	case PF_INET6:
+		ret = _PF_INET6_MAX_TRANS_SIZE;
+		break;
+	case PF_INET:
+	default:
+		ret = _PF_INET_MAX_TRANS_SIZE;
+		break;
+	}
+	return ret;
 }
 
 static int _sendmmsg(struct espress_stream_dgram *this)
@@ -237,7 +605,7 @@ static int _sendmmsg(struct espress_stream_dgram *this)
 	u_t v;
 	struct espress_stream_dgram_buffer *b;
 	struct mmsghdr mmsghdr[ESPRESS_STREAM_SEND_QUEUE_SIZE];
-	struct iovec iovec[ESPRESS_STREAM_SEND_QUEUE_SIZE];
+	struct iovec iovec[ESPRESS_STREAM_SEND_QUEUE_SIZE][2];
 
 	v = this->num_send_buffer + this->num_send_ex_buffer;
 	if (ESPRESS_STREAM_SEND_QUEUE_SIZE < v)
@@ -254,16 +622,23 @@ static int _sendmmsg(struct espress_stream_dgram *this)
 		{
 			b = this->send_ex_buffer[u - this->num_send_buffer];
 		}
-		iovec[u].iov_base = b->data;
-		iovec[u].iov_len = b->data_size;
+		iovec[u][0].iov_base = b->data;
+		iovec[u][0].iov_len = b->data_size;
 		mmsghdr[u].msg_hdr.msg_name = (struct sockaddr *)(b->address->storage);
 		mmsghdr[u].msg_hdr.msg_namelen = sizeof(*(this->send_buffer[0]->address->storage));
-		mmsghdr[u].msg_hdr.msg_iov = iovec + u;
+		mmsghdr[u].msg_hdr.msg_iov = iovec[u];
 		mmsghdr[u].msg_hdr.msg_iovlen = 1;
 		mmsghdr[u].msg_hdr.msg_control = NULL;
 		mmsghdr[u].msg_hdr.msg_controllen = 0;
 		mmsghdr[u].msg_hdr.msg_flags = 0;
 		mmsghdr[u].msg_len = b->data_size;
+		if ((PF_PACKET == ((struct sockaddr *)(mmsghdr[u].msg_hdr.msg_name))->sa_family) && (mmsghdr[u].msg_len < _PF_PACKET_MIN_TRANS_SIZE))
+		{
+			iovec[u][1].iov_len = _PF_PACKET_MIN_TRANS_SIZE - mmsghdr[u].msg_len;
+			iovec[u][1].iov_base = (b_t *)_pad[iovec[u][1].iov_len];
+			mmsghdr[u].msg_hdr.msg_iovlen = 2;
+			mmsghdr[u].msg_len = _PF_PACKET_MIN_TRANS_SIZE;
+		}
 	}
 
 	return sendmmsg(this->sock, mmsghdr, this->num_send_buffer, 0);
@@ -315,7 +690,7 @@ static void _send_yield(struct espress_stream_dgram *this, struct espress_stream
 		else
 		{
 			this->num_send_buffer = 0;
-			this->num_sent_buffer = i;
+			this->num_sent_buffer = (0 < i) ? i : 0;
 			this->send_errno = errno;
 			espress_stream_event->set(this->send_outer_event, ESPRESS_STREAM_EVENT_DGRAM_SEND_RESULT);
 		}
@@ -345,6 +720,8 @@ static int _recvmmsg(struct espress_stream_dgram *this)
 	struct espress_stream_dgram_buffer *b;
 	struct mmsghdr mmsghdr[ESPRESS_STREAM_RECV_QUEUE_SIZE];
 	struct iovec iovec[ESPRESS_STREAM_RECV_QUEUE_SIZE];
+	u_t pad_size;
+	u_t msg_len;
 
 	v = this->num_recv_buffer + this->num_recv_ex_buffer;
 	if (ESPRESS_STREAM_RECV_QUEUE_SIZE < v)
@@ -379,6 +756,18 @@ static int _recvmmsg(struct espress_stream_dgram *this)
 	{
 		for (u = 0 ; u < ret ; u++)
 		{
+			if ((PF_PACKET == ((struct sockaddr *)(mmsghdr[u].msg_hdr.msg_name))->sa_family) && (_PF_PACKET_MIN_TRANS_SIZE == mmsghdr[u].msg_len))
+			{
+				pad_size = ((b_t *)(iovec[u].iov_base))[_PF_PACKET_MIN_TRANS_SIZE - 1];
+				if ((0 < pad_size) && (pad_size <= _PF_PACKET_MIN_TRANS_SIZE))
+				{
+					msg_len = _PF_PACKET_MIN_TRANS_SIZE - pad_size;
+					if (0 == memcmp(_pad[pad_size], ((b_t *)(iovec[u].iov_base)) + msg_len, pad_size))
+					{
+						mmsghdr[u].msg_len = msg_len;
+					}
+				}
+			}
 			if (u < this->num_recv_buffer)
 			{
 				b = this->recv_buffer[u];

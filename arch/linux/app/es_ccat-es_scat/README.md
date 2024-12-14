@@ -116,6 +116,95 @@ $ es_ccat -s -h -k 7335e63a762123a941a25e5e538dd4d2e47d869280f83af7810e0b3dae806
 これにより送信データの欠落が発生することがあります。
 <tt>-h</tt>オプションにより、受信チャンネルが相手側から閉じられることによる送信チャンネルの終了が抑制され、ハーフクローズ状態でデータ送信を維持できるようになります。
 
+## ユーセージ
+
+### 注意
+
+プロトコルにrawを指定する場合、実行にはroot権限もしくはCAP_NET_RAWケーパビリティが必要です。
+
+### <tt>es_ccat [-4 | -6] [-a \<destination address\>] [-p \<destination port\>] [-b \<bind address\>] [-q \<bind port\>] [-h] [-s]</tt>
+
+<tt>-4</tt>
+: プロトコルにipv4を使用する。 (デフォルト)
+
+<tt>-6</tt>
+: プロトコルにipv6を使用する。 (非デフォルト)
+
+<tt>-a \<destination address\></tt>
+: 接続先のドメイン名、アドレス("<tt>nnn.nnn.nnn.nnn</tt>" or "<tt>xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx</tt>")を指定する。 (デフォルト値: "<tt>localhost</tt>")
+
+<tt>-p \<destination port\></tt>
+: 接続先のポート番号を指定する。 (デフォルト値: "<tt>12345</tt>")
+
+<tt>-b \<bind address\></tt>
+: 結合するアドレス("<tt>nnn.nnn.nnn.nnn</tt>" or "<tt>xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx</tt>")を指定する。 (デフォルト: 任意)
+
+<tt>-q \<bind port\></tt>
+: 結合するポート番号を指定する。 (デフォルト: 任意)
+
+<tt>-h</tt>
+: ハーフクローズ許可。 (デフォルト: ハーフクローズ禁止)
+
+<tt>-s</tt>
+: サイレントモード許可。 (デフォルト: サイレントモード禁止)
+
+### <tt>es_ccat -0 [-a \<destination address\>] [-p \<ether type\>] [-b \<interface name\>] [-h] [-s]</tt>
+
+<tt>-0</tt>
+: プロトコルにrawを指定する。 (非デフォルト)
+
+<tt>-a \<destination address\></tt>
+: 接続先のアドレス("<tt>xx:xx:xx:xx:xx:xx</tt>")を指定する。 (デフォルト値: "<tt>ff:ff:ff:ff:ff:ff</tt>")
+
+<tt>-p \<ether type\></tt>
+: 使用するイーサタイプ番号を指定する。 (デフォルト値: "<tt>0xffff</tt>")
+
+<tt>-b \<interface name\></tt>
+: 使用するインターフェイスを指定する。 (デフォルト値: "<tt>eth0</tt>")
+
+<tt>-h</tt>
+: ハーフクローズ許可。 (デフォルト: ハーフクローズ禁止)
+
+<tt>-s</tt>
+: サイレントモード許可。 (デフォルト: サイレントモード禁止)
+
+### <tt>es_scat [-4 | -6] [-a \<bind address\>] [-p \<bind port\>] [-h] [-s]</tt>
+
+<tt>-4</tt>
+: プロトコルにipv4を使用する。 (デフォルト)
+
+<tt>-6</tt>
+: プロトコルにipv6を使用する。 (非デフォルト)
+
+<tt>-a \<bind address\></tt>
+: 結合するアドレス("<tt>nnn.nnn.nnn.nnn</tt>" or "<tt>xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx%ifname</tt>")を指定する。 (デフォルト: 任意)
+
+<tt>-p \<bind port\></tt>
+: 結合するポート番号を指定する。 (デフォルト値: "<tt>12345</tt>")
+
+<tt>-h</tt>
+: ハーフクローズ許可。 (デフォルト: ハーフクローズ禁止)
+
+<tt>-s</tt>
+: サイレントモード許可。 (デフォルト: サイレントモード禁止)
+
+### <tt>es_scat -0 [-a \<interface name\>] [-p \<ether type\>] [-h] [-s]</tt>
+
+<tt>-0</tt>
+: プロトコルにrawを指定する。 (非デフォルト)
+
+<tt>-a \<interface name\></tt>
+: 使用するインターフェイスを指定する。 (デフォルト: 任意)
+
+<tt>-p \<ether type\></tt>
+: 使用するイーサタイプ番号を指定する。 (デフォルト: 任意)
+
+<tt>-h</tt>
+: ハーフクローズ許可。 (デフォルト: ハーフクローズ禁止)
+
+<tt>-s</tt>
+: サイレントモード許可。 (デフォルト: サイレントモード禁止)
+
 ## サーバー認証について
 
 サーバー認証にはEd25519アルゴリズム[RFC 8032]を使用しています。
