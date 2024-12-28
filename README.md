@@ -44,9 +44,12 @@ linuxに対するポーティングではデータグラム通信にIPv6およ�
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20241224.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20241224.tar.gz)
+- [espress_stream.20241228.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20241228.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20241228.tar.gz (1.7-1)
+: - 各サンプルアプリケーションにおいてSIGINT発生時の終了処理をSIGTERM発生時にも行うようにした。
 
 espress_stream.20241224.tar.gz (1.7-1)
 : - スレッド情報用リソースが必要以上に多く確保されていたのを修正。
@@ -1502,7 +1505,6 @@ int main(int argc, char const **argv)
         NULL, NULL,
         NULL, NULL
     }};
-    sighandler_t org_sigh;
 
     i = scan_arg(argc, argv);
     if (i) {
@@ -1592,7 +1594,8 @@ int main(int argc, char const **argv)
         goto BEGIN_SESSION_FAIL_EXIT;
     }
 
-    org_sigh = signal(SIGINT, sigh);
+    signal(SIGINT, sigh);
+    signal(SIGTERM, sigh);
 
     i = conn(attr, address, attr->is_running ? TIMEOUT : 0);
     if (i != 0) {
@@ -1612,7 +1615,8 @@ int main(int argc, char const **argv)
     cat(attr);
 
 CONN_FAIL_EXIT:
-    signal(SIGINT, org_sigh);
+    signal(SIGTERM, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
     espress_stream_end_session(attr->sid);
 BEGIN_SESSION_FAIL_EXIT:
     espress_stream_end_interface(ifd);
@@ -2272,7 +2276,6 @@ int main(int argc, char const **argv)
         NULL, NULL,
         NULL, NULL
     }};
-    sighandler_t org_sigh;
 
     i = scan_arg(argc, argv);
     if (i) {
@@ -2343,7 +2346,8 @@ int main(int argc, char const **argv)
         goto BEGIN_SESSION_FAIL_EXIT;
     }
 
-    org_sigh = signal(SIGINT, sigh);
+    signal(SIGINT, sigh);
+    signal(SIGTERM, sigh);
 
     i = accpt(attr, attr->is_running ? TIMEOUT : 0);
     if (i != 0) {
@@ -2363,7 +2367,8 @@ int main(int argc, char const **argv)
     cat(attr);
 
 ACCEPT_FAIL_EXIT:
-    signal(SIGINT, org_sigh);
+    signal(SIGTERM, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
     espress_stream_end_session(attr->sid);
 BEGIN_SESSION_FAIL_EXIT:
     espress_stream_end_interface(ifd);

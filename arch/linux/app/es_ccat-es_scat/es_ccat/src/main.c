@@ -725,7 +725,6 @@ int main(int argc, char const **argv)
 		NULL, NULL,
 		NULL, NULL
 	}};
-	sighandler_t org_sigh;
 
 	i = scan_arg(argc, argv);
 	if (i) {
@@ -815,7 +814,8 @@ int main(int argc, char const **argv)
 		goto BEGIN_SESSION_FAIL_EXIT;
 	}
 
-	org_sigh = signal(SIGINT, sigh);
+	signal(SIGINT, sigh);
+	signal(SIGTERM, sigh);
 
 	i = conn(attr, address, attr->is_running ? TIMEOUT : 0);
 	if (i != 0) {
@@ -835,7 +835,8 @@ int main(int argc, char const **argv)
 	cat(attr);
 
 CONN_FAIL_EXIT:
-	signal(SIGINT, org_sigh);
+	signal(SIGTERM, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
 	espress_stream_end_session(attr->sid);
 BEGIN_SESSION_FAIL_EXIT:
 	espress_stream_end_interface(ifd);

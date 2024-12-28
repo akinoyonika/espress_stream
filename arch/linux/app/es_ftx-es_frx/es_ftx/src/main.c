@@ -941,7 +941,6 @@ int main(int argc, char const **argv)
 	int is_stream_ng = 1;
 	struct sockaddr_storage address[1] = {0};
 	struct sockaddr_storage src_address[1] = {0};
-	sighandler_t org_sigh;
 	struct espress_stream_session_ex_param ex_param[1] = {{
 		send_connect_payload, NULL,
 		recv_connect_payload, NULL,
@@ -1094,7 +1093,8 @@ int main(int argc, char const **argv)
 		}
 	}
 
-	org_sigh = signal(SIGINT, sigh);
+	signal(SIGINT, sigh);
+	signal(SIGTERM, sigh);
 
 	for ( ; ; ) {
 		sleep(1);
@@ -1113,7 +1113,8 @@ int main(int argc, char const **argv)
 		}
 	}
 
-	signal(SIGINT, org_sigh);
+	signal(SIGTERM, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
 
 	for (u = 0 ; u < arg_num_file ; u++) {
 		if (file_tx_attr[u].is_attached) {

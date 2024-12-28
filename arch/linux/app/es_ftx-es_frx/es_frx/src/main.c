@@ -599,7 +599,6 @@ int main(int argc, char const **argv)
 	unsigned u;
 	int is_stream_ng = 1;
 	struct sockaddr_storage address[1];
-	sighandler_t org_sigh;
 
 	i = scan_arg(argc, argv);
 	if (i) {
@@ -670,7 +669,8 @@ int main(int argc, char const **argv)
 		}
 	}
 
-	org_sigh = signal(SIGINT, sigh);
+	signal(SIGINT, sigh);
+	signal(SIGTERM, sigh);
 
 	for (u = 0 ; u < NUM_STANDBY ; u++) {
 		if (standby_attr[u].is_attached) {
@@ -679,7 +679,8 @@ int main(int argc, char const **argv)
 		}
 	}
 
-	signal(SIGINT, org_sigh);
+	signal(SIGTERM, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
 
 EXIT:
 
