@@ -23,6 +23,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <semaphore.h>
+#include <linux/if_alg.h>
 
 #if __ORDER_LITTLE_ENDIAN__ == __BYTE_ORDER__
 #	define ESPRESS_STREAM_IS_HOST_BYTE_ORDER_LITTLE (1)

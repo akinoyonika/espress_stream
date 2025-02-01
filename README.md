@@ -44,9 +44,15 @@ linuxに対するポーティングではデータグラム通信にIPv6およ�
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20241228.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20241228.tar.gz)
+- [espress_stream.20250201.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20250201.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20250201.tar.gz (1.8-1)
+: - <tt>espress_stream_ctr_cipher</tt>を改良。
+- linux用の<tt>espress_stream_ctr_cipher</tt>を作成。OpenMPを使用。
+- linux用の<tt>espress_stream_block_cipher</tt>を作成。Kernel Crypt APIを使用。
+- linux用の<tt>espress_stream_hash</tt>を作成。Kernel Crypt APIを使用。
 
 espress_stream.20241228.tar.gz (1.7-1)
 : - 各サンプルアプリケーションにおいてSIGINT発生時の終了処理をSIGTERM発生時にも行うようにした。
@@ -55,7 +61,7 @@ espress_stream.20241224.tar.gz (1.7-1)
 : - スレッド情報用リソースが必要以上に多く確保されていたのを修正。
 
 espress_stream.20241214.tar.gz (1.6-1)
-: - linux実装のespress_stream_dgramのRAW対応と修正。
+: - linux実装の<tt>espress_stream_dgram</tt>のRAW対応と修正。
 - サンプルアプリケーションのIPv6とRAW対応。
 - インターフェイスに属するセッションのリソース列挙に関する部分を修正。
 - コードドキュメントの追加。
@@ -188,6 +194,12 @@ $ sudo make uninstall
 $ sudo make install
 $ make clean
 ```
+
+### 注意
+
+<tt>make clean</tt>実行時にシステムの環境に合わせてソースコードの変更を行っています。
+このため、インストールするマシン上で<tt>make clean</tt>を実行してください。
+もし、ポータブルなライブラリーを作成したい場合は、<tt>make clean</tt>の代わりに<tt>make default-clean</tt>を用いてください。
 
 ## 使用方法
 

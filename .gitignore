@@ -60,6 +60,14 @@
 /arch/linux/app/es_ftx-es_frx/es_ftx/*
 !/arch/linux/app/es_ftx-es_frx/es_ftx/src/
 /arch/linux/app/es_ftx-es_frx/es_ftx/src/*
+!/arch/linux/cipher/
+/arch/linux/cipher/*
+!/arch/linux/cipher/include/
+/arch/linux/cipher/include/*
+!/arch/linux/cipher/include/espress_stream/
+/arch/linux/cipher/include/espress_stream/*
+!/arch/linux/cipher/src/
+/arch/linux/cipher/src/*
 !/arch/linux/include/
 /arch/linux/include/*
 !/arch/linux/include/espress_stream/

@@ -7,11 +7,11 @@ SRCDIR := src
 INCDIR := include
 API_SRCDIR := api/src
 API_INCDIR := api/include
-CFLAGS := -O2 -I$(INCDIR) -I$(API_INCDIR) -I$(ORGDIR)/$(INCDIR) -I$(ORGDIR)/$(API_INCDIR) -Wall -fPIC
-#CFLAGS := -O0 -g3 -ggdb -I$(INCDIR) -I$(API_INCDIR) -I$(ORGDIR)/$(INCDIR) -I$(ORGDIR)/$(API_INCDIR) -Wall -fPIC
+CFLAGS := -O2 -I$(INCDIR) -I$(API_INCDIR) -I$(ORGDIR)/$(INCDIR) -I$(ORGDIR)/$(API_INCDIR) -Wall -fPIC -fopenmp-simd
+#CFLAGS := -O0 -g3 -ggdb -I$(INCDIR) -I$(API_INCDIR) -I$(ORGDIR)/$(INCDIR) -I$(ORGDIR)/$(API_INCDIR) -Wall -fPIC -fopenmp-simd
 LDFLAGS := -lpthread
 TARGET_MAJOR_VER := 1
-TARGET_MINOR_VER := 7
+TARGET_MINOR_VER := 8
 TARGET_PROTOCOL_VER := 1
 CFLAGS := $(CFLAGS) -DESPRESS_STREAM_MAJOR_VERSION=$(TARGET_MAJOR_VER)
 CFLAGS := $(CFLAGS) -DESPRESS_STREAM_MINOR_VERSION=$(TARGET_MINOR_VER)
@@ -37,7 +37,62 @@ API_TEST_SOURCES := $(API_TEST_SOURCES) $(shell find $(ORGDIR)/$(API_TEST_SRCDIR
 API_TEST_SOURCES := $(API_TEST_SOURCES) $(wildcard $(API_TEST_SRCDIR)/*.c)
 API_TEST_OBJECTS := $(API_TEST_SOURCES:.c=.o)
 
-.PHONY: all clean depend test install uninstall
+OPT_CONFIG_H :=
+OPT_CONFIG_H := $(OPT_CONFIG_H) P=`grep 'processor' /proc/cpuinfo | wc -l`;
+OPT_CONFIG_H := $(OPT_CONFIG_H) I2=1;
+OPT_CONFIG_H := $(OPT_CONFIG_H) for I in `seq 0 8`;
+OPT_CONFIG_H := $(OPT_CONFIG_H) do
+OPT_CONFIG_H := $(OPT_CONFIG_H)   if [ \( 4 -le $$I \) -a \( $$P -le $$I2 \) ];
+OPT_CONFIG_H := $(OPT_CONFIG_H)   then
+OPT_CONFIG_H := $(OPT_CONFIG_H)     break;
+OPT_CONFIG_H := $(OPT_CONFIG_H)   fi;
+OPT_CONFIG_H := $(OPT_CONFIG_H)   I2=`expr $$I2 \\* 2`;
+OPT_CONFIG_H := $(OPT_CONFIG_H) done;
+OPT_CONFIG_H := $(OPT_CONFIG_H) N=$(INCDIR)/espress_stream/config.h;
+OPT_CONFIG_H := $(OPT_CONFIG_H) sed -E "s/^(\#\s*define ESPRESS_STREAM_(SEND|RECV)_QUEUE_SIZE\s+)\([^()]+\)/\1(1 << $$I)/" $$N > $$N.new;
+OPT_CONFIG_H := $(OPT_CONFIG_H) mv $$N.new $$N
+
+OPT_BLOCK_CIPHER_H :=
+OPT_BLOCK_CIPHER_H := $(OPT_BLOCK_CIPHER_H) N=$(INCDIR)/espress_stream/block_cipher.h;
+OPT_BLOCK_CIPHER_H := $(OPT_BLOCK_CIPHER_H) grep '^name\s*:\s*ecb(aes)$$' /proc/crypto > /dev/null;
+OPT_BLOCK_CIPHER_H := $(OPT_BLOCK_CIPHER_H) if [ 0 -eq $$? ];
+OPT_BLOCK_CIPHER_H := $(OPT_BLOCK_CIPHER_H) then
+OPT_BLOCK_CIPHER_H := $(OPT_BLOCK_CIPHER_H)   cp cipher/$$N $$N;
+OPT_BLOCK_CIPHER_H := $(OPT_BLOCK_CIPHER_H) else
+OPT_BLOCK_CIPHER_H := $(OPT_BLOCK_CIPHER_H)   cp $(ORGDIR)/$$N $$N;
+OPT_BLOCK_CIPHER_H := $(OPT_BLOCK_CIPHER_H) fi
+
+OPT_BLOCK_CIPHER_C :=
+OPT_BLOCK_CIPHER_C := $(OPT_BLOCK_CIPHER_C) N=$(SRCDIR)/espress_stream_block_cipher.c;
+OPT_BLOCK_CIPHER_C := $(OPT_BLOCK_CIPHER_C) grep '^name\s*:\s*ecb(aes)$$' /proc/crypto > /dev/null;
+OPT_BLOCK_CIPHER_C := $(OPT_BLOCK_CIPHER_C) if [ 0 -eq $$? ];
+OPT_BLOCK_CIPHER_C := $(OPT_BLOCK_CIPHER_C) then
+OPT_BLOCK_CIPHER_C := $(OPT_BLOCK_CIPHER_C)   cp cipher/$$N $$N;
+OPT_BLOCK_CIPHER_C := $(OPT_BLOCK_CIPHER_C) else
+OPT_BLOCK_CIPHER_C := $(OPT_BLOCK_CIPHER_C)   cp $(ORGDIR)/$$N $$N;
+OPT_BLOCK_CIPHER_C := $(OPT_BLOCK_CIPHER_C) fi
+
+OPT_HASH_H :=
+OPT_HASH_H := $(OPT_HASH_H) N=$(INCDIR)/espress_stream/hash.h;
+OPT_HASH_H := $(OPT_HASH_H) grep '^name\s*:\s*sha256$$' /proc/crypto > /dev/null;
+OPT_HASH_H := $(OPT_HASH_H) if [ 0 -eq $$? ];
+OPT_HASH_H := $(OPT_HASH_H) then
+OPT_HASH_H := $(OPT_HASH_H)   cp cipher/$$N $$N;
+OPT_HASH_H := $(OPT_HASH_H) else
+OPT_HASH_H := $(OPT_HASH_H)   cp $(ORGDIR)/$$N $$N;
+OPT_HASH_H := $(OPT_HASH_H) fi
+
+OPT_HASH_C :=
+OPT_HASH_C := $(OPT_HASH_C) N=$(SRCDIR)/espress_stream_hash.c;
+OPT_HASH_C := $(OPT_HASH_C) grep '^name\s*:\s*sha256$$' /proc/crypto > /dev/null;
+OPT_HASH_C := $(OPT_HASH_C) if [ 0 -eq $$? ];
+OPT_HASH_C := $(OPT_HASH_C) then
+OPT_HASH_C := $(OPT_HASH_C)   cp cipher/$$N $$N;
+OPT_HASH_C := $(OPT_HASH_C) else
+OPT_HASH_C := $(OPT_HASH_C)   cp $(ORGDIR)/$$N $$N;
+OPT_HASH_C := $(OPT_HASH_C) fi
+
+.PHONY: all clean default-clean opt-config opt-cipher depend test install uninstall
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(OBJECTS) -shared $(LDFLAGS) -Wl,-soname,$(TARGET_SO_NAME) -o $@
@@ -53,6 +108,38 @@ clean:
 	$(RM) -f $(OBJECTS)
 	$(RM) -f $(API_TEST_TARGET)
 	$(RM) -f $(API_TEST_OBJECTS)
+	$(OPT_CONFIG_H)
+	$(OPT_BLOCK_CIPHER_H)
+	$(OPT_BLOCK_CIPHER_C)
+	$(OPT_HASH_H)
+	$(OPT_HASH_C)
+	N=$(INCDIR)/espress_stream/ctr_cipher.h; cp cipher/$$N $$N
+	N=$(SRCDIR)/espress_stream_ctr_cipher.c; cp cipher/$$N $$N
+
+default-clean:
+	$(RM) -f $(TARGET)
+	$(RM) -f $(TARGET_SO_NAME)
+	$(RM) -f $(OBJECTS)
+	$(RM) -f $(API_TEST_TARGET)
+	$(RM) -f $(API_TEST_OBJECTS)
+	N=$(INCDIR)/espress_stream/config.h; sed -E "s/^(\#\s*define ESPRESS_STREAM_(SEND|RECV)_QUEUE_SIZE\s+)\([^()]+\)/\1(1 << 4)/" $$N > $$N.new; mv $$N.new $$N
+	N=$(INCDIR)/espress_stream/block_cipher.h; cp $(ORGDIR)/$$N $$N
+	N=$(SRCDIR)/espress_stream_block_cipher.c; cp $(ORGDIR)/$$N $$N
+	N=$(INCDIR)/espress_stream/hash.h; cp $(ORGDIR)/$$N $$N
+	N=$(SRCDIR)/espress_stream_hash.c; cp $(ORGDIR)/$$N $$N
+	N=$(INCDIR)/espress_stream/ctr_cipher.h; cp $(ORGDIR)/$$N $$N
+	N=$(SRCDIR)/espress_stream_ctr_cipher.c; cp $(ORGDIR)/$$N $$N
+
+opt-config:
+	$(OPT_CONFIG_H)
+
+opt-cipher:
+	$(OPT_BLOCK_CIPHER_H)
+	$(OPT_BLOCK_CIPHER_C)
+	$(OPT_HASH_H)
+	$(OPT_HASH_C)
+	N=$(INCDIR)/espress_stream/ctr_cipher.h; cp cipher/$$N $$N
+	N=$(SRCDIR)/espress_stream_ctr_cipher.c; cp cipher/$$N $$N
 
 test: $(API_TEST_TARGET)
 	LD_PRELOAD=./$(TARGET) ./$(API_TEST_TARGET)
@@ -97,11 +184,6 @@ uninstall:
 ../../src/espress_stream_trans_ring.o: ../../include/espress_stream/ring.h
 ../../src/espress_stream_trans_ring.o: include/espress_stream/dgram.h
 ../../src/espress_stream_trans_ring.o: ../../include/espress_stream/trans_ring.h
-../../src/espress_stream_ctr_cipher.o: include/espress_stream/config.h
-../../src/espress_stream_ctr_cipher.o: include/espress_stream/depend.h
-../../src/espress_stream_ctr_cipher.o: ../../include/espress_stream/uint.h
-../../src/espress_stream_ctr_cipher.o: ../../include/espress_stream/block_cipher.h
-../../src/espress_stream_ctr_cipher.o: ../../include/espress_stream/ctr_cipher.h
 ../../src/espress_stream_ec.o: include/espress_stream/config.h
 ../../src/espress_stream_ec.o: include/espress_stream/depend.h
 ../../src/espress_stream_ec.o: ../../include/espress_stream/uint.h
@@ -124,11 +206,11 @@ uninstall:
 ../../src/espress_stream_session.o: include/espress_stream/cond.h
 ../../src/espress_stream_session.o: ../../include/espress_stream/event.h
 ../../src/espress_stream_session.o: ../../include/espress_stream/timer.h
-../../src/espress_stream_session.o: ../../include/espress_stream/hash.h
+../../src/espress_stream_session.o: include/espress_stream/hash.h
 ../../src/espress_stream_session.o: ../../include/espress_stream/mac.h
 ../../src/espress_stream_session.o: include/espress_stream/rand.h
-../../src/espress_stream_session.o: ../../include/espress_stream/block_cipher.h
-../../src/espress_stream_session.o: ../../include/espress_stream/ctr_cipher.h
+../../src/espress_stream_session.o: include/espress_stream/block_cipher.h
+../../src/espress_stream_session.o: include/espress_stream/ctr_cipher.h
 ../../src/espress_stream_session.o: ../../include/espress_stream/hkdf.h
 ../../src/espress_stream_session.o: ../../include/espress_stream/ec.h
 ../../src/espress_stream_session.o: ../../include/espress_stream/key_ex.h
@@ -149,20 +231,16 @@ uninstall:
 ../../src/espress_stream_hkdf.o: include/espress_stream/config.h
 ../../src/espress_stream_hkdf.o: include/espress_stream/depend.h
 ../../src/espress_stream_hkdf.o: ../../include/espress_stream/uint.h
-../../src/espress_stream_hkdf.o: ../../include/espress_stream/hash.h
+../../src/espress_stream_hkdf.o: include/espress_stream/hash.h
 ../../src/espress_stream_hkdf.o: ../../include/espress_stream/mac.h
 ../../src/espress_stream_hkdf.o: ../../include/espress_stream/hkdf.h
 ../../src/espress_stream_key_exp.o: include/espress_stream/config.h
 ../../src/espress_stream_key_exp.o: include/espress_stream/depend.h
 ../../src/espress_stream_key_exp.o: ../../include/espress_stream/uint.h
-../../src/espress_stream_key_exp.o: ../../include/espress_stream/hash.h
+../../src/espress_stream_key_exp.o: include/espress_stream/hash.h
 ../../src/espress_stream_key_exp.o: ../../include/espress_stream/mac.h
 ../../src/espress_stream_key_exp.o: ../../include/espress_stream/hkdf.h
 ../../src/espress_stream_key_exp.o: ../../include/espress_stream/key_exp.h
-../../src/espress_stream_hash.o: include/espress_stream/config.h
-../../src/espress_stream_hash.o: include/espress_stream/depend.h
-../../src/espress_stream_hash.o: ../../include/espress_stream/uint.h
-../../src/espress_stream_hash.o: ../../include/espress_stream/hash.h
 ../../src/espress_stream_trans_packet.o: include/espress_stream/config.h
 ../../src/espress_stream_trans_packet.o: include/espress_stream/depend.h
 ../../src/espress_stream_trans_packet.o: ../../include/espress_stream/uint.h
@@ -170,11 +248,11 @@ uninstall:
 ../../src/espress_stream_trans_packet.o: include/espress_stream/mutex.h
 ../../src/espress_stream_trans_packet.o: include/espress_stream/cond.h
 ../../src/espress_stream_trans_packet.o: ../../include/espress_stream/event.h
-../../src/espress_stream_trans_packet.o: ../../include/espress_stream/hash.h
+../../src/espress_stream_trans_packet.o: include/espress_stream/hash.h
 ../../src/espress_stream_trans_packet.o: ../../include/espress_stream/mac.h
 ../../src/espress_stream_trans_packet.o: include/espress_stream/rand.h
-../../src/espress_stream_trans_packet.o: ../../include/espress_stream/block_cipher.h
-../../src/espress_stream_trans_packet.o: ../../include/espress_stream/ctr_cipher.h
+../../src/espress_stream_trans_packet.o: include/espress_stream/block_cipher.h
+../../src/espress_stream_trans_packet.o: include/espress_stream/ctr_cipher.h
 ../../src/espress_stream_trans_packet.o: ../../include/espress_stream/hkdf.h
 ../../src/espress_stream_trans_packet.o: ../../include/espress_stream/ec.h
 ../../src/espress_stream_trans_packet.o: ../../include/espress_stream/key_ex.h
@@ -192,10 +270,10 @@ uninstall:
 ../../src/espress_stream_packet.o: include/espress_stream/mutex.h
 ../../src/espress_stream_packet.o: include/espress_stream/cond.h
 ../../src/espress_stream_packet.o: ../../include/espress_stream/event.h
-../../src/espress_stream_packet.o: ../../include/espress_stream/hash.h
+../../src/espress_stream_packet.o: include/espress_stream/hash.h
 ../../src/espress_stream_packet.o: ../../include/espress_stream/mac.h
-../../src/espress_stream_packet.o: ../../include/espress_stream/block_cipher.h
-../../src/espress_stream_packet.o: ../../include/espress_stream/ctr_cipher.h
+../../src/espress_stream_packet.o: include/espress_stream/block_cipher.h
+../../src/espress_stream_packet.o: include/espress_stream/ctr_cipher.h
 ../../src/espress_stream_packet.o: ../../include/espress_stream/hkdf.h
 ../../src/espress_stream_packet.o: ../../include/espress_stream/key_exp.h
 ../../src/espress_stream_packet.o: ../../include/espress_stream/key.h
@@ -213,28 +291,33 @@ uninstall:
 ../../src/espress_stream_mac.o: include/espress_stream/config.h
 ../../src/espress_stream_mac.o: include/espress_stream/depend.h
 ../../src/espress_stream_mac.o: ../../include/espress_stream/uint.h
-../../src/espress_stream_mac.o: ../../include/espress_stream/hash.h
+../../src/espress_stream_mac.o: include/espress_stream/hash.h
 ../../src/espress_stream_mac.o: ../../include/espress_stream/mac.h
 ../../src/espress_stream_key.o: include/espress_stream/config.h
 ../../src/espress_stream_key.o: include/espress_stream/depend.h
 ../../src/espress_stream_key.o: ../../include/espress_stream/uint.h
 ../../src/espress_stream_key.o: include/espress_stream/mutex.h
-../../src/espress_stream_key.o: ../../include/espress_stream/block_cipher.h
-../../src/espress_stream_key.o: ../../include/espress_stream/ctr_cipher.h
-../../src/espress_stream_key.o: ../../include/espress_stream/hash.h
+../../src/espress_stream_key.o: include/espress_stream/block_cipher.h
+../../src/espress_stream_key.o: include/espress_stream/ctr_cipher.h
+../../src/espress_stream_key.o: include/espress_stream/hash.h
 ../../src/espress_stream_key.o: ../../include/espress_stream/mac.h
 ../../src/espress_stream_key.o: ../../include/espress_stream/hkdf.h
 ../../src/espress_stream_key.o: ../../include/espress_stream/key_exp.h
 ../../src/espress_stream_key.o: ../../include/espress_stream/key.h
-../../src/espress_stream_block_cipher.o: include/espress_stream/config.h
-../../src/espress_stream_block_cipher.o: include/espress_stream/depend.h
-../../src/espress_stream_block_cipher.o: ../../include/espress_stream/uint.h
-../../src/espress_stream_block_cipher.o: ../../include/espress_stream/block_cipher.h
+src/espress_stream_block_cipher.o: include/espress_stream/config.h
+src/espress_stream_block_cipher.o: include/espress_stream/depend.h
+src/espress_stream_block_cipher.o: ../../include/espress_stream/uint.h
+src/espress_stream_block_cipher.o: include/espress_stream/block_cipher.h
 src/espress_stream_cond.o: include/espress_stream/config.h
 src/espress_stream_cond.o: include/espress_stream/depend.h
 src/espress_stream_cond.o: ../../include/espress_stream/uint.h
 src/espress_stream_cond.o: ../../include/espress_stream/tick.h
 src/espress_stream_cond.o: include/espress_stream/cond.h
+src/espress_stream_ctr_cipher.o: include/espress_stream/config.h
+src/espress_stream_ctr_cipher.o: include/espress_stream/depend.h
+src/espress_stream_ctr_cipher.o: ../../include/espress_stream/uint.h
+src/espress_stream_ctr_cipher.o: include/espress_stream/block_cipher.h
+src/espress_stream_ctr_cipher.o: include/espress_stream/ctr_cipher.h
 src/espress_stream_dgram.o: include/espress_stream/config.h
 src/espress_stream_dgram.o: include/espress_stream/depend.h
 src/espress_stream_dgram.o: ../../include/espress_stream/uint.h
@@ -244,6 +327,11 @@ src/espress_stream_dgram.o: include/espress_stream/cond.h
 src/espress_stream_dgram.o: ../../include/espress_stream/event.h
 src/espress_stream_dgram.o: ../../include/espress_stream/ring.h
 src/espress_stream_dgram.o: include/espress_stream/dgram.h
+src/espress_stream_dgram.o: ../../include/espress_stream/macro_repeat.h
+src/espress_stream_hash.o: include/espress_stream/config.h
+src/espress_stream_hash.o: include/espress_stream/depend.h
+src/espress_stream_hash.o: ../../include/espress_stream/uint.h
+src/espress_stream_hash.o: include/espress_stream/hash.h
 src/espress_stream_mutex.o: include/espress_stream/config.h
 src/espress_stream_mutex.o: include/espress_stream/depend.h
 src/espress_stream_mutex.o: ../../include/espress_stream/uint.h
@@ -259,11 +347,11 @@ src/espress_stream_rand.o: include/espress_stream/rand.h
 ../../api/src/espress_stream_api.o: include/espress_stream/cond.h
 ../../api/src/espress_stream_api.o: ../../include/espress_stream/event.h
 ../../api/src/espress_stream_api.o: ../../include/espress_stream/timer.h
-../../api/src/espress_stream_api.o: ../../include/espress_stream/hash.h
+../../api/src/espress_stream_api.o: include/espress_stream/hash.h
 ../../api/src/espress_stream_api.o: ../../include/espress_stream/mac.h
 ../../api/src/espress_stream_api.o: include/espress_stream/rand.h
-../../api/src/espress_stream_api.o: ../../include/espress_stream/block_cipher.h
-../../api/src/espress_stream_api.o: ../../include/espress_stream/ctr_cipher.h
+../../api/src/espress_stream_api.o: include/espress_stream/block_cipher.h
+../../api/src/espress_stream_api.o: include/espress_stream/ctr_cipher.h
 ../../api/src/espress_stream_api.o: ../../include/espress_stream/hkdf.h
 ../../api/src/espress_stream_api.o: ../../include/espress_stream/ec.h
 ../../api/src/espress_stream_api.o: ../../include/espress_stream/key_ex.h
