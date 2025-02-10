@@ -44,9 +44,13 @@ linuxに対するポーティングではデータグラム通信にIPv6およ�
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20250201.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20250201.tar.gz)
+- [espress_stream.20250210.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20250210.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20250210.tar.gz (1.8-1)
+: - linux用<tt>espress_stream_ctr_cipher</tt>に顕在化しないバグあり。修正。
+- linux用のいくつかのソースコードの行末がCRLFになっていた。LFに修正。
 
 espress_stream.20250201.tar.gz (1.8-1)
 : - <tt>espress_stream_ctr_cipher</tt>を改良。

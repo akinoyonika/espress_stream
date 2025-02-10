@@ -89,6 +89,11 @@ static void _encrypt(struct espress_stream_ctr_cipher *this, b_t *text, u_t text
 	u_t tail = (this->total_size + text_size + (ESPRESS_STREAM_CTR_CIPHER_BLOCK_SIZE - 1)) / ESPRESS_STREAM_CTR_CIPHER_BLOCK_SIZE;
 	u_t counter;
 
+	if ((head * ESPRESS_STREAM_CTR_CIPHER_BLOCK_SIZE) < this->total_size) {
+		_encrypt_block(this, text, text_size, head);
+		head++;
+	}
+
 #	pragma omp parallel for
 	for (counter = head ; counter < tail ; counter++)
 	{
