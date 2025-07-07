@@ -44,133 +44,200 @@ linuxに対するポーティングではデータグラム通信にIPv6およ�
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20250210.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20250210.tar.gz)
+- [espress_stream.20250731.tar.gz](http://akino-yo.blue.coocan.jp/akinoyonika/espress_stream/espress_stream.20250731.tar.gz)
 
 <details><summary>変更履歴</summary>
 
+espress_stream.20250731.tar.gz (1.9-1)
+: <ul>
+    <li>サンプルアプリケーション<tt>es_gw</tt>を新設。</li>
+    <li><tt>espress_stream_recv</tt>が切断検出時にエラーになることがあるバグを修正。</li>
+    <li>各サンプルアプリケーションのシグナルによる終了のための処理を効率化。</li>
+    <li>アプリケーションがfork-execする場合の対策。</li>
+    <li>不正な受信パケットの処理に問題があったので、これを修正。</li>
+    <li>セッションを閉じた後に、それに属していたパケットのエンコード、デコード処理が行われてしまうことがあったので、これを修正。</li>
+    <li>高速再転送がうまく動作していなかったので、これを修正</li>
+  </ul>
+
 espress_stream.20250210.tar.gz (1.8-1)
-: - linux用<tt>espress_stream_ctr_cipher</tt>に顕在化しないバグあり。修正。
-- linux用のいくつかのソースコードの行末がCRLFになっていた。LFに修正。
+: <ul>
+    <li>linux用<tt>espress_stream_ctr_cipher</tt>に顕在化しないバグあり。修正。</li>
+    <li>linux用のいくつかのソースコードの行末がCRLFになっていた。LFに修正。</li>
+  </ul>
 
 espress_stream.20250201.tar.gz (1.8-1)
-: - <tt>espress_stream_ctr_cipher</tt>を改良。
-- linux用の<tt>espress_stream_ctr_cipher</tt>を作成。OpenMPを使用。
-- linux用の<tt>espress_stream_block_cipher</tt>を作成。Kernel Crypt APIを使用。
-- linux用の<tt>espress_stream_hash</tt>を作成。Kernel Crypt APIを使用。
+: <ul>
+    <li><tt>espress_stream_ctr_cipher</tt>を改良。</li>
+    <li>linux用の<tt>espress_stream_ctr_cipher</tt>を作成。OpenMPを使用。</li>
+    <li>linux用の<tt>espress_stream_block_cipher</tt>を作成。Kernel Crypt APIを使用。</li>
+    <li>linux用の<tt>espress_stream_hash</tt>を作成。Kernel Crypt APIを使用。</li>
+  </ul>
 
 espress_stream.20241228.tar.gz (1.7-1)
-: - 各サンプルアプリケーションにおいてSIGINT発生時の終了処理をSIGTERM発生時にも行うようにした。
+: <ul>
+    <li>各サンプルアプリケーションにおいてSIGINT発生時の終了処理をSIGTERM発生時にも行うようにした。</li>
+  </ul>
 
 espress_stream.20241224.tar.gz (1.7-1)
-: - スレッド情報用リソースが必要以上に多く確保されていたのを修正。
+: <ul>
+    <li>スレッド情報用リソースが必要以上に多く確保されていたのを修正。</li>
+  </ul>
 
 espress_stream.20241214.tar.gz (1.6-1)
-: - linux実装の<tt>espress_stream_dgram</tt>のRAW対応と修正。
-- サンプルアプリケーションのIPv6とRAW対応。
-- インターフェイスに属するセッションのリソース列挙に関する部分を修正。
-- コードドキュメントの追加。
+: <ul>
+    <li>linux実装の<tt>espress_stream_dgram</tt>のRAW対応と修正。</li>
+    <li>サンプルアプリケーションのIPv6とRAW対応。</li>
+    <li>インターフェイスに属するセッションのリソース列挙に関する部分を修正。</li>
+    <li>コードドキュメントの追加。</li>
+  </ul>
 
 espress_stream.20240825.tar.gz (1.5-1)
-: - ドキュメントの修正。
-- 基本実装及びlinux用実装の<tt>espress_stream_dgram.c</tt>を修正。
+: <ul>
+    <li>ドキュメントの修正。</li>
+    <li>基本実装及びlinux用実装の<tt>espress_stream_dgram.c</tt>を修正。</li>
+  </ul>
 
 espress_stream.20240803.tar.gz (1.4-1)
-: - 通信途絶検出を強化。プロトコル仕様を若干変更。このため、プロトコルバージョンが更新され、以前のバージョンと相互接続できなくなった。
-- APIの<tt>espress_stream_send</tt>と<tt>espress_stream_recv</tt>に機能追加。
-- サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>のバグ修正、改良。
-- サンプルアプリケーション<tt>es_ftx</tt>の通信途絶検出を改良。
+: <ul>
+    <li>通信途絶検出を強化。プロトコル仕様を若干変更。このため、プロトコルバージョンが更新され、以前のバージョンと相互接続できなくなった。</li>
+    <li>APIの<tt>espress_stream_send</tt>と<tt>espress_stream_recv</tt>に機能追加。</li>
+    <li>サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>のバグ修正、改良。</li>
+    <li>サンプルアプリケーション<tt>es_ftx</tt>の通信途絶検出を改良。</li>
+  </ul>
 
 
 espress_stream.20240710.tar.gz (1.3-0)
-: - サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>を改良。
+: <ul>
+    <li>サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>を改良。</li>
+  </ul>
 
 espress_stream.20240708.tar.gz (1.3-0)
-: - サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>を改良。
+: <ul>
+    <li>サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>を改良。</li>
+  </ul>
 
 espress_stream.20240705.tar.gz (1.3-0)
-: - ドキュメントの修正。
+: <ul>
+    <li>ドキュメントの修正。</li>
+  </ul>
 
 espress_stream.20240704.tar.gz (1.3-0)
-: - APIの<tt>espress_stream_wait_break</tt>を改良。
-- APIに<tt>espress_stream_wait_cancel_break</tt>を新設。
-- サンプルアプリケーション<tt>es_ftx</tt>、<tt>es_frx</tt>を改良。
-- サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>を新設。
-- サンプルアプリケーションのディレクトリ構成を変更。
-- コードドキュメント、<tt>README.md</tt>の修正。
+: <ul>
+    <li>APIの<tt>espress_stream_wait_break</tt>を改良。</li>
+    <li>APIに<tt>espress_stream_wait_cancel_break</tt>を新設。</li>
+    <li>サンプルアプリケーション<tt>es_ftx</tt>、<tt>es_frx</tt>を改良。</li>
+    <li>サンプルアプリケーション<tt>es_ccat</tt>、<tt>es_scat</tt>を新設。</li>
+    <li>サンプルアプリケーションのディレクトリ構成を変更。</li>
+    <li>コードドキュメント、<tt>README.md</tt>の修正。</li>
+  </ul>
 
 espress_stream.20240117.tar.gz (1.2-0)
-: - APIの<tt>espress_stream_poll</tt>と<tt>espress_stream_wait_any</tt>を改良。
-- 前述の改良に合わせてサンプルアプリケーション<tt>es_ftx</tt>を修正。
-- サンプルアプリケーション<tt>es_ftx</tt>に対して<tt>espress_stream_wait_any</tt>の異常動作対応。この関数をコールする場所だけを最適化しないようにした。原因不明。現象確認時のGCCバージョンは11.4.0。
+: <ul>
+    <li>APIの<tt>espress_stream_poll</tt>と<tt>espress_stream_wait_any</tt>を改良。</li>
+    <li>前述の改良に合わせてサンプルアプリケーション<tt>es_ftx</tt>を修正。</li>
+    <li>サンプルアプリケーション<tt>es_ftx</tt>に対して<tt>espress_stream_wait_any</tt>の異常動作対応。この関数をコールする場所だけを最適化しないようにした。原因不明。現象確認時のGCCバージョンは11.4.0。</li>
+  </ul>
 
 espress_stream.20240115.tar.gz (1.1-0)
-: - API仕様となる<tt>espress_stream/api.h</tt>のコードドキュメントを加筆修正。
+: <ul>
+    <li>API仕様となる<tt>espress_stream/api.h</tt>のコードドキュメントを加筆修正。</li>
+  </ul>
 
 espress_stream.20240112.tar.gz (1.1-0)
-: - APIの<tt>espress_stream_send</tt>と<tt>espress_stream_recv</tt>を改良。
+: <ul>
+    <li>APIの<tt>espress_stream_send</tt>と<tt>espress_stream_recv</tt>を改良。</li>
+  </ul>
 
 espress_stream.20240110.tar.gz (1.0-0)
-: - APIの<tt>espress_stream_wait_for_any</tt>と<tt>espress_stream_poll</tt>のプロトタイプを変更。機能を拡充した。
- - APIの仕様変更のため、メジャーバージョン番号を変え、マイナーバージョン番号をリセットした。
- - サンプルアプリケーション<tt>es_ftx</tt>をAPI変更に対応させた。
+: <ul>
+    <li>APIの<tt>espress_stream_wait_for_any</tt>と<tt>espress_stream_poll</tt>のプロトタイプを変更。機能を拡充した。</li>
+    <li>APIの仕様変更のため、メジャーバージョン番号を変え、マイナーバージョン番号をリセットした。</li>
+    <li>サンプルアプリケーション<tt>es_ftx</tt>をAPI変更に対応させた。</li>
+  </ul>
 
 espress_stream.20231228.tar.gz (0.9-0)
-: - 一部設定値を固定値から初期値付き変数に変更。
- - いくつかのモジュールに関して、初期化時のエラーチェックを強化した。
- - サンプルアプリケーション<tt>es_ftx</tt>において、サーバー公開鍵を指定しない場合、サーバー認証を行わないようにした。
- - サンプルアプリケーション<tt>es_frx</tt>において、クライアントからのサーバー認証メッセージがない場合、サーバー認証応答もしないようにした。
- - サンプルアプリケーションで使用する署名アルゴリズムの実装において固定テーブルの一部が変数になっていたのを固定値に修正。
- - 多ビット長整数演算部のローカル変数が外部参照可能になっていたのを外部参照不可に修正。
- - サンプルアプリケーション<tt>es_ftx</tt>において、データの送信タイミングが遅れる可能性があったため、これを修正。
- - シングルスレッド動作設定時、<tt>espress_stream_poll</tt>内で少なくとも1度は一連のyield処理が呼び出されるようにした。
+: <ul>
+    <li>一部設定値を固定値から初期値付き変数に変更。</li>
+    <li>いくつかのモジュールに関して、初期化時のエラーチェックを強化した。</li>
+    <li>サンプルアプリケーション<tt>es_ftx</tt>において、サーバー公開鍵を指定しない場合、サーバー認証を行わないようにした。</li>
+    <li>サンプルアプリケーション<tt>es_frx</tt>において、クライアントからのサーバー認証メッセージがない場合、サーバー認証応答もしないようにした。</li>
+    <li>サンプルアプリケーションで使用する署名アルゴリズムの実装において固定テーブルの一部が変数になっていたのを固定値に修正。</li>
+    <li>多ビット長整数演算部のローカル変数が外部参照可能になっていたのを外部参照不可に修正。</li>
+    <li>サンプルアプリケーション<tt>es_ftx</tt>において、データの送信タイミングが遅れる可能性があったため、これを修正。</li>
+    <li>シングルスレッド動作設定時、<tt>espress_stream_poll</tt>内で少なくとも1度は一連のyield処理が呼び出されるようにした。</li>
+  </ul>
 
 espress_stream.20231221.tar.gz (0.8-0)
-: - 好ましくない関数名の修正、未削除のコメントアウトコードの削除、テストコードのバグ修正等、動作に影響のないソースコードの修正。
+: <ul>
+    <li>好ましくない関数名の修正、未削除のコメントアウトコードの削除、テストコードのバグ修正等、動作に影響のないソースコードの修正。</li>
+  </ul>
 
 espress_stream.20231219.tar.gz (0.8-0)
-: - 多ビット長整数演算部の改良。
+: <ul>
+    <li>多ビット長整数演算部の改良。</li>
+  </ul>
 
 espress_stream.20231214.tar.gz (0.7-0)
-: - 再送タイムアウトにlinuxと同様の最小値を設定した。
- - リファクタリング、コメントの修正。
+: <ul>
+    <li>再送タイムアウトにlinuxと同様の最小値を設定した。</li>
+    <li>リファクタリング、コメントの修正。</li>
+  </ul>
 
 espress_stream.20231209.tar.gz (0.6-0)
-: - デスティネーションのネットワークアドレスをパケット受信毎に更新するようにした。
- - 現在のソース及びデスティネーションのネットワークアドレスを取得する機能を追加。
- - サンプルアプリケーション<tt>es_ftx</tt>において、プログレス表示の更新頻度を上げた。
- - データグラム通信とのインターフェイスを改良した。
+: <ul>
+    <li>デスティネーションのネットワークアドレスをパケット受信毎に更新するようにした。</li>
+    <li>現在のソース及びデスティネーションのネットワークアドレスを取得する機能を追加。</li>
+    <li>サンプルアプリケーション<tt>es_ftx</tt>において、プログレス表示の更新頻度を上げた。</li>
+    <li>データグラム通信とのインターフェイスを改良した。</li>
+  </ul>
 
 espress_stream.20231202.tar.gz (0.5-0)
-: - 送受信バッファーの使用量を取得する機能を追加。
- - サンプルアプリケーション<tt>es_ftx</tt>において、送信完了タイムアウト検出時に送信バッファーの使用量の変化を考慮するようにし、タイムアウトしにくくした。
- - サンプルアプリケーション<tt>es_ftx</tt>において、32ビット環境でも64ビット以上の整数を保証するため、<tt>unsigned long</tt>を<tt>uint64_t</tt>に変更した。
- - linux用の各種設定値を調整。
- - シングルスレッド動作設定時、アプリケーションのマルチスレッド動作に対して必要な排他制御の一部が欠落していたので、その部分を追加、修正。
+: <ul>
+    <li>送受信バッファーの使用量を取得する機能を追加。</li>
+    <li>サンプルアプリケーション<tt>es_ftx</tt>において、送信完了タイムアウト検出時に送信バッファーの使用量の変化を考慮するようにし、タイムアウトしにくくした。</li>
+    <li>サンプルアプリケーション<tt>es_ftx</tt>において、32ビット環境でも64ビット以上の整数を保証するため、<tt>unsigned long</tt>を<tt>uint64_t</tt>に変更した。</li>
+    <li>linux用の各種設定値を調整。</li>
+    <li>シングルスレッド動作設定時、アプリケーションのマルチスレッド動作に対して必要な排他制御の一部が欠落していたので、その部分を追加、修正。</li>
+  </ul>
 
 espress_stream.20231125.tar.gz (0.4-0)
-: - サンプルアプリケーション<tt>es_frx</tt>作成時に用いる<tt>mk_cert_h.sh</tt>を改良。
+: <ul>
+    <li>サンプルアプリケーション<tt>es_frx</tt>作成時に用いる<tt>mk_cert_h.sh</tt>を改良。</li>
+  </ul>
 
 espress_stream.20231124.tar.gz (0.4-0)
-: - 多ビット長整数定義で64ビットの定数定義にあったバグを修正。
- - サンプルアプリケーションの認証機能の移植部を内製化。
+: <ul>
+    <li>多ビット長整数定義で64ビットの定数定義にあったバグを修正。</li>
+    <li>サンプルアプリケーションの認証機能の移植部を内製化。</li>
+  </ul>
 
 espress_stream.20231117.tar.gz (0.3-0)
-: - リトライタイムアウト値の上限をセッションタイムアウト値と同じ値に設定。
- - 異なるセッションのイベントの発生を同時に待つ機能を追加。
+: <ul>
+    <li>リトライタイムアウト値の上限をセッションタイムアウト値と同じ値に設定。</li>
+    <li>異なるセッションのイベントの発生を同時に待つ機能を追加。</li>
+  </ul>
 
 espress_stream.20231107.tar.gz (0.2-0)
-: - APIレイヤーで、セッションリソースがスタティックでかつシングルスレッドモード時のセッションリソース列挙にバグあり。これを修正。
- - linux用の依存定義に対して32ビットコードモデルに適した定義を追加。32ビットコードモデルでのコンパイル時にその定義を使用するようにした。
+: <ul>
+    <li>APIレイヤーで、セッションリソースがスタティックでかつシングルスレッドモード時のセッションリソース列挙にバグあり。これを修正。</li>
+    <li>linux用の依存定義に対して32ビットコードモデルに適した定義を追加。32ビットコードモデルでのコンパイル時にその定義を使用するようにした。</li>
+  </ul>
 
 espress_stream.20231106.tar.gz (0.1-0)
-: - READMEの僅かな修正のみ。
+: <ul>
+    <li>READMEの僅かな修正のみ。</li>
+  </ul>
 
 espress_stream.20231102.tar.gz (0.1-0)
-: - サンプルアプリケーションに認証機能追加。
- - 多ビット長整数演算の割り算にあったバグを修正。
+: <ul>
+    <li>サンプルアプリケーションに認証機能追加。</li>
+    <li>多ビット長整数演算の割り算にあったバグを修正。</li>
+  </ul>
 
 espress_stream.20231023.tar.gz (0.0-0)
-: - 初版
+: <ul>
+    <li>初版</li>
+</ul>
 
 </details>
 
@@ -822,6 +889,9 @@ unsigned espress_stream_fast_retransmit_count(void *sid);
 #define BUFFER_SIZE (8 * 1024)
 #define CONNECT_MESSAGE_SIZE (64)
 
+#define set_eventfd(fd) do{uint64_t u = 1; while (write(fd, &u, sizeof(u)) != sizeof(u));}while (0)
+#define wait_eventfd(fd) do{uint64_t u = 1; while (read(fd, &u, sizeof(u)) != sizeof(u));}while (0) 
+
 static void *ifd;
 static int arg_protocol;
 static char const *arg_address;
@@ -1203,9 +1273,6 @@ static int conn(struct session_attr *attr,
     if (i == 0) {
         for (i = -1, t = 0 ; *is_running && (i == -1) ; ) {
             t = timeout - t;
-            if (1000000 < t) {
-                t = 1000000;
-            }
             i = espress_stream_connect_result(*sid, t);
             if (0 < i) {
                 ex_param->send_connect_payload_param = attr;
@@ -1250,9 +1317,6 @@ static int flush(struct session_attr *attr, unsigned timeout)
         *is_running & (i == -1) ;
         u = v) {
         t = timeout - t;
-        if (1000000 < t) {
-            t = 1000000;
-        }
         i = espress_stream_flush(*sid, t);
 
         v = espress_stream_buffered_send_size(*sid, NULL);
@@ -1272,9 +1336,8 @@ static void sub_wait(void *param, unsigned events)
 {
     void **sid = &(((struct session_attr *)param)->sid);
     int *event = &(((struct session_attr *)param)->event);
-    uint64_t const u64 = 1;
     espress_stream_wait_any(*sid, events, 0xffffffff);
-    while (sizeof(u64) != write(*event, &u64, sizeof(u64)));
+    set_eventfd(*event);
 }
 
 static void *s_wait(void *param)
@@ -1300,7 +1363,6 @@ static void wait(struct session_attr *attr,
     unsigned timeout)
 {
     int i = -1;
-    uint64_t u64;
     void **sid = &(attr->sid);
     int *event = &(attr->event);
     pthread_t sub_wait_thread;
@@ -1322,7 +1384,7 @@ static void wait(struct session_attr *attr,
     }
 
     if (is_sidin || is_sidout) {
-        *event = eventfd(0, EFD_NONBLOCK);
+        *event = eventfd(0, 0);
         if (0 <= *event) {
             if (is_sidin && is_sidout) {
                 i = pthread_create(&sub_wait_thread, NULL, sr_wait, attr);
@@ -1346,7 +1408,7 @@ static void wait(struct session_attr *attr,
         if (0 <= *event) {
             if (i == 0) {
                 espress_stream_wait_break(*sid);
-                while (sizeof(u64) != read(*event, &u64, sizeof(u64)));
+                wait_eventfd(*event);
                 pthread_join(sub_wait_thread, NULL);
                 espress_stream_wait_cancel_break(*sid);
             }
@@ -1360,6 +1422,7 @@ static void cat(struct session_attr *attr)
     int i;
     ssize_t st;
     unsigned u;
+    unsigned v;
     volatile int *is_running = &(attr->is_running);
     void **sid = &(attr->sid);
     unsigned char read_buf[BUFFER_SIZE];
@@ -1374,16 +1437,31 @@ static void cat(struct session_attr *attr)
     int is_stdout_open;
     int is_sidin_open;
     int is_sidout_open;
+    unsigned stdout_tm;
+    unsigned sidout_tm;
 
-    for (is_stdin_open = 1, is_stdout_open = 1, is_sidin_open = 1, is_sidout_open = 1 ;
+    for (is_stdin_open = 1, is_stdout_open = 1, is_sidin_open = 1, is_sidout_open = 1, stdout_tm = sidout_tm = espress_stream_time() ;
         *is_running && (is_stdin_open || is_stdout_open || is_sidin_open || is_sidout_open) ;
         ) {
+        v = espress_stream_time();
+        if (is_stdout_open && (0 < write_buf_size)) {
+            u = (v - stdout_tm) & 0xffffffff;
+            u = (u < TIMEOUT) ? (TIMEOUT - u) : TIMEOUT;
+        } else {
+            u = 0xffffffff;
+        }
+        if (is_sidout_open && (0 < send_buf_size)) {
+            v = (v - sidout_tm) & 0xffffffff;
+            v = (v < TIMEOUT) ? (TIMEOUT - v) : TIMEOUT;
+        } else {
+            v = 0xffffffff;
+        }
         wait(attr,
             is_stdin_open && (read_buf_size == 0),
             is_stdout_open && (0 < write_buf_size),
             is_sidin_open && (recv_buf_size == 0),
             is_sidout_open && (0 < send_buf_size),
-            1000000);
+            *is_running ? ((u < v) ? u : v) : 0);
 
         if (is_stdin_open) {
             if (read_buf_size == 0) {
@@ -1391,12 +1469,16 @@ static void cat(struct session_attr *attr)
                 if (0 < st) {
                     read_buf_size = st;
                 } else if (st == 0) {
+                    close(STDIN_FILENO);
                     is_stdin_open = 0;
                     if (send_buf_size == 0) {
-                        flush(attr, TIMEOUT);
+                        i = flush(attr, TIMEOUT);
                         espress_stream_disconnect(*sid);
                         espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
                         is_sidout_open = 0;
+                        if (0 < i) {
+                            break;
+                        }
                     }
                 } else if (errno != EAGAIN) {
                     break;
@@ -1424,12 +1506,16 @@ static void cat(struct session_attr *attr)
                         }
                         if (!arg_is_close_half && is_stdin_open)
                         {
+                            close(STDIN_FILENO);
                             is_stdin_open = 0;
                             if (send_buf_size == 0) {
-                                flush(attr, TIMEOUT);
+                                i = flush(attr, TIMEOUT);
                                 espress_stream_disconnect(*sid);
                                 espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
                                 is_sidout_open = 0;
+                                if (0 < i) {
+                                    break;
+                                }
                             }
                         }
                     }
@@ -1460,14 +1546,20 @@ static void cat(struct session_attr *attr)
                             is_stdout_open = 0;
                         }
                     }
+                    stdout_tm = espress_stream_time();
                 } else if (errno != EAGAIN) {
                     break;
+                } else {
+                    if (TIMEOUT <= ((espress_stream_time() - stdout_tm) & 0xffffffff)) {
+                        break;
+                    }
                 }
             } else {
                 st = write(STDOUT_FILENO, NULL, 0);
                 if ((st == -1) && (errno != EAGAIN)) {
                     break;
                 }
+                stdout_tm = espress_stream_time();
             }
         }
 
@@ -1483,14 +1575,22 @@ static void cat(struct session_attr *attr)
                         if (is_stdin_open) {
                             espress_stream_flush(*sid, 0);
                         } else {
-                            flush(attr, TIMEOUT);
+                            i = flush(attr, TIMEOUT);
                             espress_stream_disconnect(*sid);
                             espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
                             is_sidout_open = 0;
+                            if (0 < i) {
+                                break;
+                            }
                         }
                     }
+                    sidout_tm = espress_stream_time();
                 } else if (0 < i) {
                     break;
+                } else {
+                    if (TIMEOUT <= ((espress_stream_time() - sidout_tm) & 0xffffffff)) {
+                        break;
+                    }
                 }
             } else {
                 u = 1;
@@ -1498,14 +1598,41 @@ static void cat(struct session_attr *attr)
                 if (0 < i) {
                     break;
                 }
+                sidout_tm = espress_stream_time();
             }
         }
     }
+
+    if (is_stdin_open) {
+        close(STDIN_FILENO);
+    }
+    if (is_stdout_open) {
+        close(STDOUT_FILENO);
+    }
+    if (is_sidin_open) {
+        ;
+    }
+    if (is_sidout_open) {
+        espress_stream_disconnect(*sid);
+        espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+    }
 }
+
+static int sige = -1;
 
 static void sigh(int signum)
 {
+    set_eventfd(sige);
+}
+
+static void *sigt(void *param)
+{
+    wait_eventfd(sige);
     session_attr->is_running = 0;
+    if (session_attr->sid != NULL) {
+        espress_stream_wait_break(session_attr->sid);
+    }
+    return param;
 }
 
 int main(int argc, char const **argv)
@@ -1521,6 +1648,7 @@ int main(int argc, char const **argv)
         NULL, NULL,
         NULL, NULL
     }};
+    pthread_t signal_thread;
 
     i = scan_arg(argc, argv);
     if (i) {
@@ -1600,6 +1728,20 @@ int main(int argc, char const **argv)
         goto BEGIN_INTERFACE_FAIL_EXIT;
     }
 
+    sige = eventfd(0, 0);
+    if (sige == -1) {
+        ret = 1;
+        fprintf(stderr, "error: can't create eventfd.\n");
+        goto CREATE_EVENTFD_FAIL_EXIT;
+    }
+
+    i = pthread_create(&signal_thread, NULL, sigt, NULL);
+    if (i != 0) {
+        ret = 1;
+        fprintf(stderr, "error: can't create thread.\n");
+        goto CREATE_THREAD_FAIL_EXIT;
+    }
+
     attr->is_running = 1;
     ex_param->send_connect_payload_param = attr;
     ex_param->recv_connect_payload_param = attr;
@@ -1633,8 +1775,15 @@ int main(int argc, char const **argv)
 CONN_FAIL_EXIT:
     signal(SIGTERM, SIG_DFL);
     signal(SIGINT, SIG_DFL);
+    espress_stream_wait_cancel_break(attr->sid);
     espress_stream_end_session(attr->sid);
+    attr->sid = NULL;
 BEGIN_SESSION_FAIL_EXIT:
+    set_eventfd(sige);
+    pthread_join(signal_thread, NULL);
+CREATE_THREAD_FAIL_EXIT:
+    close(sige);
+CREATE_EVENTFD_FAIL_EXIT:
     espress_stream_end_interface(ifd);
 BEGIN_INTERFACE_FAIL_EXIT:
     espress_stream_end();
@@ -1680,6 +1829,9 @@ static unsigned char const public_key[] = PUBLIC_KEY;
 #define TIMEOUT (30 * 1000 * 1000)
 #define BUFFER_SIZE (8 * 1024)
 #define CONNECT_MESSAGE_SIZE (64)
+
+#define set_eventfd(fd) do{uint64_t u = 1; while (write(fd, &u, sizeof(u)) != sizeof(u));}while (0)
+#define wait_eventfd(fd) do{uint64_t u = 1; while (read(fd, &u, sizeof(u)) != sizeof(u));}while (0) 
 
 static void *ifd;
 static int arg_protocol;
@@ -1984,9 +2136,6 @@ static int accpt(struct session_attr *attr, unsigned timeout)
 
     for (i = -1, t = 0 ; *is_running && (i == -1) ;) {
         t = timeout - t;
-        if (1000000 < t) {
-            t = 1000000;
-        }
         i = espress_stream_connect_detect(*sid, t);
         if (0 < i) {
             ex_param->send_connect_payload_param = attr;
@@ -2022,9 +2171,6 @@ static int flush(struct session_attr *attr, unsigned timeout)
         *is_running & (i == -1) ;
         u = v) {
         t = timeout - t;
-        if (1000000 < t) {
-            t = 1000000;
-        }
         i = espress_stream_flush(*sid, t);
 
         v = espress_stream_buffered_send_size(*sid, NULL);
@@ -2044,9 +2190,8 @@ static void sub_wait(void *param, unsigned events)
 {
     void **sid = &(((struct session_attr *)param)->sid);
     int *event = &(((struct session_attr *)param)->event);
-    uint64_t const u64 = 1;
     espress_stream_wait_any(*sid, events, 0xffffffff);
-    while (sizeof(u64) != write(*event, &u64, sizeof(u64)));
+    set_eventfd(*event);
 }
 
 static void *s_wait(void *param)
@@ -2072,7 +2217,6 @@ static void wait(struct session_attr *attr,
     unsigned timeout)
 {
     int i = -1;
-    uint64_t u64;
     void **sid = &(attr->sid);
     int *event = &(attr->event);
     pthread_t sub_wait_thread;
@@ -2094,7 +2238,7 @@ static void wait(struct session_attr *attr,
     }
 
     if (is_sidin || is_sidout) {
-        *event = eventfd(0, EFD_NONBLOCK);
+        *event = eventfd(0, 0);
         if (0 <= *event) {
             if (is_sidin && is_sidout) {
                 i = pthread_create(&sub_wait_thread, NULL, sr_wait, attr);
@@ -2118,7 +2262,7 @@ static void wait(struct session_attr *attr,
         if (0 <= *event) {
             if (i == 0) {
                 espress_stream_wait_break(*sid);
-                while (sizeof(u64) != read(*event, &u64, sizeof(u64)));
+                wait_eventfd(*event);
                 pthread_join(sub_wait_thread, NULL);
                 espress_stream_wait_cancel_break(*sid);
             }
@@ -2132,6 +2276,7 @@ static void cat(struct session_attr *attr)
     int i;
     ssize_t st;
     unsigned u;
+    unsigned v;
     volatile int *is_running = &(attr->is_running);
     void **sid = &(attr->sid);
     unsigned char read_buf[BUFFER_SIZE];
@@ -2146,16 +2291,31 @@ static void cat(struct session_attr *attr)
     int is_stdout_open;
     int is_sidin_open;
     int is_sidout_open;
+    unsigned stdout_tm;
+    unsigned sidout_tm;
 
-    for (is_stdin_open = 1, is_stdout_open = 1, is_sidin_open = 1, is_sidout_open = 1 ;
+    for (is_stdin_open = 1, is_stdout_open = 1, is_sidin_open = 1, is_sidout_open = 1, stdout_tm = sidout_tm = espress_stream_time() ;
         *is_running && (is_stdin_open || is_stdout_open || is_sidin_open || is_sidout_open) ;
         ) {
+        v = espress_stream_time();
+        if (is_stdout_open && (0 < write_buf_size)) {
+            u = (v - stdout_tm) & 0xffffffff;
+            u = (u < TIMEOUT) ? (TIMEOUT - u) : TIMEOUT;
+        } else {
+            u = 0xffffffff;
+        }
+        if (is_sidout_open && (0 < send_buf_size)) {
+            v = (v - sidout_tm) & 0xffffffff;
+            v = (v < TIMEOUT) ? (TIMEOUT - v) : TIMEOUT;
+        } else {
+            v = 0xffffffff;
+        }
         wait(attr,
             is_stdin_open && (read_buf_size == 0),
             is_stdout_open && (0 < write_buf_size),
             is_sidin_open && (recv_buf_size == 0),
             is_sidout_open && (0 < send_buf_size),
-            1000000);
+            *is_running ? ((u < v) ? u : v) : 0);
 
         if (is_stdin_open) {
             if (read_buf_size == 0) {
@@ -2163,12 +2323,16 @@ static void cat(struct session_attr *attr)
                 if (0 < st) {
                     read_buf_size = st;
                 } else if (st == 0) {
+                    close(STDIN_FILENO);
                     is_stdin_open = 0;
                     if (send_buf_size == 0) {
-                        flush(attr, TIMEOUT);
+                        i = flush(attr, TIMEOUT);
                         espress_stream_disconnect(*sid);
                         espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
                         is_sidout_open = 0;
+                        if (0 < i) {
+                            break;
+                        }
                     }
                 } else if (errno != EAGAIN) {
                     break;
@@ -2196,12 +2360,16 @@ static void cat(struct session_attr *attr)
                         }
                         if (!arg_is_close_half && is_stdin_open)
                         {
+                            close(STDIN_FILENO);
                             is_stdin_open = 0;
                             if (send_buf_size == 0) {
-                                flush(attr, TIMEOUT);
+                                i = flush(attr, TIMEOUT);
                                 espress_stream_disconnect(*sid);
                                 espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
                                 is_sidout_open = 0;
+                                if (0 < i) {
+                                    break;
+                                }
                             }
                         }
                     }
@@ -2232,14 +2400,20 @@ static void cat(struct session_attr *attr)
                             is_stdout_open = 0;
                         }
                     }
+                    stdout_tm = espress_stream_time();
                 } else if (errno != EAGAIN) {
                     break;
+                } else {
+                    if (TIMEOUT <= ((espress_stream_time() - stdout_tm) & 0xffffffff)) {
+                        break;
+                    }
                 }
             } else {
                 st = write(STDOUT_FILENO, NULL, 0);
                 if ((st == -1) && (errno != EAGAIN)) {
                     break;
                 }
+                stdout_tm = espress_stream_time();
             }
         }
 
@@ -2255,14 +2429,22 @@ static void cat(struct session_attr *attr)
                         if (is_stdin_open) {
                             espress_stream_flush(*sid, 0);
                         } else {
-                            flush(attr, TIMEOUT);
+                            i = flush(attr, TIMEOUT);
                             espress_stream_disconnect(*sid);
                             espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
                             is_sidout_open = 0;
+                            if (0 < i) {
+                                break;
+                            }
                         }
                     }
+                    sidout_tm = espress_stream_time();
                 } else if (0 < i) {
                     break;
+                } else {
+                    if (TIMEOUT <= ((espress_stream_time() - sidout_tm) & 0xffffffff)) {
+                        break;
+                    }
                 }
             } else {
                 u = 1;
@@ -2270,14 +2452,41 @@ static void cat(struct session_attr *attr)
                 if (0 < i) {
                     break;
                 }
+                sidout_tm = espress_stream_time();
             }
         }
     }
+
+    if (is_stdin_open) {
+        close(STDIN_FILENO);
+    }
+    if (is_stdout_open) {
+        close(STDOUT_FILENO);
+    }
+    if (is_sidin_open) {
+        ;
+    }
+    if (is_sidout_open) {
+        espress_stream_disconnect(*sid);
+        espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+    }
 }
+
+static int sige = -1;
 
 static void sigh(int signum)
 {
+    set_eventfd(sige);
+}
+
+static void *sigt(void *param)
+{
+    wait_eventfd(sige);
     session_attr->is_running = 0;
+    if (session_attr->sid != NULL) {
+        espress_stream_wait_break(session_attr->sid);
+    }
+    return param;
 }
 
 int main(int argc, char const **argv)
@@ -2292,6 +2501,7 @@ int main(int argc, char const **argv)
         NULL, NULL,
         NULL, NULL
     }};
+    pthread_t signal_thread;
 
     i = scan_arg(argc, argv);
     if (i) {
@@ -2352,6 +2562,20 @@ int main(int argc, char const **argv)
         goto BEGIN_INTERFACE_FAIL_EXIT;
     }
 
+    sige = eventfd(0, 0);
+    if (sige == -1) {
+        ret = 1;
+        fprintf(stderr, "error: can't create eventfd.\n");
+        goto CREATE_EVENTFD_FAIL_EXIT;
+    }
+
+    i = pthread_create(&signal_thread, NULL, sigt, NULL);
+    if (i != 0) {
+        ret = 1;
+        fprintf(stderr, "error: can't create thread.\n");
+        goto CREATE_THREAD_FAIL_EXIT;
+    }
+
     attr->is_running = 1;
     ex_param->send_connect_payload_param = attr;
     ex_param->recv_connect_payload_param = attr;
@@ -2385,8 +2609,15 @@ int main(int argc, char const **argv)
 ACCEPT_FAIL_EXIT:
     signal(SIGTERM, SIG_DFL);
     signal(SIGINT, SIG_DFL);
+    espress_stream_wait_cancel_break(attr->sid);
     espress_stream_end_session(attr->sid);
+    attr->sid = NULL;
 BEGIN_SESSION_FAIL_EXIT:
+    set_eventfd(sige);
+    pthread_join(signal_thread, NULL);
+CREATE_THREAD_FAIL_EXIT:
+    close(sige);
+CREATE_EVENTFD_FAIL_EXIT:
     espress_stream_end_interface(ifd);
 BEGIN_INTERFACE_FAIL_EXIT:
     espress_stream_end();
@@ -2409,6 +2640,9 @@ SCAN_ARG_FAIL_EXIT:
 
 <tt>es_ftx</tt>, <tt>es_frx</tt>
 : クライアントアプリケーション(<tt>es_ftx</tt>)からサーバーアプリケーション(<tt>es_frx</tt>)にファイルを送信します。
+
+<tt>es_gw</tt>
+: 任意のespress_streamクライアントアプリケーションからの接続を受け付けたサーバーアプリケーションが、この接続の入出力を、子プロセスで起動させたコマンドの標準入出力に接続します。
 
 ## ライセンス
 

@@ -31,7 +31,7 @@ static void _initialize(struct espress_stream_block_cipher *this, b_t const *key
 	strcpy((char *)sa->salg_type, "skcipher");
 	strcpy((char *)sa->salg_name, "ecb(aes)");
 
-	this->op_sock = socket(PF_ALG, SOCK_SEQPACKET, 0);
+	this->op_sock = socket(PF_ALG, SOCK_SEQPACKET | SOCK_CLOEXEC, 0);
 	if (-1 == this->op_sock)
 	{
 		ret = 1;

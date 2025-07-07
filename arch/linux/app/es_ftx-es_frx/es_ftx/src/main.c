@@ -15,6 +15,8 @@
 #include <net/if.h>
 #include <netpacket/packet.h>
 #include <net/ethernet.h>
+#include <sys/eventfd.h>
+#include <inttypes.h>
 
 #include "espress_stream/api.h"
 #include "cipher_api.h"
@@ -25,6 +27,9 @@
 #define CONNECT_MESSAGE_SIZE (64)
 #define USER_ID_SIZE (256)
 #define USER_PASSWORD_SIZE (256)
+
+#define set_eventfd(fd) do{uint64_t u = 1; while (write(fd, &u, sizeof(u)) != sizeof(u));}while (0)
+#define wait_eventfd(fd) do{uint64_t u = 1; while (read(fd, &u, sizeof(u)) != sizeof(u));}while (0) 
 
 static void *ifd;
 static int arg_protocol;
@@ -220,7 +225,7 @@ static int scan_arg(int argc, char const **argv)
 	arg_user_password = NULL;
 
 	for (i = 1 ; i < argc ; i++) {
-		if (argv[i][0] == '-') {
+		if ((arg_num_file == 0) && (argv[i][0] == '-')) {
 			c = argv[i][1];
 			switch (c) {
 			case '4':
@@ -397,11 +402,11 @@ static struct file_tx_attr *file_tx_attr = NULL;
 
 		printf("\x1b[24C");
 		if (fin_state == -1) {
-			printf("[XXXXXXXXXXXXXXXX(XXXXXXXX)/%016llu]\n", file_size);
+			printf("[XXXXXXXXXXXXXXXX(XXXXXXXX)/%016"PRIu64"]\n", file_size);
 		} else if (fin_state == 1) {
-			printf("[OOOOOOOOOOOOOOOO(OOOOOOOO)/%016llu]\n", file_size);
+			printf("[OOOOOOOOOOOOOOOO(OOOOOOOO)/%016"PRIu64"]\n", file_size);
 		} else {
-			printf("[%016llu(%08u)/%016llu]\n", progress, bufdsz, file_size);
+			printf("[%016"PRIu64"(%08u)/%016"PRIu64"]\n", progress, bufdsz, file_size);
 		}
 		if (fin_state == 0) {
 			printf("rtt=%08u, ", rtt);
@@ -592,9 +597,6 @@ static int conn(struct file_tx_attr *attr,
 	if (i == 0) {
 		for (i = -1, t = 0 ; *is_running && (i == -1) ; ) {
 			t = timeout - t;
-			if (1000000 < t) {
-				t = 1000000;
-			}
 			i = espress_stream_connect_result(*sid, t);
 			if (0 < i) {
 				ex_param->send_connect_payload_param = attr;
@@ -638,9 +640,6 @@ static int send_recv(struct file_tx_attr *attr,
 
 	for (i = -1, j = -1, t = 0 ; *is_running && (i == -1) && (j == -1) ; ) {
 		t = timeout - t;
-		if (1000000 < t) {
-			t = 1000000;
-		}
 		espress_stream_wait_any(sid, ESPRESS_STREAM_EVENT_SEND | ESPRESS_STREAM_EVENT_RECV, t);
 		i = espress_stream_send(sid, send_data, send_data_size, 0);
 		j = espress_stream_recv(sid, recv_data, recv_data_size, 0);
@@ -669,9 +668,6 @@ static int flush_recv(struct file_tx_attr *attr,
 	espress_stream_flush(sid, 0);
 	for (i = -1, j = -1, t = 0 ; *is_running && (i == -1) && (j == -1) ; ) {
 		t = timeout - t;
-		if (1000000 < t) {
-			t = 1000000;
-		}
 		espress_stream_wait_any(sid, ESPRESS_STREAM_EVENT_FLUSH | ESPRESS_STREAM_EVENT_RECV, t);
 		i = espress_stream_flush(sid, 0);
 		j = espress_stream_recv(sid, recv_data, recv_data_size, 0);
@@ -922,14 +918,24 @@ FILE_NAME_INVALID_EXIT:
 	return ret;
 }
 
+static int sige = -1;
+
 static void sigh(int signum)
 {
+	set_eventfd(sige);
+}
+
+static void *sigt(void *param)
+{
 	unsigned u;
+	wait_eventfd(sige);
 	for (u = 0 ; u < arg_num_file ; u++) {
 		if (file_tx_attr[u].is_attached) {
 			file_tx_attr[u].is_running = 0;
+			espress_stream_wait_break(file_tx_attr[u].sid);
 		}
 	}
+	return param;
 }
 
 int main(int argc, char const **argv)
@@ -949,6 +955,7 @@ int main(int argc, char const **argv)
 	}};
 	char user_id[USER_ID_SIZE];
 	char user_password[USER_PASSWORD_SIZE];
+	pthread_t signal_thread;
 
 	ifd = NULL;
 
@@ -1077,6 +1084,20 @@ int main(int argc, char const **argv)
 		goto EXIT;
 	}
 
+	sige = eventfd(0, 0);
+	if (sige == -1) {
+		ret = 1;
+		fprintf(stderr, "error: can't create eventfd.\n");
+		goto EXIT;
+	}
+
+	i = pthread_create(&signal_thread, NULL, sigt, NULL);
+	if (i != 0) {
+		ret = 1;
+		fprintf(stderr, "error: can't create thread.\n");
+		goto EXIT;
+	}
+
 	for (u = 0 ; u < arg_num_file ; u++) {
 		file_tx_attr[u].index = u;
 		file_tx_attr[u].is_attached = 1;
@@ -1090,31 +1111,14 @@ int main(int argc, char const **argv)
 		if ((i != 0) || pthread_create(&(file_tx_attr[u].thread), NULL, file_tx, file_tx_attr + u)) {
 			file_tx_attr[u].is_attached = 0;
 			file_tx_attr[u].is_running = 0;
+			if (i == 0) {
+				espress_stream_end_session(file_tx_attr[u].sid);
+			}
 		}
 	}
 
 	signal(SIGINT, sigh);
 	signal(SIGTERM, sigh);
-
-	for ( ; ; ) {
-		sleep(1);
-		for (u = 0 ; u < arg_num_file ; u++) {
-			if (file_tx_attr[u].is_attached && file_tx_attr[u].is_running) {
-				break;
-			}
-		}
-		if (u == arg_num_file) {
-			for (u = 0 ; u < arg_num_file ; u++) {
-				if (file_tx_attr[u].is_attached) {
-					espress_stream_wait_break(file_tx_attr[u].sid);
-				}
-			}
-			break;
-		}
-	}
-
-	signal(SIGTERM, SIG_DFL);
-	signal(SIGINT, SIG_DFL);
 
 	for (u = 0 ; u < arg_num_file ; u++) {
 		if (file_tx_attr[u].is_attached) {
@@ -1130,6 +1134,9 @@ int main(int argc, char const **argv)
 		}
 	}
 
+	signal(SIGTERM, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
+
 	disp_fin(arg_num_file);
 
 	for (u = 0 ; u < arg_num_file ; u++) {
@@ -1139,9 +1146,12 @@ int main(int argc, char const **argv)
 		}
 	}
 
+	set_eventfd(sige);
+	pthread_join(signal_thread, NULL);
 
 EXIT:
 
+	if (sige != -1) close(sige);
 	if (ifd != NULL) espress_stream_end_interface(ifd);
 	if (!is_stream_ng) espress_stream_end();
 	if (file_tx_attr != NULL) free(file_tx_attr);

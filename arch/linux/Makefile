@@ -11,7 +11,7 @@ CFLAGS := -O2 -I$(INCDIR) -I$(API_INCDIR) -I$(ORGDIR)/$(INCDIR) -I$(ORGDIR)/$(AP
 #CFLAGS := -O0 -g3 -ggdb -I$(INCDIR) -I$(API_INCDIR) -I$(ORGDIR)/$(INCDIR) -I$(ORGDIR)/$(API_INCDIR) -Wall -fPIC -fopenmp-simd
 LDFLAGS := -lpthread
 TARGET_MAJOR_VER := 1
-TARGET_MINOR_VER := 8
+TARGET_MINOR_VER := 9
 TARGET_PROTOCOL_VER := 1
 CFLAGS := $(CFLAGS) -DESPRESS_STREAM_MAJOR_VERSION=$(TARGET_MAJOR_VER)
 CFLAGS := $(CFLAGS) -DESPRESS_STREAM_MINOR_VERSION=$(TARGET_MINOR_VER)
@@ -92,7 +92,15 @@ OPT_HASH_C := $(OPT_HASH_C) else
 OPT_HASH_C := $(OPT_HASH_C)   cp $(ORGDIR)/$$N $$N;
 OPT_HASH_C := $(OPT_HASH_C) fi
 
-.PHONY: all clean default-clean opt-config opt-cipher depend test install uninstall
+OPT_CTR_CIPHER_H :=
+OPT_CTR_CIPHER_H := $(OPT_CTR_CIPHER_H) N=$(INCDIR)/espress_stream/ctr_cipher.h;
+OPT_CTR_CIPHER_H := $(OPT_CTR_CIPHER_H) cp cipher/$$N $$N
+
+OPT_CTR_CIPHER_C :=
+OPT_CTR_CIPHER_C := $(OPT_CTR_CIPHER_C) N=$(SRCDIR)/espress_stream_ctr_cipher.c;
+OPT_CTR_CIPHER_C := $(OPT_CTR_CIPHER_C) cp cipher/$$N $$N
+
+.PHONY: all clean default-clean opt-config opt-block-cipher opt-hash opt-ctr-cipher depend test install uninstall
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(OBJECTS) -shared $(LDFLAGS) -Wl,-soname,$(TARGET_SO_NAME) -o $@
@@ -113,8 +121,8 @@ clean:
 	$(OPT_BLOCK_CIPHER_C)
 	$(OPT_HASH_H)
 	$(OPT_HASH_C)
-	N=$(INCDIR)/espress_stream/ctr_cipher.h; cp cipher/$$N $$N
-	N=$(SRCDIR)/espress_stream_ctr_cipher.c; cp cipher/$$N $$N
+	$(OPT_CTR_CIPHER_H)
+	$(OPT_CTR_CIPHER_C)
 
 default-clean:
 	$(RM) -f $(TARGET)
@@ -133,13 +141,17 @@ default-clean:
 opt-config:
 	$(OPT_CONFIG_H)
 
-opt-cipher:
+opt-block-cipher:
 	$(OPT_BLOCK_CIPHER_H)
 	$(OPT_BLOCK_CIPHER_C)
+
+opt-hash:
 	$(OPT_HASH_H)
 	$(OPT_HASH_C)
-	N=$(INCDIR)/espress_stream/ctr_cipher.h; cp cipher/$$N $$N
-	N=$(SRCDIR)/espress_stream_ctr_cipher.c; cp cipher/$$N $$N
+
+opt-ctr-cipher:
+	$(OPT_CTR_CIPHER_H)
+	$(OPT_CTR_CIPHER_C)
 
 test: $(API_TEST_TARGET)
 	LD_PRELOAD=./$(TARGET) ./$(API_TEST_TARGET)

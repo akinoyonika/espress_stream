@@ -23,7 +23,7 @@ static void _initialize(struct espress_stream_hash *this)
 	strcpy((char *)sa->salg_type, "hash");
 	strcpy((char *)sa->salg_name, "sha256");
 
-	this->op_sock = socket(PF_ALG, SOCK_SEQPACKET, 0);
+	this->op_sock = socket(PF_ALG, SOCK_SEQPACKET | SOCK_CLOEXEC, 0);
 	if (-1 == this->op_sock)
 	{
 		ret = 1;

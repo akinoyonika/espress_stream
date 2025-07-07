@@ -60,6 +60,18 @@
 /arch/linux/app/es_ftx-es_frx/es_ftx/*
 !/arch/linux/app/es_ftx-es_frx/es_ftx/src/
 /arch/linux/app/es_ftx-es_frx/es_ftx/src/*
+!/arch/linux/app/es_gw/
+/arch/linux/app/es_gw/*
+!/arch/linux/app/es_gw/cipher/
+/arch/linux/app/es_gw/cipher/*
+!/arch/linux/app/es_gw/cipher/include/
+/arch/linux/app/es_gw/cipher/include/*
+!/arch/linux/app/es_gw/cipher/include/espress_cipher/
+/arch/linux/app/es_gw/cipher/include/espress_cipher/*
+!/arch/linux/app/es_gw/cipher/src/
+/arch/linux/app/es_gw/cipher/src/*
+!/arch/linux/app/es_gw/src/
+/arch/linux/app/es_gw/src/*
 !/arch/linux/cipher/
 /arch/linux/cipher/*
 !/arch/linux/cipher/include/
@@ -93,5 +105,4 @@
 !*.c
 !Makefile
 !README.md
-!/arch/linux/app/es_ftx-es_frx/es_frx/mk_cert_h.sh
-!/arch/linux/app/es_ccat-es_scat/es_scat/mk_cert_h.sh
+!mk_cert_h.sh

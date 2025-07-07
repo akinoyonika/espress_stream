@@ -414,7 +414,7 @@ static i_t _initialize(struct espress_stream_dgram *this, struct espress_stream_
 		goto RECV_MUTEX_INIT_FAIL_EXIT;
 	}
 
-	this->sock = socket(bind_address->storage->ss_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
+	this->sock = socket(bind_address->storage->ss_family, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
 	if (-1 == this->sock)
 	{
 		ret = errno;

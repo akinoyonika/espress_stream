@@ -29,7 +29,7 @@ struct espress_stream_cond_ops const espress_stream_cond[] =
 
 static void _event_initialize(int *event)
 {
-	*event = eventfd(0, 0);
+	*event = eventfd(0, EFD_CLOEXEC);
 }
 
 static void _event_destroy(int event)

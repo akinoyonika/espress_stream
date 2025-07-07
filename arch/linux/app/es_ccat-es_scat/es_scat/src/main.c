@@ -29,6 +29,9 @@ static unsigned char const public_key[] = PUBLIC_KEY;
 #define BUFFER_SIZE (8 * 1024)
 #define CONNECT_MESSAGE_SIZE (64)
 
+#define set_eventfd(fd) do{uint64_t u = 1; while (write(fd, &u, sizeof(u)) != sizeof(u));}while (0)
+#define wait_eventfd(fd) do{uint64_t u = 1; while (read(fd, &u, sizeof(u)) != sizeof(u));}while (0) 
+
 static void *ifd;
 static int arg_protocol;
 static char const *arg_address;
@@ -332,9 +335,6 @@ static int accpt(struct session_attr *attr, unsigned timeout)
 
 	for (i = -1, t = 0 ; *is_running && (i == -1) ;) {
 		t = timeout - t;
-		if (1000000 < t) {
-			t = 1000000;
-		}
 		i = espress_stream_connect_detect(*sid, t);
 		if (0 < i) {
 			ex_param->send_connect_payload_param = attr;
@@ -370,9 +370,6 @@ static int flush(struct session_attr *attr, unsigned timeout)
 		*is_running & (i == -1) ;
 		u = v) {
 		t = timeout - t;
-		if (1000000 < t) {
-			t = 1000000;
-		}
 		i = espress_stream_flush(*sid, t);
 
 		v = espress_stream_buffered_send_size(*sid, NULL);
@@ -392,9 +389,8 @@ static void sub_wait(void *param, unsigned events)
 {
 	void **sid = &(((struct session_attr *)param)->sid);
 	int *event = &(((struct session_attr *)param)->event);
-	uint64_t const u64 = 1;
 	espress_stream_wait_any(*sid, events, 0xffffffff);
-	while (sizeof(u64) != write(*event, &u64, sizeof(u64)));
+	set_eventfd(*event);
 }
 
 static void *s_wait(void *param)
@@ -420,7 +416,6 @@ static void wait(struct session_attr *attr,
 	unsigned timeout)
 {
 	int i = -1;
-	uint64_t u64;
 	void **sid = &(attr->sid);
 	int *event = &(attr->event);
 	pthread_t sub_wait_thread;
@@ -442,7 +437,7 @@ static void wait(struct session_attr *attr,
 	}
 
 	if (is_sidin || is_sidout) {
-		*event = eventfd(0, EFD_NONBLOCK);
+		*event = eventfd(0, 0);
 		if (0 <= *event) {
 			if (is_sidin && is_sidout) {
 				i = pthread_create(&sub_wait_thread, NULL, sr_wait, attr);
@@ -466,7 +461,7 @@ static void wait(struct session_attr *attr,
 		if (0 <= *event) {
 			if (i == 0) {
 				espress_stream_wait_break(*sid);
-				while (sizeof(u64) != read(*event, &u64, sizeof(u64)));
+				wait_eventfd(*event);
 				pthread_join(sub_wait_thread, NULL);
 				espress_stream_wait_cancel_break(*sid);
 			}
@@ -480,6 +475,7 @@ static void cat(struct session_attr *attr)
 	int i;
 	ssize_t st;
 	unsigned u;
+	unsigned v;
 	volatile int *is_running = &(attr->is_running);
 	void **sid = &(attr->sid);
 	unsigned char read_buf[BUFFER_SIZE];
@@ -494,16 +490,31 @@ static void cat(struct session_attr *attr)
 	int is_stdout_open;
 	int is_sidin_open;
 	int is_sidout_open;
+	unsigned stdout_tm;
+	unsigned sidout_tm;
 
-	for (is_stdin_open = 1, is_stdout_open = 1, is_sidin_open = 1, is_sidout_open = 1 ;
+	for (is_stdin_open = 1, is_stdout_open = 1, is_sidin_open = 1, is_sidout_open = 1, stdout_tm = sidout_tm = espress_stream_time() ;
 		*is_running && (is_stdin_open || is_stdout_open || is_sidin_open || is_sidout_open) ;
 		) {
+		v = espress_stream_time();
+		if (is_stdout_open && (0 < write_buf_size)) {
+			u = (v - stdout_tm) & 0xffffffff;
+			u = (u < TIMEOUT) ? (TIMEOUT - u) : TIMEOUT;
+		} else {
+			u = 0xffffffff;
+		}
+		if (is_sidout_open && (0 < send_buf_size)) {
+			v = (v - sidout_tm) & 0xffffffff;
+			v = (v < TIMEOUT) ? (TIMEOUT - v) : TIMEOUT;
+		} else {
+			v = 0xffffffff;
+		}
 		wait(attr,
 			is_stdin_open && (read_buf_size == 0),
 			is_stdout_open && (0 < write_buf_size),
 			is_sidin_open && (recv_buf_size == 0),
 			is_sidout_open && (0 < send_buf_size),
-			1000000);
+			*is_running ? ((u < v) ? u : v) : 0);
 
 		if (is_stdin_open) {
 			if (read_buf_size == 0) {
@@ -511,12 +522,16 @@ static void cat(struct session_attr *attr)
 				if (0 < st) {
 					read_buf_size = st;
 				} else if (st == 0) {
+					close(STDIN_FILENO);
 					is_stdin_open = 0;
 					if (send_buf_size == 0) {
-						flush(attr, TIMEOUT);
+						i = flush(attr, TIMEOUT);
 						espress_stream_disconnect(*sid);
 						espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
 						is_sidout_open = 0;
+						if (0 < i) {
+							break;
+						}
 					}
 				} else if (errno != EAGAIN) {
 					break;
@@ -544,12 +559,16 @@ static void cat(struct session_attr *attr)
 						}
 						if (!arg_is_close_half && is_stdin_open)
 						{
+							close(STDIN_FILENO);
 							is_stdin_open = 0;
 							if (send_buf_size == 0) {
-								flush(attr, TIMEOUT);
+								i = flush(attr, TIMEOUT);
 								espress_stream_disconnect(*sid);
 								espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
 								is_sidout_open = 0;
+								if (0 < i) {
+									break;
+								}
 							}
 						}
 					}
@@ -580,14 +599,20 @@ static void cat(struct session_attr *attr)
 							is_stdout_open = 0;
 						}
 					}
+					stdout_tm = espress_stream_time();
 				} else if (errno != EAGAIN) {
 					break;
+				} else {
+					if (TIMEOUT <= ((espress_stream_time() - stdout_tm) & 0xffffffff)) {
+						break;
+					}
 				}
 			} else {
 				st = write(STDOUT_FILENO, NULL, 0);
 				if ((st == -1) && (errno != EAGAIN)) {
 					break;
 				}
+				stdout_tm = espress_stream_time();
 			}
 		}
 
@@ -603,14 +628,22 @@ static void cat(struct session_attr *attr)
 						if (is_stdin_open) {
 							espress_stream_flush(*sid, 0);
 						} else {
-							flush(attr, TIMEOUT);
+							i = flush(attr, TIMEOUT);
 							espress_stream_disconnect(*sid);
 							espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
 							is_sidout_open = 0;
+							if (0 < i) {
+								break;
+							}
 						}
 					}
+					sidout_tm = espress_stream_time();
 				} else if (0 < i) {
 					break;
+				} else {
+					if (TIMEOUT <= ((espress_stream_time() - sidout_tm) & 0xffffffff)) {
+						break;
+					}
 				}
 			} else {
 				u = 1;
@@ -618,14 +651,41 @@ static void cat(struct session_attr *attr)
 				if (0 < i) {
 					break;
 				}
+				sidout_tm = espress_stream_time();
 			}
 		}
 	}
+
+	if (is_stdin_open) {
+		close(STDIN_FILENO);
+	}
+	if (is_stdout_open) {
+		close(STDOUT_FILENO);
+	}
+	if (is_sidin_open) {
+		;
+	}
+	if (is_sidout_open) {
+		espress_stream_disconnect(*sid);
+		espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
+	}
 }
+
+static int sige = -1;
 
 static void sigh(int signum)
 {
+	set_eventfd(sige);
+}
+
+static void *sigt(void *param)
+{
+	wait_eventfd(sige);
 	session_attr->is_running = 0;
+	if (session_attr->sid != NULL) {
+		espress_stream_wait_break(session_attr->sid);
+	}
+	return param;
 }
 
 int main(int argc, char const **argv)
@@ -640,6 +700,7 @@ int main(int argc, char const **argv)
 		NULL, NULL,
 		NULL, NULL
 	}};
+	pthread_t signal_thread;
 
 	i = scan_arg(argc, argv);
 	if (i) {
@@ -700,6 +761,20 @@ int main(int argc, char const **argv)
 		goto BEGIN_INTERFACE_FAIL_EXIT;
 	}
 
+	sige = eventfd(0, 0);
+	if (sige == -1) {
+		ret = 1;
+		fprintf(stderr, "error: can't create eventfd.\n");
+		goto CREATE_EVENTFD_FAIL_EXIT;
+	}
+
+	i = pthread_create(&signal_thread, NULL, sigt, NULL);
+	if (i != 0) {
+		ret = 1;
+		fprintf(stderr, "error: can't create thread.\n");
+		goto CREATE_THREAD_FAIL_EXIT;
+	}
+
 	attr->is_running = 1;
 	ex_param->send_connect_payload_param = attr;
 	ex_param->recv_connect_payload_param = attr;
@@ -733,8 +808,15 @@ int main(int argc, char const **argv)
 ACCEPT_FAIL_EXIT:
 	signal(SIGTERM, SIG_DFL);
 	signal(SIGINT, SIG_DFL);
+	espress_stream_wait_cancel_break(attr->sid);
 	espress_stream_end_session(attr->sid);
+	attr->sid = NULL;
 BEGIN_SESSION_FAIL_EXIT:
+	set_eventfd(sige);
+	pthread_join(signal_thread, NULL);
+CREATE_THREAD_FAIL_EXIT:
+	close(sige);
+CREATE_EVENTFD_FAIL_EXIT:
 	espress_stream_end_interface(ifd);
 BEGIN_INTERFACE_FAIL_EXIT:
 	espress_stream_end();

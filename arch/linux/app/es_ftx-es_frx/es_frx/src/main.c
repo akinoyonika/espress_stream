@@ -14,6 +14,7 @@
 #include <net/if.h>
 #include <netpacket/packet.h>
 #include <net/ethernet.h>
+#include <sys/eventfd.h>
 
 #include "espress_stream/api.h"
 #include "cipher_api.h"
@@ -34,6 +35,9 @@ static char const *user_id_pass[] = USER_ID_PASS;
 #else
 #	define DEBUG_PRINT(...) ((void)0)
 #endif
+
+#define set_eventfd(fd) do{uint64_t u = 1; while (write(fd, &u, sizeof(u)) != sizeof(u));}while (0)
+#define wait_eventfd(fd) do{uint64_t u = 1; while (read(fd, &u, sizeof(u)) != sizeof(u));}while (0) 
 
 static void *ifd;
 static int arg_protocol;
@@ -286,7 +290,7 @@ static int scan_arg(int argc, char const **argv)
 		printf("%s\n", espress_stream_copyright());
 	}
 
-	return ret || (arg_dir_name == NULL);
+	return ret;
 }
 
 struct file_rx_attr {
@@ -295,6 +299,17 @@ struct file_rx_attr {
 	volatile int is_running;
 	void *sid;
 };
+
+struct standby_attr {
+	int is_attached;
+	pthread_t thread;
+	volatile int is_running;
+	volatile int is_blocking;
+	void *sid;
+	unsigned char message[CONNECT_MESSAGE_SIZE];
+	unsigned message_size;
+};
+static struct standby_attr standby_attr[NUM_STANDBY];
 
 static void *file_rx(void *param)
 {
@@ -438,17 +453,18 @@ DIR_NAME_TOO_LONG_EXIT:
 	espress_stream_disconnect_result(*sid, *is_running ? TIMEOUT : 0);
 
 	*is_running = 0;
+
+	for (u = 0 ; u < NUM_STANDBY ; u++) {
+		if (standby_attr[u].is_attached) {
+			standby_attr[u].is_blocking = 0;
+			if (standby_attr[u].sid != NULL) {
+				espress_stream_wait_break(standby_attr[u].sid);
+			}
+		}
+	}
+
 	return ret;
 }
-
-struct standby_attr {
-	int is_attached;
-	pthread_t thread;
-	volatile int is_running;
-	unsigned char message[CONNECT_MESSAGE_SIZE];
-	unsigned message_size;
-};
-static struct standby_attr standby_attr[NUM_STANDBY];
 
 static int send_connect_payload(void *sid, int (*callback)(void *sid, void const *payload, unsigned payload_size, int is_rejected), void *param)
 {
@@ -483,6 +499,8 @@ static void *standby(void *param)
 	unsigned t;
 	unsigned u;
 	volatile int *is_running = &(((struct standby_attr *)param)->is_running);
+	volatile int *is_blocking = &(((struct standby_attr *)param)->is_blocking);
+	void **sid = &(((struct standby_attr *)param)->sid);
 	unsigned num_thread = 0;
 	struct file_rx_attr **attr = NULL;
 	struct espress_stream_session_ex_param ex_param[1] = {{
@@ -492,7 +510,7 @@ static void *standby(void *param)
 		NULL, NULL
 	}};
 
-	while (*is_running) {
+	for (*sid = NULL ; *is_running ; ) {
 		for (t = 0, u = num_thread ; t < num_thread ; t++) {
 			if (!attr[t]->is_attached) {
 				u = t;
@@ -530,7 +548,11 @@ static void *standby(void *param)
 				}
 			}
 			if (attr[t]->sid != NULL) {
-				i = espress_stream_connect_detect(attr[t]->sid, 1 * 1000 * 1000);
+				*sid = attr[t]->sid;
+				i = espress_stream_connect_detect(attr[t]->sid, (*is_running && *is_blocking) ? 0xffffffff : 0);
+				*sid = NULL;
+				espress_stream_wait_cancel_break(attr[t]->sid);
+				*is_blocking = 1;
 				if (i == 0) {
 					attr[t]->is_attached = 1;
 					attr[t]->is_running = 1;
@@ -584,12 +606,26 @@ static void *standby(void *param)
 	return ret;
 }
 
+static int sige = -1;
+
 static void sigh(int signum)
 {
+	set_eventfd(sige);
+}
+
+static void *sigt(void *param)
+{
 	unsigned u;
+	wait_eventfd(sige);
 	for (u = 0 ; u < NUM_STANDBY ; u++) {
-		standby_attr[u].is_running = 0;
+		if (standby_attr[u].is_attached) {
+			standby_attr[u].is_running = 0;
+			if (standby_attr[u].sid != NULL) {
+				espress_stream_wait_break(standby_attr[u].sid);
+			}
+		}
 	}
+	return param;
 }
 
 int main(int argc, char const **argv)
@@ -599,6 +635,7 @@ int main(int argc, char const **argv)
 	unsigned u;
 	int is_stream_ng = 1;
 	struct sockaddr_storage address[1];
+	pthread_t signal_thread;
 
 	i = scan_arg(argc, argv);
 	if (i) {
@@ -660,9 +697,24 @@ int main(int argc, char const **argv)
 		goto EXIT;
 	}
 
+	sige = eventfd(0, 0);
+	if (sige == -1) {
+		ret = 1;
+		fprintf(stderr, "error: can't create eventfd.\n");
+		goto EXIT;
+	}
+
+	i = pthread_create(&signal_thread, NULL, sigt, NULL);
+	if (i != 0) {
+		ret = 1;
+		fprintf(stderr, "error: can't create thread.\n");
+		goto EXIT;
+	}
+
 	for (u = 0 ; u < NUM_STANDBY ; u++) {
 		standby_attr[u].is_attached = 1;
 		standby_attr[u].is_running = 1;
+		standby_attr[u].is_blocking = 1;
 		if (pthread_create(&(standby_attr[u].thread), NULL, standby, standby_attr + u)) {
 			standby_attr[u].is_attached = 0;
 			standby_attr[u].is_running = 0;
@@ -682,8 +734,12 @@ int main(int argc, char const **argv)
 	signal(SIGTERM, SIG_DFL);
 	signal(SIGINT, SIG_DFL);
 
+	set_eventfd(sige);
+	pthread_join(signal_thread, NULL);
+
 EXIT:
 
+	if (sige != -1) close(sige);
 	if (ifd != NULL) espress_stream_end_interface(ifd);
 	if (!is_stream_ng) espress_stream_end();
 

@@ -6,7 +6,6 @@
 
 ## 導入
 
-
 ### 準備
 
 espress_streamライブラリーの導入環境を準備し、espress_streamライブラリーを導入しておいてください。
