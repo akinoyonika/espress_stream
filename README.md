@@ -44,9 +44,14 @@ linuxに対するポーティングではデータグラム通信にIPv6およ�
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20250825.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20250825.tar.gz)
+- [espress_stream.20250902.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20250902.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20250902.tar.gz (1.10-1)
+: <ul>
+    <li>シングルスレッド動作でのAPI呼び出し時にイールドループが作動するようにした。</li>
+  </ul>
 
 espress_stream.20250825.tar.gz (1.9-1)
 : <ul>
