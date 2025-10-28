@@ -17,6 +17,7 @@
 #include <net/ethernet.h>
 #include <sys/eventfd.h>
 #include <inttypes.h>
+#include <termios.h>
 
 #include "espress_stream/api.h"
 #include "cipher_api.h"
@@ -956,6 +957,8 @@ int main(int argc, char const **argv)
 	char user_id[USER_ID_SIZE];
 	char user_password[USER_PASSWORD_SIZE];
 	pthread_t signal_thread;
+	struct termios termios[1];
+	struct termios org_termios[1];
 
 	ifd = NULL;
 
@@ -1011,10 +1014,10 @@ int main(int argc, char const **argv)
 	arg_user_id = user_id;
 	printf("user password: ");
 	if (arg_user_password == NULL) {
-#		pragma GCC diagnostic push
-#		pragma GCC diagnostic ignored "-Wunused-result"
-		system("stty -echo");
-#		pragma GCC diagnostic pop
+		tcgetattr(STDIN_FILENO, org_termios);
+		memcpy(termios, org_termios, sizeof(*termios));
+		termios->c_lflag &= ~((tcflag_t)ECHO);
+		tcsetattr(STDIN_FILENO, TCSANOW, termios);
 		if ((fgets(user_password, USER_PASSWORD_SIZE, stdin) == NULL) ||
 			(user_password[0] == '\n') ||
 			(user_password[0] == '\0')) {
@@ -1022,10 +1025,7 @@ int main(int argc, char const **argv)
 		} else if (user_password[strlen(user_password) - 1] == '\n') {
 			user_password[strlen(user_password) - 1] = '\0';
 		}
-#		pragma GCC diagnostic push
-#		pragma GCC diagnostic ignored "-Wunused-result"
-		system("stty echo");
-#		pragma GCC diagnostic pop
+		tcsetattr(STDIN_FILENO, TCSANOW, org_termios);
 		printf("\n");
 	} else {
 		strncpy(user_password, arg_user_password, USER_PASSWORD_SIZE);

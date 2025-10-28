@@ -44,9 +44,14 @@ linuxに対するポーティングではデータグラム通信にIPv6およ�
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20251001.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20251001.tar.gz)
+- [espress_stream.20251024.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20251024.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20251024.tar.gz (1.12-1)
+: <ul>
+    <li>サンプルアプリケーションのわずかな修正。</li>
+  </ul>
 
 espress_stream.20251001.tar.gz (1.12-1)
 : <ul>
