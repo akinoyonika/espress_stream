@@ -134,7 +134,7 @@ static int packet_naton(char const *mac_address, char const *type, char const *i
 			ret = 1;
 			goto EXIT;
 		}
-		if(ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
+		if (ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
 			ret = 1;
 			goto EXIT;
 		}
@@ -161,7 +161,7 @@ static int packet_naton(char const *mac_address, char const *type, char const *i
 			ret = 1;
 			goto EXIT;
 		}
-		if(ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
+		if (ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
 			ret = 1;
 			goto EXIT;
 		}

@@ -143,7 +143,7 @@ static int packet_naton(char const *mac_address, char const *type, char const *i
 			ret = 1;
 			goto EXIT;
 		}
-		if(ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
+		if (ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
 			ret = 1;
 			goto EXIT;
 		}
@@ -170,7 +170,7 @@ static int packet_naton(char const *mac_address, char const *type, char const *i
 			ret = 1;
 			goto EXIT;
 		}
-		if(ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
+		if (ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
 			ret = 1;
 			goto EXIT;
 		}
@@ -461,7 +461,7 @@ static struct file_tx_attr *file_tx_attr = NULL;
 				au = "";                    \
 			}                               \
 			printf("%u%sB", num, au);       \
-		} while(0)
+		} while (0)
 
 		if (file_size == 0) {
 			ratio = 0;
@@ -545,7 +545,7 @@ static int send_connect_payload(void *sid, int (*callback)(void *sid, void const
 				u -= s;               \
 			}                         \
 		}                             \
-	} while(0)
+	} while (0)
 	if (arg_public_key == NULL) {
 		*message_size = CONNECT_MESSAGE_SIZE; /* dummy size */
 		ret = callback(sid, NULL, 0, 0);

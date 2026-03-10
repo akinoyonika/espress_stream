@@ -1,5 +1,7 @@
 # espress_stream - ストリーム通信用ライブラリー
 
+<div style="text-align:right">2026年3月11日</div>
+
 ## 概要
 
 本ソフトウェアはデータグラム通信上でストリーム通信を実現するためのライブラリーです。
@@ -44,9 +46,14 @@ linuxに対するポーティングではデータグラム通信にIPv6およ�
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20251024.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20251024.tar.gz)
+- [espress_stream.20260311.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20260311.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20260311.tar.gz (1.12-1)
+: <ul>
+    <li>ドキュメントの加筆、修正。</li>
+  </ul>
 
 espress_stream.20251024.tar.gz (1.12-1)
 : <ul>
@@ -1017,7 +1024,7 @@ static int packet_naton(char const *mac_address, char const *type, char const *i
             ret = 1;
             goto EXIT;
         }
-        if(ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
+        if (ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
             ret = 1;
             goto EXIT;
         }
@@ -1044,7 +1051,7 @@ static int packet_naton(char const *mac_address, char const *type, char const *i
             ret = 1;
             goto EXIT;
         }
-        if(ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
+        if (ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
             ret = 1;
             goto EXIT;
         }
@@ -1245,7 +1252,7 @@ static int send_connect_payload(void *sid, int (*callback)(void *sid, void const
                 u -= s;               \
             }                         \
         }                             \
-    } while(0)
+    } while (0)
     if (arg_public_key == NULL) {
         *message_size = CONNECT_MESSAGE_SIZE; /* dummy size */
         ret = callback(sid, NULL, 0, 0);
@@ -1953,7 +1960,7 @@ static int packet_naton(char const *mac_address, char const *type, char const *i
             ret = 1;
             goto EXIT;
         }
-        if(ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
+        if (ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
             ret = 1;
             goto EXIT;
         }
@@ -1980,7 +1987,7 @@ static int packet_naton(char const *mac_address, char const *type, char const *i
             ret = 1;
             goto EXIT;
         }
-        if(ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
+        if (ioctl(sock, SIOCGIFINDEX, ifr) == -1) {
             ret = 1;
             goto EXIT;
         }
