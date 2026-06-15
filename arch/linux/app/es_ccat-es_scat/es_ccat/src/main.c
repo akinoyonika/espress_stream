@@ -314,6 +314,7 @@ static int scan_arg(int argc, char const **argv)
 					"[-p <destination port>] "
 					"[-b <bind address>] "
 					"[-q <bind port>] "
+					"[-k <destination public key>] "
 					"[-h (half close)] "
 					"[-s (silent)]\n"
 			"%s "
@@ -321,6 +322,7 @@ static int scan_arg(int argc, char const **argv)
 					"[-a <destination address>] "
 					"[-p <ether type>] "
 					"[-b <interface name>] "
+					"[-k <destination public key>] "
 					"[-h (half close)] "
 					"[-s (silent)]\n",
 			p, p);

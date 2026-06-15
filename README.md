@@ -1,6 +1,6 @@
 # espress_stream - ストリーム通信用ライブラリー
 
-<div style="text-align:right">2026年3月11日</div>
+<div style="text-align:right">2026年6月15日</div>
 
 ## 概要
 
@@ -46,9 +46,14 @@ linuxに対するポーティングではデータグラム通信にIPv6およ�
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20260311.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20260311.tar.gz)
+- [espress_stream.20260615.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20260615.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20260615.tar.gz (1.12-1)
+: <ul>
+    <li>サンプルアプリケーションのわずかな修正。</li>
+  </ul>
 
 espress_stream.20260311.tar.gz (1.12-1)
 : <ul>
@@ -1209,6 +1214,7 @@ static int scan_arg(int argc, char const **argv)
                     "[-p <destination port>] "
                     "[-b <bind address>] "
                     "[-q <bind port>] "
+                    "[-k <destination public key>] "
                     "[-h (half close)] "
                     "[-s (silent)]\n"
             "%s "
@@ -1216,6 +1222,7 @@ static int scan_arg(int argc, char const **argv)
                     "[-a <destination address>] "
                     "[-p <ether type>] "
                     "[-b <interface name>] "
+                    "[-k <destination public key>] "
                     "[-h (half close)] "
                     "[-s (silent)]\n",
             p, p);
