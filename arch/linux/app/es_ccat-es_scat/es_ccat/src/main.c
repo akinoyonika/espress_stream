@@ -643,8 +643,7 @@ static void cat(struct session_attr *attr)
 							close(STDOUT_FILENO);
 							is_stdout_open = 0;
 						}
-						if (!arg_is_close_half && is_stdin_open)
-						{
+						if (!arg_is_close_half && is_stdin_open) {
 							close(STDIN_FILENO);
 							is_stdin_open = 0;
 							if (send_buf_size == 0) {

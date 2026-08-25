@@ -46,7 +46,7 @@ BIND_ERROR_EXIT:
 	if (0 != ret) close(this->op_sock);
 SOCKET_ERROR_EXIT:
 
-	if (0 != ret) exit(EXIT_FAILURE);
+	if (0 != ret) abort();
 }
 
 static void _finalize(struct espress_stream_hash *this, b_t *digest)
@@ -71,7 +71,7 @@ EXIT:
 	close(this->sock);
 	close(this->op_sock);
 
-	if (0 != ret) exit(EXIT_FAILURE);
+	if (0 != ret) abort();
 }
 
 static void _update(struct espress_stream_hash *this, b_t const *message, u_t size)
@@ -95,5 +95,5 @@ EXIT:
 	if (0 != ret) close(this->sock);
 	if (0 != ret) close(this->op_sock);
 
-	if (0 != ret) exit(EXIT_FAILURE);
+	if (0 != ret) abort();
 }

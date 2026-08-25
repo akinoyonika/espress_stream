@@ -1,6 +1,6 @@
 # espress_stream - ストリーム通信用ライブラリー
 
-<div style="text-align:right">2026年6月15日</div>
+<div style="text-align:right">2026年8月25日</div>
 
 ## 概要
 
@@ -46,9 +46,14 @@ linuxに対するポーティングではデータグラム通信にIPv6およ�
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20260615.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20260615.tar.gz)
+- [espress_stream.20260825.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20260825.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20260825.tar.gz (1.12-1)
+: <ul>
+    <li>linux用のCrypto APIを用いたモジュールにおいて異常終了時に<tt>exit</tt>を用いていたが、これを<tt>abort</tt>に変更した。</li>
+  </ul>
 
 espress_stream.20260615.tar.gz (1.12-1)
 : <ul>
@@ -1543,8 +1548,7 @@ static void cat(struct session_attr *attr)
                             close(STDOUT_FILENO);
                             is_stdout_open = 0;
                         }
-                        if (!arg_is_close_half && is_stdin_open)
-                        {
+                        if (!arg_is_close_half && is_stdin_open) {
                             close(STDIN_FILENO);
                             is_stdin_open = 0;
                             if (send_buf_size == 0) {
