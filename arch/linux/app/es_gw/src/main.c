@@ -1001,6 +1001,7 @@ int main(int argc, char const **argv)
 
 	signal(SIGINT, sigh);
 	signal(SIGTERM, sigh);
+	signal(SIGPIPE, SIG_IGN);
 
 	for (u = 0 ; u < NUM_STANDBY ; u++) {
 		if (standby_attr[u].is_attached) {
@@ -1009,6 +1010,7 @@ int main(int argc, char const **argv)
 		}
 	}
 
+	signal(SIGPIPE, SIG_DFL);
 	signal(SIGTERM, SIG_DFL);
 	signal(SIGINT, SIG_DFL);
 

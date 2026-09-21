@@ -1,6 +1,6 @@
 # espress_stream - ストリーム通信用ライブラリー
 
-<div style="text-align:right">2026年8月25日</div>
+<div style="text-align:right">2026年9月21日</div>
 
 ## 概要
 
@@ -46,9 +46,14 @@ linuxに対するポーティングではデータグラム通信にIPv6およ�
 
 本ソフトウェアはソースパッケージにて提供しています。以下をダウンロードしてください。
 
-- [espress_stream.20260825.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20260825.tar.gz)
+- [espress_stream.20260921.tar.gz](http://akino-yo.f5.si/akinoyonika/espress_stream/espress_stream.20260921.tar.gz)
 
 <details><summary>変更履歴</summary>
+
+espress_stream.20260921.tar.gz (1.12-1)
+: <ul>
+    <li>サンプルアプリケーションの<tt>es_gw</tt>においてSIGPIPEシグナルを無視するようにした。</li>
+  </ul>
 
 espress_stream.20260825.tar.gz (1.12-1)
 : <ul>
