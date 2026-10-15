@@ -105,4 +105,5 @@
 !*.c
 !Makefile
 !README.md
+!LICENSE
 !mk_cert_h.sh
